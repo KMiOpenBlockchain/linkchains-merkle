@@ -1,8 +1,15 @@
 cfg = {
     "dataFolder": "FOLDER_CONTAINING_DATASETS",
-    "account": "BLOCKCHAIN_ACCOUNT"
-    "ipfsDomain": "IPFS_HOST",
-    "ipfsAPIPort": "IPFS_PORT",
+    "account": "BLOCKCHAIN_ACCOUNT",
+    "ipfs": {
+        "domain": "IPFS_HOST",
+        "APIPort": "IPFS_PORT",
+        "onlyHash": {
+            "merkleTree": false,
+            "index": false,
+            "indextoindex": false
+        }
+    },
     "data": [
         {
             "datafile": "dbpedia-20000.nq",

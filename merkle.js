@@ -12,7 +12,7 @@ const bs58 = require('bs58');
 var microtime = require('microtime');
 const Web3 = require('web3');
 var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:56000'));
-var ipfsurl = "http://" + cfg.ipfsDomain + ":" + cfg.ipfsAPIPort;
+var ipfsurl = "http://" + cfg.ipfs.domain + ":" + cfg.ipfs.APIPort;
 //var ipfs = ipfsClient(cfg.ipfsDomain, cfg.ipfsAPIPort, { protocol: 'http' });
 var ipfs = ipfsClient(ipfsurl);
 var randomHash = web3.utils.sha3("dummy data");  // web3 keccak256
@@ -42,7 +42,9 @@ var analysis = {};
 var ai = 0;
 var af;
 
-var onlyHash = false;
+var onlyHashMerkle = cfg.ipfs.onlyHash.merkleTree;
+var onlyHashIndex = cfg.ipfs.onlyHash.index;
+var onlyHashIndexToIndex = cfg.ipfs.onlyHash.indextoindex;
 
 function processAllData() {
 	if (dataLoopCount == cfg.data.length) {
@@ -54,6 +56,7 @@ function processAllData() {
 		fs.writeFile (folderpath + "sorted/merkle.json", json, function(err) {
 			if (err) throw err;
 				//
+				process.exit();
 			}
 		);			
 		
@@ -189,9 +192,9 @@ function processfiles() {
 				);	
 				
 			}
-			fileStatsIPFS(hash, innerhandler);
+			fileStatsIPFS(hash, onlyHashIndexToIndex, innerhandler);
 		}
-		addFileToIPFS(path, handler);
+		addFileToIPFS(path, onlyHashIndexToIndex, handler);
 	} else {
 		start(fileArray[progresscount]);
 	}
@@ -352,27 +355,27 @@ function generateipfs(dat, merkleTools) {
 					progresscount++;
 					processfiles();
 				}
-				fileStatsIPFS(hash, innerhandler2);
+				fileStatsIPFS(hash, onlyHashIndex, innerhandler2);
 			}
-			addFileToIPFS(path, handler2);
+			addFileToIPFS(path, onlyHashIndex, handler2);
 		}
-		fileStatsIPFS(hash, innerhandler1);
+		fileStatsIPFS(hash, onlyHashMerkle, innerhandler1);
 	}
 
-	addFileToIPFS(path, handler1);
+	addFileToIPFS(path, onlyHashMerkle, handler1);
 
 }
 
-async function addFileToIPFS(file, returnhandler) {
-	for await (const result of ipfs.add(globSource(file), { onlyHash: onlyHash })) {
+async function addFileToIPFS(file, hashonly, returnhandler) {
+	for await (const result of ipfs.add(globSource(file), { onlyHash: hashonly })) {
 		hash = bs58.encode(result.cid.multihash);
 		returnhandler(hash);
 	}
 }
 
 
-async function fileStatsIPFS(hash, returnhandler) {
-	if(onlyHash) {
+async function fileStatsIPFS(hash, hashonly, returnhandler) {
+	if(hashonly) {
 		stats = {"cumulativeSize": 0};
 		returnhandler(stats);
 	} else {
