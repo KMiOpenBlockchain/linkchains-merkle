@@ -2,7 +2,6 @@ var fs = require('fs');
 const rp = require('request-promise-native');
 var request = require('request');
 var keccak256 = require('js-sha3').keccak_256;
-var crypto = require('crypto');
 var MerkleTools = require('merkle-tools');
 var microtime = require('microtime');
 const N3 = require('n3');

@@ -4,15 +4,17 @@ var fs = require('fs');
 var MerkleTools = require('merkle-tools');
 const web3_extended = require('web3_ipc');
 var keccak256 = require('js-sha3').keccak_256;
-var crypto = require('crypto');
 const countLinesInFile = require('count-lines-in-file');
 var readline = require('linebyline');
-var ipfsClient = require('ipfs-http-client');
+const ipfsClient = require('ipfs-http-client');
+const globSource = require('ipfs-utils/src/files/glob-source');
 const bs58 = require('bs58');
 var microtime = require('microtime');
 const Web3 = require('web3');
 var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:56000'));
-var ipfs = ipfsClient(cfg.ipfsDomain, cfg.ipfsAPIPort, { protocol: 'http' });
+var ipfsurl = "http://" + cfg.ipfsDomain + ":" + cfg.ipfsAPIPort;
+//var ipfs = ipfsClient(cfg.ipfsDomain, cfg.ipfsAPIPort, { protocol: 'http' });
+var ipfs = ipfsClient(ipfsurl);
 var randomHash = web3.utils.sha3("dummy data");  // web3 keccak256
 var reg = new RegExp('^\\d+$');
 
@@ -39,6 +41,8 @@ var fileArray;
 var analysis = {};
 var ai = 0;
 var af;
+
+var onlyHash = false;
 
 function processAllData() {
 	if (dataLoopCount == cfg.data.length) {
@@ -153,17 +157,18 @@ function processfiles() {
 		//console.log(indextoindex);
 		
 		var starttime = microtime.now();
-		ipfs.addFromFs(path, (err, result) => {
-			if (err) { throw err }
-			analysis[af][ai].files.indextoindex.ipfshash = result[0].hash;
+
+
+		function handler(hash) {
+			//console.log("HASH = " + hash);
+			analysis[af][ai].files.indextoindex.ipfshash = hash;
 			analysis[af][ai].files.indextoindex.IPFSWriteTime = microtime.now() - starttime;
-			
-			processdata.ipfsindextoindex = result[0].hash;
-			
-			ipfs.files.stat("/ipfs/"+result[0].hash, (err, stats) => {
-				analysis[af][ai].files.indextoindex.filesize = stats.cumulativeSize;
-				//analysis[af][ai].files.indextoindex.size = stats.size;
-				//console.log(stats);
+			processdata.ipfsindextoindex = hash;
+
+			function innerhandler(output) {
+				//console.log(output);
+				analysis[af][ai].files.indextoindex.filesize = output.cumulativeSize;
+
 				/*
 				fs.writeFile(ipfsfilepath + "sampledata.json", JSON.stringify(processdata), function(err) {
 					if (err) throw err;
@@ -172,12 +177,21 @@ function processfiles() {
 					processAllData();
 				});
 				*/
-				dataLoopCount += 1;
-				processAllData();
-			});
-			
-			
-		});
+				cfg.data[dataLoopCount].indextoindex = hash;
+				
+				var json = "cfg = " + JSON.stringify(cfg, null, 4);
+				fs.writeFile ("./config.js", json, function(err) {
+					if (err) throw err;
+						console.log('config,js data updated');
+						dataLoopCount += 1;
+						processAllData();
+					}
+				);	
+				
+			}
+			fileStatsIPFS(hash, innerhandler);
+		}
+		addFileToIPFS(path, handler);
 	} else {
 		start(fileArray[progresscount]);
 	}
@@ -287,20 +301,19 @@ function generateipfs(dat, merkleTools) {
 	
 	analysis[af][ai].files.index[progresscount].merkleTree.treeJSONFileCreation = microtime.now() - starttime;
 	starttime = microtime.now();
-	
-	ipfs.addFromFs(path, (err, result) => {
-		if (err) { throw err }
-		//fs.unlinkSync(ipfsfilepath + res[0] + ".json");
-		
+
+
+	function handler1(hash) {
+		//console.log("HASH = " + hash);
+
 		analysis[af][ai].files.index[progresscount].merkleTree.treeIPFSWriteTime = microtime.now() - starttime;
-		analysis[af][ai].files.index[progresscount].merkleTree.IPFSHash = result[0].hash;
-		
-		ipfs.files.stat("/ipfs/"+result[0].hash, (err, stats) => {
-			analysis[af][ai].files.index[progresscount].merkleTree.filesize = stats.cumulativeSize;
+		analysis[af][ai].files.index[progresscount].merkleTree.IPFSHash = hash;
+
+		function innerhandler1(output) {
+			analysis[af][ai].files.index[progresscount].merkleTree.filesize = output.cumulativeSize;
 			//analysis[af][ai].files.index[progresscount].merkleTree.size = stats.size;
-			
 			starttime = microtime.now();
-			dat.ipfshashtree = result[0].hash;
+			dat.ipfshashtree = hash;
 			index = {};
 			index.merkleipfs = dat.ipfshashtree;
 			index.merkleroot = dat.merkleroot;
@@ -317,17 +330,16 @@ function generateipfs(dat, merkleTools) {
 			starttime = microtime.now();
 			
 			//console.log(ipfsfilepath + res[0] + "_index.json");
-		
-			ipfs.addFromFs(path, (err, result) => {
-				if (err) { throw err }
-				//fs.unlinkSync(ipfsfilepath + res[0] + "_index.json");
+
+			function handler2(hash) {
+				//console.log("HASH = " + hash);
 				analysis[af][ai].files.index[progresscount].IPFSIndex.treeIPFSWriteTime = microtime.now() - starttime;
-				analysis[af][ai].files.index[progresscount].IPFSIndex.IPFSHash = result[0].hash;
-				
-				ipfs.files.stat("/ipfs/"+result[0].hash, (err, stats) => {
-					analysis[af][ai].files.index[progresscount].IPFSIndex.filesize = stats.cumulativeSize;
+				analysis[af][ai].files.index[progresscount].IPFSIndex.IPFSHash = hash;
+
+				function innerhandler2(output) {
+					analysis[af][ai].files.index[progresscount].IPFSIndex.filesize = output.cumulativeSize;
 					//analysis[af][ai].files.index[progresscount].IPFSIndex.size = stats.size;
-					dat.ipfsindex = result[0].hash;
+					dat.ipfsindex = hash;
 					//console.log(result);
 					dat.enc = getBytes32FromIpfsHash(dat.ipfsindex);
 					ind = processdata.treesandindexes.length;
@@ -339,16 +351,38 @@ function generateipfs(dat, merkleTools) {
 					processdata.treesandindexes[ind].indexIndex = dat.indexIndex;
 					progresscount++;
 					processfiles();
-					//console.log("enc = " + enc);
-					//var dec = getIpfsHashFromBytes32(enc);
-					//console.log("dec = " + dec);
-				});
-			});
-		});
-			
-		
-		
-	})
+				}
+				fileStatsIPFS(hash, innerhandler2);
+			}
+			addFileToIPFS(path, handler2);
+		}
+		fileStatsIPFS(hash, innerhandler1);
+	}
+
+	addFileToIPFS(path, handler1);
+
+}
+
+async function addFileToIPFS(file, returnhandler) {
+	for await (const result of ipfs.add(globSource(file), { onlyHash: onlyHash })) {
+		hash = bs58.encode(result.cid.multihash);
+		returnhandler(hash);
+	}
+}
+
+
+async function fileStatsIPFS(hash, returnhandler) {
+	if(onlyHash) {
+		stats = {"cumulativeSize": 0};
+		returnhandler(stats);
+	} else {
+		try {
+	    	stats = await ipfs.files.stat("/ipfs/" + hash);
+			returnhandler(stats);
+	  	} catch (e) {
+	    	console.log(e);
+	  	}
+  	}
 }
 
 function getBytes32FromIpfsHash(ipfsListing) {
