@@ -1,15 +1,17 @@
+require("./config.js");
 var fs = require('fs');
 const countLinesInFile = require('count-lines-in-file');
-var readline = require('linebyline');const rp = require('request-promise-native');
-var request = require('request');
+var readline = require('linebyline');
 var keccak256 = require('js-sha3').keccak_256;
 const N3 = require('n3');
 const parser = new N3.Parser();
 
-var folderpath = 'DATASET_FOLDER_PATH';
-var datasetFolder = "ntriples/";
-require("PATH_TO/IPFSMerkleProof2.js");
-var rdfdatafile = 'watdiv_10M.nt';
+var folderpath = cfg.dataFolder;
+
+var configDataIndex = "DATASET_ARRAY_INDEX_TO USE_IN_CONFIG";
+
+var datasetFolder = cfg.data[configDataIndex].datafolder;
+var rdfdatafile = cfg.data[configDataIndex].datafile;
 //var rdfdatafile = 'test.nq';
 var path = folderpath + datasetFolder + rdfdatafile;
 var sortedpath = folderpath + "sorted/";

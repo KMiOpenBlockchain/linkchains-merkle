@@ -1,18 +1,19 @@
+require("./config.js");
 const fs = require('fs');
-
 const Web3 = require('web3');
-var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:56000'));
+
+var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://' + cfg.web3Socket.domain + ':' + cfg.web3Socket.port));
 
 var gasPrice = 21000000000;
 // var gasUnits = 4700000; // this is the max
 var gasUnits = 100000;
 var empty = "0x0000000000000000000000000000000000000000";
 
-var socketport = SOCKET_PORT;
+var socketport = cfg.socketServer.port;
 var http = require('http');
 var server = http.createServer(callHandler);
 
-var serveraddress = 'SERVER_ADDRESS';
+var serveraddress = cfg.socketServer.domain;
 var io = require('socket.io')(server, {'path': '/node_modules/socket.io'});
 server.listen(socketport, serveraddress);
 io.set("origins", "*:*");
@@ -20,7 +21,8 @@ io.set("origins", "*:*");
 /*********************/
 
 function callHandler(req, res) {
-	// console.log("[200] " + req.method + " to " + req.url);
+	 console.log("[200] " + req.method + " to " + req.url);
+	 //console.log(req);
 	var fullBody = '';
 
 	req.on('data', function(chunk) {
@@ -33,7 +35,7 @@ function callHandler(req, res) {
 
 	req.on('end', function() {
 		if (fullBody !== null && fullBody !== "") {
-			// console.log('fullBody ' + fullBody);
+			console.log('fullBody ' + fullBody);
 			var json = JSON.parse(fullBody);
 			if (json.blockchainaddress) {
 				rdfContractRead(json, res);

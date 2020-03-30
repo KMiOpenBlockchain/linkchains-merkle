@@ -1,7 +1,6 @@
 var fs = require('fs');
 const countLinesInFile = require('count-lines-in-file');
-var readline = require('linebyline');const rp = require('request-promise-native');
-var request = require('request');
+var readline = require('linebyline');
 var keccak256 = require('js-sha3').keccak_256;
 var microtime = require('microtime');
 //const readLastLines = require('read-last-lines');
@@ -43,7 +42,11 @@ var processTimes = new Array();
 function processAllData() {
 	if (dataLoopCount >= cfg.data.length) {
 		console.log("FINISHED");
-		if (analysisFlag) finishAnalysis();
+		if (analysisFlag) {
+			finishAnalysis();
+		} else {
+			process.exit();
+		}
 	} else {
 		//console.log(cfg.data[i]);
 		console.log(dataLoopCount);
@@ -73,10 +76,8 @@ function finishAnalysis() {
 		fs.writeFile (folderpath + "sorted/preprocess.json", json, function(err) {
 			if (err) throw err;
 				//
-			}
-		);	
-		
-		
+			process.exit();
+		});	
 		
 		//console.log("ANALYSIS FINISHED");
 	} else {

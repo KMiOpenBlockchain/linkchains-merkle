@@ -1,8 +1,6 @@
 var fs = require('fs');
-const rp = require('request-promise-native');
-var request = require('request');
+const got = require('got');
 var keccak256 = require('js-sha3').keccak_256;
-var crypto = require('crypto');
 var MerkleTools = require('merkle-tools');
 const N3 = require('n3');
 const parser = new N3.Parser();
@@ -20,7 +18,7 @@ const parser = new N3.Parser({
 var settings = {
 	"blockchainaddress": "BLOCKCHAIN_ADDRESS",
 	"apiurl": "http://API_HOST:API_PORT/",
-	"IPFSurl": "http://IPFS_NODE:IPFS_PORT/ipfs/",
+	"IPFSurl": "http://IPFS_NODE:IPFS_PORT/ipfs",
 	"contractabi": [{"constant":true,"inputs":[],"name":"leastSignificantDigits","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"divisor","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"getData","outputs":[{"name":"theCreationTime","type":"uint256"},{"name":"theOwner","type":"address"},{"name":"theIPFSAddress","type":"string"},{"name":"theIndexType","type":"string"},{"name":"leastSignificants","type":"uint256"},{"name":"theDivisor","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"IPFSAddress","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"indexType","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"creationTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[{"name":"IPFSAddr","type":"string"},{"name":"newIndexType","type":"string"},{"name":"lsds","type":"uint256"},{"name":"div","type":"string"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
 };
 
@@ -36,46 +34,49 @@ var start = 0;
 var end = 0;
 
 function getData(settings, triples) {
+
 	post_contractdata = {};
 	post_contractdata.blockchainaddress = settings.blockchainaddress;
 	post_contractdata.contractabi = settings.contractabi;
-	var options = {
-		method: 'POST',
-		uri: settings.apiurl,
-		body: post_contractdata,
-		json: true
-	};
 
-	rp(options).then(function(body) {
-		//var results = JSON.parse(body);
-		//console.log(body);
-		//console.log(body);
-		getIndextoIndex(body, settings, triples);
-	})
-	.catch(function(err) {
-		console.log(err)
+	const postcustom = got.extend({
+		responseType: 'json',
+		headers: {'User-Agent': 'request'}
 	});
 
+	(async () => {
+		try {
+	    	const response = await postcustom.post(settings.apiurl, {json: post_contractdata});
+			//console.log(response.body);
+			getIndextoIndex(response.body, settings, triples);
+		} catch (error) {
+			console.log(error.response.body);
+		}
+	})();
 }
 
 getData(settings, triples);
 
 function getIndextoIndex(contractdata, settings, triples) {
-	ipfsurl = settings.IPFSurl + contractdata.IPFSindextoindex;
-	request.get({
-		url: ipfsurl,
-		json: true,
+	const custom = got.extend({
+	    prefixUrl: settings.IPFSurl,
+	    responseType: 'json',
 		headers: {'User-Agent': 'request'}
-	}, (err, res, indextoindex) => {
-		if (err) {
-			console.log('Error:', err);
-		} else if (res.statusCode !== 200) {
-			console.log('Status:', res.statusCode);
-		} else {
-			//console.log(indextoindex);
-			loopIndexToIndex(indextoindex);
-		}
 	});
+
+	(async () => {
+		try {
+	    	const response = await custom(contractdata.IPFSindextoindex);
+	    	if (response.statusCode !== 200) {
+				console.log('Status:', response.statusCode);
+			} else {
+				loopIndexToIndex(response.body);
+			}
+			//console.log(response.body);
+		} catch (error) {
+			console.log(error.response.body);
+		}
+	})();
 }
 
 function loopIndexToIndex(indextoindex) {
@@ -98,35 +99,32 @@ function processloop() {
 }
 
 function process() {
-
-	ipfsurl = settings.IPFSurl + indexesArray[count];
-	//console.log(ipfsurl);
-	request.get({
-		url: ipfsurl,
-		json: true,
+	const custom = got.extend({
+	    prefixUrl: settings.IPFSurl,
+	    responseType: 'json',
 		headers: {'User-Agent': 'request'}
-	}, (err, res, ipfsindex) => {
-		if (err) {
-			console.log('Error:', err);
-		} else if (res.statusCode !== 200) {
-			console.log('Status:', res.statusCode);
-		} else {
-			var IPFSindexJson = ipfsindex;
-			//console.log(IPFSindexJson);
-			start = (new Date()).getTime();
-			for (var key in IPFSindexJson.data) {
-				hashArray.push(key.toString());
-			}
-			//console.log(hashArray);
-			makeTree(hashArray);
-			
-			
-			
-			//getTree(processing, indextoindex, settings, sortedTriples, handler);
-		}
 	});
 
-
+	(async () => {
+		try {
+	    	const response = await custom(indexesArray[count]);
+	    	if (response.statusCode !== 200) {
+				console.log('Status:', response.statusCode);
+			} else {
+				var IPFSindexJson = response.body;
+				//console.log(IPFSindexJson);
+				start = (new Date()).getTime();
+				for (var key in IPFSindexJson.data) {
+					hashArray.push(key.toString());
+				}
+				//console.log(hashArray);
+				makeTree(hashArray);
+			}
+			//console.log(response.body);
+		} catch (error) {
+			console.log(error.response.body);
+		}
+	})();
 }
 
 

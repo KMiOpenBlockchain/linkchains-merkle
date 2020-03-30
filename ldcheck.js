@@ -1,6 +1,6 @@
+require("./config.js");
 var fs = require('fs');
-const rp = require('request-promise-native');
-var request = require('request');
+const got = require('got');
 var keccak256 = require('js-sha3').keccak_256;
 var MerkleTools = require('merkle-tools');
 var microtime = require('microtime');
@@ -19,16 +19,15 @@ const parser = new N3.Parser({
 });
 */
 
-
 var settings = {
 	"blockchainaddress": "BLOCKCHAIN_ADDRESS",
 	"apiurl": "http://API_HOST:API_PORT/",
-	"IPFSurl": "http://IPFS_NODE:IPFS_PORT/ipfs/",
+	"IPFSurl": "http://IPFS_NODE:IPFS_PORT/ipfs",
 	"contractabi": [{"constant":true,"inputs":[],"name":"leastSignificantDigits","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"divisor","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"getData","outputs":[{"name":"theCreationTime","type":"uint256"},{"name":"theOwner","type":"address"},{"name":"theIPFSAddress","type":"string"},{"name":"theIndexType","type":"string"},{"name":"leastSignificants","type":"uint256"},{"name":"theDivisor","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"IPFSAddress","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"indexType","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"creationTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[{"name":"IPFSAddr","type":"string"},{"name":"newIndexType","type":"string"},{"name":"lsds","type":"uint256"},{"name":"div","type":"string"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
 };
 
 //var triples = ['<http://dbpedia.org/resource/Geng_Xiaofeng__1>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Genevieve_Blatt__1>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Genevieve_Blatt__2>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Geng_Xiaofeng__4>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Geng_Xiaofeng__5>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .'];
-var triples = ['<http://dbpedia.org/resource/Geng_Xiaofeng__1>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .'];
+var triples = ['<http://dbpedia.org/resource/Geert_Brusselers__9>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .'];
 
 var divisor;
 var lsds;
@@ -37,45 +36,51 @@ function getData(settings, triples, handler) {
 	post_contractdata = {};
 	post_contractdata.blockchainaddress = settings.blockchainaddress;
 	post_contractdata.contractabi = settings.contractabi;
-	var options = {
-		method: 'POST',
-		uri: settings.apiurl,
-		body: post_contractdata,
-		json: true
-	};
 
-	rp(options).then(function(body) {
-		//var results = JSON.parse(body);
-		//console.log(body);
-		getIndextoIndex(body, settings, triples, handler);
-	})
-	.catch(function(err) {
-		console.log(err)
+	const postcustom = got.extend({
+		responseType: 'json',
+		headers: {'User-Agent': 'request'}
 	});
 
+	(async () => {
+		try {
+	    	const response = await postcustom.post(settings.apiurl, {json: post_contractdata});
+			//console.log(response.body);
+			getIndextoIndex(response.body, settings, triples, handler);
+		} catch (error) {
+			console.log(error);
+		}
+	})();
 }
+
 var getProofsHandler = function(data) {
 	console.log(data);
+	//process.exit();
 };
 
 getData(settings, triples, getProofsHandler);
 
 function getIndextoIndex(contractdata, settings, triples, handler) {
-	ipfsurl = settings.IPFSurl + contractdata.IPFSindextoindex;
-	request.get({
-		url: ipfsurl,
-		json: true,
+	const custom = got.extend({
+	    prefixUrl: settings.IPFSurl,
+	    responseType: 'json',
 		headers: {'User-Agent': 'request'}
-	}, (err, res, indextoindex) => {
-		if (err) {
-			console.log('Error:', err);
-		} else if (res.statusCode !== 200) {
-			console.log('Status:', res.statusCode);
-		} else {
-			sortTriples(contractdata, indextoindex, settings, triples, handler);
-			//console.log(indextoindex);
-		}
 	});
+
+	(async () => {
+		try {
+	    	const response = await custom(contractdata.IPFSindextoindex);
+	    	//console.log(response);
+	    	if (response.statusCode !== 200) {
+				console.log('Status:', response.statusCode);
+			} else {
+				sortTriples(contractdata, response.body, settings, triples, handler);
+			}
+			//console.log(response.body);
+		} catch (error) {
+			console.log(error);
+		}
+	})();
 }
 
 function sortTriples(contractdata, indextoindex, settings, triples, handler) {
@@ -134,28 +139,32 @@ function loopThroughTriples(processing, indextoindex, settings, sortedTriples, h
 		processing.id = Object.keys(sortedTriples)[processing.runningcount];
 		//console.log(indextoindex);
 		processing.IPFSindex = indextoindex[processing.id];
-		
-		ipfsurl = settings.IPFSurl + processing.IPFSindex;
-		//console.log(ipfsurl);
-		request.get({
-			url: ipfsurl,
-			json: true,
+
+		const custom = got.extend({
+		    prefixUrl: settings.IPFSurl,
+		    responseType: 'json',
 			headers: {'User-Agent': 'request'}
-		}, (err, res, ipfsindex) => {
-			if (err) {
-				console.log('Error:', err);
-			} else if (res.statusCode !== 200) {
-				console.log('Status:', res.statusCode);
-			} else {
-				processing.IPFSindexJson = ipfsindex;
-				//console.log(processing.IPFSindexJson);
-				if (dynamicMerkleTree == false) {
-					getTree(processing, indextoindex, settings, sortedTriples, handler);
-				} else {
-					getTreeDynamic(processing, indextoindex, settings, sortedTriples, handler);
-				}
-			}
 		});
+
+		(async () => {
+			try {
+		    	const response = await custom(processing.IPFSindex);
+		    	if (response.statusCode !== 200) {
+					console.log('Status:', response.statusCode);
+				} else {
+					processing.IPFSindexJson = response.body;
+					//console.log(processing.IPFSindexJson);
+					if (dynamicMerkleTree == false) {
+						getTree(processing, indextoindex, settings, sortedTriples, handler);
+					} else {
+						getTreeDynamic(processing, indextoindex, settings, sortedTriples, handler);
+					}
+				}
+				//console.log(response.body);
+			} catch (error) {
+				console.log(error);
+			}
+		})();
 	}
 }
 
@@ -198,23 +207,28 @@ function getTreeDynamic(processing, indextoindex, settings, sortedTriples, handl
 }
 
 function getTree(processing, indextoindex, settings, sortedTriples, handler) {
-		ipfsurl = settings.IPFSurl + processing.IPFSindexJson["merkleipfs"];
-		//console.log(ipfsurl);
-		request.get({
-			url: ipfsurl,
-			json: true,
-			headers: {'User-Agent': 'request'}
-		}, (err, res, tree) => {
-			if (err) {
-				console.log('Error:', err);
-			} else if (res.statusCode !== 200) {
-				console.log('Status:', res.statusCode);
+
+	const custom = got.extend({
+	    prefixUrl: settings.IPFSurl,
+	    responseType: 'json',
+		headers: {'User-Agent': 'request'}
+	});
+
+	(async () => {
+		try {
+	    	const response = await custom(processing.IPFSindexJson["merkleipfs"]);
+	    	if (response.statusCode !== 200) {
+				console.log('Status:', response.statusCode);
 			} else {
-				processing.IPFSTree = tree;
+				processing.IPFSTree = response.body;
 				//console.log(processing.IPFSTree);
 				getProofs(processing, indextoindex, settings, sortedTriples, handler);
 			}
-		});
+			//console.log(response.body);
+		} catch (error) {
+			console.log(error);
+		}
+	})();
 }
 
 function getProofs(processing, indextoindex, settings, sortedTriples, handler) {
@@ -311,7 +325,7 @@ function hashQuads(quad, indexType) {
 		hash[0] = "";
 		hash[1] = quadhash;
 		if (indexType == "uniform") {
-			hash[0] = quadHash;
+			hash[0] = quadhash;
 		} else if (indexType == "subject") {
 			hash[0] = keccak256(subject);
 		} else if (indexType == "predicate") {

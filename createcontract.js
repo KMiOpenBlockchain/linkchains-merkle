@@ -29,30 +29,26 @@ var divisor;
 var sampledata;
 var folder;
 
-var contract = "0x9a3201a27e01a332182f4e8d0b7b155936b959c4"; 
+var contract = ""; 
 
 function processAllData() {
 	if (dataLoopCount == cfg.data.length) {
 		console.log("FINISHED");
+		process.exit();
 	} else {
 		//console.log(cfg.data[i]);
 		sortedpath = folderpath + "sorted/";
 		
 		res = cfg.data[dataLoopCount].datafile.split(".");
 		folder = res[0];
-		ipfsfilepath = folderpath + "foripfs/" + folder + "/" + cfg.data[dataLoopCount].indexType + "/sampledata.json";
-		rawdata = fs.readFileSync(ipfsfilepath);
-		sampledata = JSON.parse(rawdata);
-		IPFSAddress = sampledata.ipfsindextoindex;
+		IPFSAddress = cfg.data[dataLoopCount].indextoindex
 		type = cfg.data[dataLoopCount].indexType;
 		lsds = cfg.data[dataLoopCount].lsd;
 		divisor = cfg.data[dataLoopCount].divisor;
-		console.log(sampledata.ipfsindextoindex);
+		console.log(cfg.data[dataLoopCount].indextoindex);
 		estimate();
 	}
 }
-
-
 
 function estimate() {
 	var newcontract = new web3.eth.Contract(abi);

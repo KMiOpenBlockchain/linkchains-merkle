@@ -181,6 +181,7 @@ function processfiles() {
 				});
 				*/
 				cfg.data[dataLoopCount].indextoindex = hash;
+				cfg.data[dataLoopCount].treesandindexes = processdata.treesandindexes.length;
 				
 				var json = "cfg = " + JSON.stringify(cfg, null, 4);
 				fs.writeFile ("./config.js", json, function(err) {

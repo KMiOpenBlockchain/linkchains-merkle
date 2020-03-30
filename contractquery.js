@@ -6,20 +6,18 @@ CURRENT WAY OF CALCULATING INDEX NUMBER FROM QUAD HASH FOR 100,000 SAMPLE data
 		
 		dividing by 8500 for this set creates 124 sorted sets with just less than 1024 elements
 */
-
-require("PATH_TO/IPFSMerkleProof3.js");
+require("./config.js");
 
 const Web3 = require('web3');
 var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:56000'));
 
-var data = require("./dataset/sampledata.json");
-var numberToProcess = data.treesandindexes.length;
+var configDataIndex = "DATASET_ARRAY_INDEX_TO USE_IN_CONFIG";
 
-var account = "BLOCKCHAIN_ACCOUNT";
+var numberToProcess = cfg.data[configDataIndex].treesandindexes;
+
+var account = cfg.account;
 var abi = cfg.contracts.ipfsmerkleproof.abi;
-var binary = cfg.contracts.ipfsmerkleproof.binary;
-var contract = "CONTRACT_ADDRESS"; 
-
+var contract = cfg.data[configDataIndex].contract; 
 
 function getData() {
 
@@ -33,8 +31,10 @@ function getData() {
 			console.log("theIndexType = " + result['theIndexType']);
 			console.log("leastSignificants = " + result['leastSignificants']); //remember comes in as string
 			console.log("theDivisor = " + result['theDivisor']); //remember comes in as string
+			process.exit();
 		} else {
 			console.error(e);
+			process.exit();
 		}
 	});
 }

@@ -4,11 +4,21 @@ cfg = {
     "ipfs": {
         "domain": "IPFS_HOST",
         "APIPort": "IPFS_PORT",
+        "HTTPPath": "HTTP_PATH",
         "onlyHash": {
             "merkleTree": false,
             "index": false,
             "indextoindex": false
         }
+    },
+    "web3Socket": {
+        "domain": "WEB3_DOMAIN",
+        "port": "WEB3_SOCKET_PORT"
+    },
+    "socketServer": {
+        "protocol": "SOCKET_PROTOCOL",
+        "domain": "SOCKET_DOMAIN",
+        "port": "SOCKET_PORT"
     },
     "data": [
         {
@@ -16,8 +26,7 @@ cfg = {
             "datafolder": "nquads/",
             "indexType": "object",
             "lsd": 64,
-            "divisor": "0x1",
-            "contract": "CONTRACT_ADDRESS"
+            "divisor": "0x1"
         }
     ],
     "contracts": {

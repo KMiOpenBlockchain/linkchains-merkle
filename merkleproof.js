@@ -1,6 +1,7 @@
+require("./config.js");
 const web3_extended = require('web3_ipc');
 const bs58 = require('bs58');
-var request = require('request');
+const got = require('got');
 var keccak256 = require('js-sha3').keccak_256;
 var MerkleTools = require('merkle-tools');
 //const Web3 = require('web3');
@@ -13,33 +14,33 @@ var treeOptions = {
 }
 var merkleTools = new MerkleTools(treeOptions);
 
-var data = require("./dataset/sampledata.json");
-var numberToProcess = data.treesandindexes.length;
+var configDataIndex = "DATASET_ARRAY_INDEX_TO USE_IN_CONFIG";
+var numberToProcess = cfg.data[configDataIndex].treesandindexes;
 
 var data = {"treeipfs":"TREE_IPFS","indexipfs":"INDEX_IPFS","indexipfsbytes32":"INDEX_IPFS_BYTES32","file":"100.txt","indexIndex":"100"};
 
-var ipfsprotocol = "http";
-var ipfshost = "IPFS_NODE";
-var ipfsport = "IPFS_PORT";
-var ipfspath = ipfsprotocol + "://" + ipfshost + ":" + ipfsport + "/ipfs/";
-var treeurl = ipfspath + data.treeipfs;
+var treeurl = cfg.HTTPPath +"/" + data.treeipfs;
 
 var proof = {};
 
-
-request.get({
-	url: treeurl,
-	json: true,
+const custom = got.extend({
+    responseType: 'json',
 	headers: {'User-Agent': 'request'}
-}, (err, res, tree) => {
-	if (err) {
-		console.log('Error:', err);
-	} else if (res.statusCode !== 200) {
-		console.log('Status:', res.statusCode);
-	} else {
-		processTree(tree.merkletree, data.indexIndex);
-	}
 });
+
+(async () => {
+	try {
+    	const response = await custom(treeurl);
+    	if (response.statusCode !== 200) {
+			console.log('Status:', response.statusCode);
+		} else {
+			processTree(response.body.merkletree, data.indexIndex);
+		}
+		//console.log(response.body);
+	} catch (error) {
+		console.log(error.response.body);
+	}
+})();
 
 function processTree(tree, leaf) {
 	var levels = tree.length;
