@@ -1,6 +1,9 @@
 cfg = {
     "dataFolder": "FOLDER_CONTAINING_DATASETS",
     "account": "BLOCKCHAIN_ACCOUNT",
+    "treeHash": {
+        "type": "KECCAK256" //value supported by the merkle-tools node module
+    },
     "ipfs": {
         "domain": "IPFS_HOST",
         "APIPort": "IPFS_PORT",

@@ -1,12 +1,25 @@
 var fs = require('fs');
 const countLinesInFile = require('count-lines-in-file');
 var readline = require('linebyline');
-var keccak256 = require('js-sha3').keccak_256;
+const hashingFunctions = require('./hashing');
 var microtime = require('microtime');
 //const readLastLines = require('read-last-lines');
 const N3 = require('n3');
 const parser = new N3.Parser();
 require("./config.js");
+
+var settings = {
+    "pluggableFunctions": {
+        "quadHash": {
+        	"thefunction": hashingFunctions.getHash,
+        	"parameters": {
+        		"type": "KECCAK256"
+        	}
+        }
+    }
+};
+
+var pluggable = settings.pluggableFunctions;
 
 var analysisFlag = true;
 
@@ -215,7 +228,7 @@ function  readthelines() {
 		
 		quadString = subject + ' ' + predicate + ' ' + object + ' ' + graph + ' .';
 		
-		quadHash = keccak256(quadString);
+		quadHash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);
 		
 		text = quadHash + "\n";
 		
@@ -223,15 +236,15 @@ function  readthelines() {
 			if (indexType == "uniform") {
 				hash = quadHash;
 			} else if (indexType == "subject") {
-				hash = keccak256(subject);
+				hash = pluggable.quadHash.thefunction(subject, pluggable.quadHash.parameters);
 			} else if (indexType == "predicate") {
-				hash = keccak256(predicate);
+				hash = pluggable.quadHash.thefunction(predicate, pluggable.quadHash.parameters);
 			} else if (indexType == "object") {
-				hash = keccak256(object);
+				hash = pluggable.quadHash.thefunction(object, pluggable.quadHash.parameters);
 			} else if (indexType == "graph") {
-				hash = keccak256(graph);
+				hash = pluggable.quadHash.thefunction(graph, pluggable.quadHash.parameters);
 			} else if (indexType == "subjectobject") {
-				hash = keccak256(subject + " " + object);
+				hash = pluggable.quadHash.thefunction(subject + " " + object, pluggable.quadHash.parameters);
 			}
 			lastdigits = hash.substr(hash.length - lsds);
 			decimalInt = BigInt("0x" + lastdigits);
@@ -256,7 +269,19 @@ function  readthelines() {
 				analysis[af].allhashes.time = microtime.now() - starttime;
 				analysis[af].allhashes.filesize = fs.statSync(parentdatafolder + "allquadhashes.txt").size;
 				alldatafile[af] = 0;
-				readthelines();
+				fs.unlink(parentdatafolder + "allquadhashes.txt", function(err) {
+					if(err && err.code == 'ENOENT') {
+						// file doens't exist
+						console.info("allquadhashes.txt file doesn't exist, won't remove it.");
+						readthelines();
+					} else if (err) {
+						// other errors, e.g. maybe we don't have enough permission
+						console.error("Error occurred while trying to remove file");
+					} else {
+						console.info("removed allquadhashes.txt");
+						readthelines();
+					}
+				});
 			}
 		}
 		count++;

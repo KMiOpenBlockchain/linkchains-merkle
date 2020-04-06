@@ -2,7 +2,7 @@ require("./config.js");
 const web3_extended = require('web3_ipc');
 const bs58 = require('bs58');
 const got = require('got');
-var keccak256 = require('js-sha3').keccak_256;
+//var keccak256 = require('js-sha3').keccak_256;
 var MerkleTools = require('merkle-tools');
 //const Web3 = require('web3');
 
@@ -10,7 +10,7 @@ var MerkleTools = require('merkle-tools');
 require("PATH_TO/IPFSMerkleProof.js");
 
 var treeOptions = {
-	hashType: 'KECCAK256' // optional, defaults to 'sha256'
+	hashType: cfg.treeHash.type // optional, defaults to 'sha256'
 }
 var merkleTools = new MerkleTools(treeOptions);
 
@@ -69,7 +69,8 @@ function processTree(tree, leaf) {
 		
 		bufconcat = Buffer.concat([leftbuf, rightbuf]);
 		//console.log(bufconcat.toString('hex'));
-		hash = keccak256(bufconcat);
+		//hash = keccak256(bufconcat);
+		hash = pluggable.quadHash.thefunction(bufconcat, settings.treeHash);
 		console.log("calculated next = " +hash);	
 		
 			

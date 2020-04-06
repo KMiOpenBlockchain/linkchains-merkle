@@ -1,36 +1,76 @@
 require("./config.js");
 var fs = require('fs');
 const got = require('got');
-var keccak256 = require('js-sha3').keccak_256;
+//var keccak256 = require('js-sha3').keccak_256;
+const hashingFunctions = require('./hashing');
 var MerkleTools = require('merkle-tools');
 var microtime = require('microtime');
 const N3 = require('n3');
 const parser = new N3.Parser();
 
-var treeOptions = {
-	hashType: 'KECCAK256' // optional, defaults to 'sha256'
-}
-
-var dynamicMerkleTree = false;
+//var cfgstr = fs.readFileSync('config.js', 'utf-8'); 
+//var cfg = JSON.parse(cfgstr);
+//console.log(cfgstr);
 
 /*
 const parser = new N3.Parser({
  format: 'N-Triples'
 });
 */
-
+/*
 var settings = {
 	"blockchainaddress": "BLOCKCHAIN_ADDRESS",
 	"apiurl": "http://API_HOST:API_PORT/",
 	"IPFSurl": "http://IPFS_NODE:IPFS_PORT/ipfs",
+    "treeHash": {
+        "type": "KECCAK256" //value supported by the merkle-tools node module
+    },
+    "pluggableFunctions": {
+        "getTree": getTree // alternative getTreeDynamic
+        "getIndextoIndex": getIndextoIndex,
+        "quadHash": {
+        	"thefunction": hashingFunctions.getHash,
+        	"parameters": {
+        		"type": "KECCAK256"
+        	}
+        }
+    },
+	"contractabi": [{"constant":true,"inputs":[],"name":"leastSignificantDigits","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"divisor","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"getData","outputs":[{"name":"theCreationTime","type":"uint256"},{"name":"theOwner","type":"address"},{"name":"theIPFSAddress","type":"string"},{"name":"theIndexType","type":"string"},{"name":"leastSignificants","type":"uint256"},{"name":"theDivisor","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"IPFSAddress","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"indexType","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"creationTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[{"name":"IPFSAddr","type":"string"},{"name":"newIndexType","type":"string"},{"name":"lsds","type":"uint256"},{"name":"div","type":"string"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
+};
+*/
+var settings = {
+	"blockchainaddress": "0x36d217b02f0d7aB12a7394A13019e8230DC46B9b",
+	"apiurl": "http://blockchain2.kmi.open.ac.uk:57201/",
+	"IPFSurl": "http://blockchain2.kmi.open.ac.uk/ipfs",
+    "treeHash": {
+        "type": "KECCAK256" //value supported by the merkle-tools node module
+    },
+    "pluggableFunctions": {
+        "getTree": getTree, // alternative getTreeDynamic
+        "getIndextoIndex": getIndextoIndex,
+        "quadHash": {
+        	"thefunction": hashingFunctions.getHash,
+        	"parameters": {
+        		"type": "KECCAK256"
+        	}
+        }
+    },
 	"contractabi": [{"constant":true,"inputs":[],"name":"leastSignificantDigits","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"divisor","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"getData","outputs":[{"name":"theCreationTime","type":"uint256"},{"name":"theOwner","type":"address"},{"name":"theIPFSAddress","type":"string"},{"name":"theIndexType","type":"string"},{"name":"leastSignificants","type":"uint256"},{"name":"theDivisor","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"IPFSAddress","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"indexType","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"creationTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[{"name":"IPFSAddr","type":"string"},{"name":"newIndexType","type":"string"},{"name":"lsds","type":"uint256"},{"name":"div","type":"string"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
 };
 
 //var triples = ['<http://dbpedia.org/resource/Geng_Xiaofeng__1>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Genevieve_Blatt__1>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Genevieve_Blatt__2>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Geng_Xiaofeng__4>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Geng_Xiaofeng__5>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .'];
 var triples = ['<http://dbpedia.org/resource/Geert_Brusselers__9>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .'];
 
+
+
+
+var treeOptions = {
+	hashType: settings.treeHash.type // optional, defaults to 'sha256'
+}
+
 var divisor;
 var lsds;
+var pluggable = settings.pluggableFunctions;
 
 function getData(settings, triples, handler) {
 	post_contractdata = {};
@@ -46,7 +86,9 @@ function getData(settings, triples, handler) {
 		try {
 	    	const response = await postcustom.post(settings.apiurl, {json: post_contractdata});
 			//console.log(response.body);
-			getIndextoIndex(response.body, settings, triples, handler);
+			
+			pluggable.getIndextoIndex(response.body, settings, triples, handler);
+
 		} catch (error) {
 			console.log(error);
 		}
@@ -154,11 +196,9 @@ function loopThroughTriples(processing, indextoindex, settings, sortedTriples, h
 				} else {
 					processing.IPFSindexJson = response.body;
 					//console.log(processing.IPFSindexJson);
-					if (dynamicMerkleTree == false) {
-						getTree(processing, indextoindex, settings, sortedTriples, handler);
-					} else {
-						getTreeDynamic(processing, indextoindex, settings, sortedTriples, handler);
-					}
+
+					pluggable.getTree(processing, indextoindex, settings, sortedTriples, handler);
+
 				}
 				//console.log(response.body);
 			} catch (error) {
@@ -282,7 +322,8 @@ function getProofs(processing, indextoindex, settings, sortedTriples, handler) {
 			}
 		
 			bufconcat = Buffer.concat([leftbuf, rightbuf]);
-			nexthash = keccak256(bufconcat);
+			//nexthash = keccak256(bufconcat);
+			nexthash = pluggable.quadHash.thefunction(bufconcat, settings.treeHash);
 			runningindex = Math.floor(runningindex / 2);
 		}
 		// should really use array push rather than creating a temporary workingproofs array									
@@ -320,23 +361,24 @@ function hashQuads(quad, indexType) {
 		}
 		graph = (quad.graph.value ? '<' + quad.graph.value + '>' : '');
 		quadString = subject + ' ' + predicate + ' ' + object + ' ' + graph + ' .';	
-		quadhash = keccak256(quadString);
+		quadhash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);
 		hash = new Array();
 		hash[0] = "";
 		hash[1] = quadhash;
 		if (indexType == "uniform") {
 			hash[0] = quadhash;
 		} else if (indexType == "subject") {
-			hash[0] = keccak256(subject);
+			hash[0] = pluggable.quadHash.thefunction(subject, pluggable.quadHash.parameters);
 		} else if (indexType == "predicate") {
-			hash[0] = keccak256(predicate);
+			hash[0] = pluggable.quadHash.thefunction(predicate, pluggable.quadHash.parameters);
 		} else if (indexType == "object") {
-			hash[0] = keccak256(object);
+			hash[0] = pluggable.quadHash.thefunction(object, pluggable.quadHash.parameters);
 		} else if (indexType == "graph") {
-			hash[0] = keccak256(graph);
+			hash[0] = pluggable.quadHash.thefunction(graph, pluggable.quadHash.parameters);
 		} else if (indexType == "subjectobject") {
-			hash[0] = keccak256(subject + " " + object);
+			hash[0] = pluggable.quadHash.thefunction(subject + " " + object, pluggable.quadHash.parameters);
 		}
+
 		return hash;
 	}
 }

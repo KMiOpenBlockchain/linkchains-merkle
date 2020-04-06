@@ -21,7 +21,7 @@ io.set("origins", "*:*");
 /*********************/
 
 function callHandler(req, res) {
-	 console.log("[200] " + req.method + " to " + req.url);
+	 //console.log("[200] " + req.method + " to " + req.url);
 	 //console.log(req);
 	var fullBody = '';
 
@@ -35,7 +35,7 @@ function callHandler(req, res) {
 
 	req.on('end', function() {
 		if (fullBody !== null && fullBody !== "") {
-			console.log('fullBody ' + fullBody);
+			//console.log('fullBody ' + fullBody);
 			var json = JSON.parse(fullBody);
 			if (json.blockchainaddress) {
 				rdfContractRead(json, res);

@@ -1,11 +1,25 @@
+const hashingFunctions = require('./hashing');
 require("./config.js");
+
+var settings = {
+    "pluggableFunctions": {
+        "quadHash": {
+        	"thefunction": hashingFunctions.getHash,
+        	"parameters": {
+        		"type": "KECCAK256"
+        	}
+        }
+    }
+};
+
 var fs = require('fs');
 const countLinesInFile = require('count-lines-in-file');
 var readline = require('linebyline');
-var keccak256 = require('js-sha3').keccak_256;
+//var keccak256 = require('js-sha3').keccak_256;
 const N3 = require('n3');
 const parser = new N3.Parser();
 
+var pluggable = settings.pluggableFunctions;
 var folderpath = cfg.dataFolder;
 
 var configDataIndex = "DATASET_ARRAY_INDEX_TO USE_IN_CONFIG";
@@ -71,8 +85,7 @@ function  readthelines () {
 		
 		quadString = subject + ' ' + predicate + ' ' + object + ' ' + graph + ' .';
 		
-		quadHash = keccak256(quadString);
-		
+		quadhash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);		
 		
 		if (indexType == "uniform") {
 			lastfive = quadHash.substr(quadHash.length - 5);
@@ -80,34 +93,34 @@ function  readthelines () {
 			index = Math.floor(decimal/8500);
 			results[index] = 1;
 		} else if (indexType == "subject") {
-			filenamehash = keccak256(subject);
+			filenamehash = pluggable.quadHash.thefunction(subject, pluggable.quadHash.parameters);
 			if (results[filenamehash] == undefined) {
 				resultscount += 1;
 				results[filenamehash] = 1;
 			}
 		} else if (indexType == "predicate") {
-			filenamehash = keccak256(predicate);
+			filenamehash = pluggable.quadHash.thefunction(predicate, pluggable.quadHash.parameters);
 			if (results[filenamehash] == undefined) {
 				resultscount += 1;
 				results[filenamehash] = 1;
 			}
 			results[filenamehash] = 1;
 		} else if (indexType == "object") {
-			filenamehash = keccak256(object);
+			filenamehash = pluggable.quadHash.thefunction(object, pluggable.quadHash.parameters);
 			if (results[filenamehash] == undefined) {
 				resultscount += 1;
 				results[filenamehash] = 1;
 			}
 			results[filenamehash] = 1;
 		} else if (indexType == "graph") {
-			filenamehash = keccak256(graph);
+			filenamehash = pluggable.quadHash.thefunction(graph, pluggable.quadHash.parameters);
 			if (results[filenamehash] == undefined) {
 				resultscount += 1;
 				results[filenamehash] = 1;
 			}
 			results[filenamehash] = 1;
 		} else if (indexType == "subjectobject") {
-			filenamehash = keccak256(subject + " " + object);
+			filenamehash = pluggable.quadHash.thefunction(subject + " " + object, pluggable.quadHash.parameters);
 			if (results[filenamehash] == undefined) {
 				resultscount += 1;
 				results[filenamehash] = 1;

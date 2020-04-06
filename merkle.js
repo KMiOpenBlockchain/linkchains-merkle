@@ -3,7 +3,7 @@ require("./config.js");
 var fs = require('fs');
 var MerkleTools = require('merkle-tools');
 const web3_extended = require('web3_ipc');
-var keccak256 = require('js-sha3').keccak_256;
+//var keccak256 = require('js-sha3').keccak_256;
 const countLinesInFile = require('count-lines-in-file');
 var readline = require('linebyline');
 const ipfsClient = require('ipfs-http-client');
@@ -19,11 +19,10 @@ var randomHash = web3.utils.sha3("dummy data");  // web3 keccak256
 var reg = new RegExp('^\\d+$');
 
 var treeOptions = {
-	hashType: 'KECCAK256' // optional, defaults to 'sha256'
+	hashType: cfg.treeHash.type // optional, defaults to 'sha256'
 }
 
 var folderpath = cfg.dataFolder;
-var allquadsfile = 'allquadhashes.txt';
 var sortedpath;
 var ipfsfilepath;
 var parentdatafolder;
