@@ -1,4 +1,17 @@
 require("./config.js");
+
+const hashingFunctions = require('./hashing');
+
+var settings = {
+    "pluggableFunctions": {
+        "quadHash": {
+        	"thefunction": hashingFunctions.getHash,
+        	"parameters": {
+        		"type": "KECCAK256"
+        	}
+        }
+    }
+};
 /*
 			var json = "cfg = " + JSON.stringify(cfg, null, 4);
 			console.log(cfg.pathToSocketScript + 'socketserver.cfg');
@@ -54,7 +67,7 @@ function estimate() {
 	var newcontract = new web3.eth.Contract(abi);
 	newcontract.deploy({
 		data: binary,
-		arguments: [IPFSAddress, type, lsds, divisor]
+		arguments: [IPFSAddress, type, lsds, divisor, settings.pluggableFunctions.quadHash.parameters.type, cfg.treeHash.type]
 	}).estimateGas(function(error, gasAmount){
 		console.log('Estimated Gas = ' + gasAmount);
 		gastouse = parseInt(gasAmount * 1.05);
@@ -66,7 +79,7 @@ function make(gastouse) {
 	var newcontract = new web3.eth.Contract(abi);
 	newcontract.deploy({
 		data: binary,
-		arguments: [IPFSAddress, type, lsds, divisor]
+		arguments: [IPFSAddress, type, lsds, divisor, settings.pluggableFunctions.quadHash.parameters.type, cfg.treeHash.type]
 	})
 	.send({
 		from: account,

@@ -31,6 +31,8 @@ function getData() {
 			console.log("theIndexType = " + result['theIndexType']);
 			console.log("leastSignificants = " + result['leastSignificants']); //remember comes in as string
 			console.log("theDivisor = " + result['theDivisor']); //remember comes in as string
+			console.log("theQuadHashAlgorithm = " + result['theQuadHashAlgorithm']); 
+			console.log("theTreeHashAlgorithm = " + result['theTreeHashAlgorithm']); 
 			process.exit();
 		} else {
 			console.error(e);
