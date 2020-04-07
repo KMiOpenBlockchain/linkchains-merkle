@@ -17,7 +17,7 @@ const parser = new N3.Parser({
  format: 'N-Triples'
 });
 */
-/*
+
 var settings = {
 	"blockchainaddress": "BLOCKCHAIN_ADDRESS",
 	"apiurl": "http://API_HOST:API_PORT/",
@@ -27,6 +27,7 @@ var settings = {
     },
     "pluggableFunctions": {
         "getTree": getTree // alternative getTreeDynamic
+        "getIndex": getIndex,
         "getIndextoIndex": getIndextoIndex,
         "quadHash": {
         	"thefunction": hashingFunctions.getHash,
@@ -37,26 +38,7 @@ var settings = {
     },
 	"contractabi": [{"constant":true,"inputs":[],"name":"leastSignificantDigits","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"divisor","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"getData","outputs":[{"name":"theCreationTime","type":"uint256"},{"name":"theOwner","type":"address"},{"name":"theIPFSAddress","type":"string"},{"name":"theIndexType","type":"string"},{"name":"leastSignificants","type":"uint256"},{"name":"theDivisor","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"IPFSAddress","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"indexType","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"creationTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[{"name":"IPFSAddr","type":"string"},{"name":"newIndexType","type":"string"},{"name":"lsds","type":"uint256"},{"name":"div","type":"string"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
 };
-*/
-var settings = {
-	"blockchainaddress": "0x36d217b02f0d7aB12a7394A13019e8230DC46B9b",
-	"apiurl": "http://blockchain2.kmi.open.ac.uk:57201/",
-	"IPFSurl": "http://blockchain2.kmi.open.ac.uk/ipfs",
-    "treeHash": {
-        "type": "KECCAK256" //value supported by the merkle-tools node module
-    },
-    "pluggableFunctions": {
-        "getTree": getTree, // alternative getTreeDynamic
-        "getIndextoIndex": getIndextoIndex,
-        "quadHash": {
-        	"thefunction": hashingFunctions.getHash,
-        	"parameters": {
-        		"type": "KECCAK256"
-        	}
-        }
-    },
-	"contractabi": [{"constant":true,"inputs":[],"name":"leastSignificantDigits","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"divisor","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"getData","outputs":[{"name":"theCreationTime","type":"uint256"},{"name":"theOwner","type":"address"},{"name":"theIPFSAddress","type":"string"},{"name":"theIndexType","type":"string"},{"name":"leastSignificants","type":"uint256"},{"name":"theDivisor","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"IPFSAddress","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"indexType","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"creationTime","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[{"name":"IPFSAddr","type":"string"},{"name":"newIndexType","type":"string"},{"name":"lsds","type":"uint256"},{"name":"div","type":"string"}],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]
-};
+
 
 //var triples = ['<http://dbpedia.org/resource/Geng_Xiaofeng__1>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Genevieve_Blatt__1>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Genevieve_Blatt__2>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Geng_Xiaofeng__4>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .', '<http://dbpedia.org/resource/Geng_Xiaofeng__5>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .'];
 var triples = ['<http://dbpedia.org/resource/Geert_Brusselers__9>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://www.w3.org/2002/07/owl#Thing> <http://blockchain.kmi.open.ac.uk/dbpedia-20000> .'];
@@ -180,32 +162,39 @@ function loopThroughTriples(processing, indextoindex, settings, sortedTriples, h
 	} else {
 		processing.id = Object.keys(sortedTriples)[processing.runningcount];
 		//console.log(indextoindex);
-		processing.IPFSindex = indextoindex[processing.id];
 
-		const custom = got.extend({
-		    prefixUrl: settings.IPFSurl,
-		    responseType: 'json',
-			headers: {'User-Agent': 'request'}
-		});
+		function getIndexHandler(updatedprocessing) {
+			processing = updatedprocessing;
+			pluggable.getTree(processing, indextoindex, settings, sortedTriples, handler);
+		}
 
-		(async () => {
-			try {
-		    	const response = await custom(processing.IPFSindex);
-		    	if (response.statusCode !== 200) {
-					console.log('Status:', response.statusCode);
-				} else {
-					processing.IPFSindexJson = response.body;
-					//console.log(processing.IPFSindexJson);
-
-					pluggable.getTree(processing, indextoindex, settings, sortedTriples, handler);
-
-				}
-				//console.log(response.body);
-			} catch (error) {
-				console.log(error);
-			}
-		})();
+		pluggable.getIndex(processing, indextoindex[processing.id], getIndexHandler);
 	}
+}
+
+function getIndex(processing, indexid, returnhandler){
+	processing.IPFSindex = indexid;
+	const custom = got.extend({
+	    prefixUrl: settings.IPFSurl,
+	    responseType: 'json',
+		headers: {'User-Agent': 'request'}
+	});
+
+	(async () => {
+		try {
+	    	const response = await custom(processing.IPFSindex);
+	    	if (response.statusCode !== 200) {
+				console.log('Status:', response.statusCode);
+			} else {
+				processing.IPFSindexJson = response.body;
+				//console.log(processing.IPFSindexJson);
+				returnhandler(processing);
+			}
+			//console.log(response.body);
+		} catch (error) {
+			console.log(error);
+		}
+	})();
 }
 
 function getTreeDynamic(processing, indextoindex, settings, sortedTriples, handler) {
