@@ -201,7 +201,7 @@ function processfiles() {
 			}
 			fileStatsIPFS(hash, onlyHashIndexToIndex, innerhandler);
 		}
-		addFileToIPFS(path, onlyHashIndexToIndex, handler);
+		pluggable.getFileHash(path, onlyHashIndexToIndex, handler);
 	} else {
 		start(fileArray[progresscount]);
 	}
