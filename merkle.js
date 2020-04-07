@@ -1,5 +1,11 @@
 require("./config.js");
 
+var settings = {
+    "pluggableFunctions": {
+        "getFileHash": addFileToIPFS
+    },
+};
+
 var fs = require('fs');
 var MerkleTools = require('merkle-tools');
 const web3_extended = require('web3_ipc');
@@ -36,6 +42,7 @@ var progresscount;
 var dataLoopCount = 0;
 var processdata;
 var fileArray;
+var pluggable = settings.pluggableFunctions;
 
 var analysis = {};
 var ai = 0;
@@ -357,12 +364,11 @@ function generateipfs(dat, merkleTools) {
 				}
 				fileStatsIPFS(hash, onlyHashIndex, innerhandler2);
 			}
-			addFileToIPFS(path, onlyHashIndex, handler2);
+			pluggable.getFileHash(path, onlyHashMerkle, handler2);
 		}
 		fileStatsIPFS(hash, onlyHashMerkle, innerhandler1);
 	}
-
-	addFileToIPFS(path, onlyHashMerkle, handler1);
+	pluggable.getFileHash(path, onlyHashMerkle, handler1);
 
 }
 
