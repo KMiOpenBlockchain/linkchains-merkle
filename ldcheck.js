@@ -26,7 +26,7 @@ var settings = {
         "type": "KECCAK256" //value supported by the merkle-tools node module
     },
     "pluggableFunctions": {
-        "getTree": getTree // alternative getTreeDynamic
+        "getTree": getTree, // alternative getTreeDynamic
         "getIndex": getIndex,
         "getIndextoIndex": getIndextoIndex,
         "quadHash": {

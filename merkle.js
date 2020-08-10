@@ -245,23 +245,25 @@ function  readthelines (dat) {
 	var starttime = microtime.now();
 	//console.log(sortedpath + dat.file);
 	rd = readline(sortedpath + dat.file);
-	rd.on('line', function(data, linecount) {
-		if (linecount == dat.total) {
-			if (data.trim() != "") {
-				if (linecount % 10000 == 0) console.log(linecount);
-				dat.jsonhasharray[linecount - 1] = data;
-			}
-			//console.log("File " + dat.file + " read finished");
-			//addExtraLeafs(dat);
-			
-			analysis[af][ai].files.index[progresscount].merkleTree.leafArrayReadTime = microtime.now() - starttime;
-			analysis[af][ai].files.index[progresscount].count = linecount;
-			makeTree(dat);
-		} else {
-			//if (linecount % 10000 == 0) console.log(linecount);
+	rd.on('line', readRow(data, dat, linecount));
+}
+
+function readRow(data, dat, linecount) {
+	if (linecount == dat.total) {
+		if (data.trim() != "") {
+			if (linecount % 10000 == 0) console.log(linecount);
 			dat.jsonhasharray[linecount - 1] = data;
 		}
-	});
+		//console.log("File " + dat.file + " read finished");
+		//addExtraLeafs(dat);
+
+		analysis[af][ai].files.index[progresscount].merkleTree.leafArrayReadTime = microtime.now() - starttime;
+		analysis[af][ai].files.index[progresscount].count = linecount;
+		makeTree(dat);
+	} else {
+		//if (linecount % 10000 == 0) console.log(linecount);
+		dat.jsonhasharray[linecount - 1] = data;
+	}
 }
 
 /*
