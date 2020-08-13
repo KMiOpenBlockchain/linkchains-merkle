@@ -104,20 +104,21 @@ function setUpFolderPaths() {
 	analysis[af][ai].files.index = new Array();
 	
 	sortedpath = sortedpath + indexType + "_" + lsds + "_" + divisor + "/";
+
 	if (!fs.existsSync(sortedpath)){
-		fs.mkdirSync(sortedpath);
+		fs.mkdirSync(sortedpath, {recursive:true});
 	}
 	
 	ipfsfilepath = ipfsfilepath + folder + "/";
 	parentipfsdatafolder = ipfsfilepath;
 	if (!fs.existsSync(ipfsfilepath)){
-		fs.mkdirSync(ipfsfilepath);
+		fs.mkdirSync(ipfsfilepath, {recursive:true});
 	}
 	ipfsfilepath = ipfsfilepath + indexType + "_" + lsds + "_" + divisor + "/";
 	
 	deleteFolderRecursive(ipfsfilepath);
 	if (!fs.existsSync(ipfsfilepath)){
-		fs.mkdirSync(ipfsfilepath);
+		fs.mkdirSync(ipfsfilepath, {recursive:true});
 	}
 	
 	fs.readdir(sortedpath, function (err, files) {
