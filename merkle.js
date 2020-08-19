@@ -310,6 +310,70 @@ function generateTreeJson(merkleTools, dat) {
 	return {tree, str};
 }
 
+function fileProcessingHandler(output, dat, hash) {
+	analysis[af][ai].files.index[progresscount].IPFSIndex.filesize = output.cumulativeSize;
+	//analysis[af][ai].files.index[progresscount].IPFSIndex.size = stats.size;
+	dat.ipfsindex = hash;
+	//console.log(result);
+	dat.enc = getBytes32FromIpfsHash(dat.ipfsindex);
+	ind = processdata.treesandindexes.length;
+	processdata.treesandindexes[ind] = {};
+	processdata.treesandindexes[ind].treeipfs = dat.ipfshashtree;
+	processdata.treesandindexes[ind].indexipfs = dat.ipfsindex;
+	processdata.treesandindexes[ind].indexipfsbytes32 = dat.enc;
+	processdata.treesandindexes[ind].file = dat.file;
+	processdata.treesandindexes[ind].indexIndex = dat.indexIndex;
+	progresscount++;
+	processfiles();
+}
+
+function fileProcessingStatsHandler(starttime, hash, dat) {
+	analysis[af][ai].files.index[progresscount].IPFSIndex.treeIPFSWriteTime = microtime.now() - starttime;
+	analysis[af][ai].files.index[progresscount].IPFSIndex.IPFSHash = hash;
+
+	function innerhandler2(output) {
+		fileProcessingHandler(output, dat, hash);
+	}
+
+	fileStatsIPFS(hash, onlyHashIndex, innerhandler2);
+}
+
+function createIndex(dat, tree) {
+	var index = {};
+	index.merkleipfs = dat.ipfshashtree;
+	index.merkleroot = dat.merkleroot;
+	var leaveslevel = tree.levels.length - 1;
+	index.data = {};
+	for (var x = 0; x < dat.total; x++) {
+		index.data[tree.levels[leaveslevel][x]] = x;
+	}
+	return index;
+}
+
+function indexHandler(output, starttime, dat, hash, tree) {
+	analysis[af][ai].files.index[progresscount].merkleTree.filesize = output.cumulativeSize;
+	//analysis[af][ai].files.index[progresscount].merkleTree.size = stats.size;
+	starttime = microtime.now();
+	dat.ipfshashtree = hash;
+	var index = createIndex(dat, tree);
+	path = ipfsfilepath + res[0] + "_index.json";
+	//console.log(path);
+	fs.writeFileSync(path, JSON.stringify(index));
+
+	analysis[af][ai].files.index[progresscount].IPFSIndex.indexJSONFileCreation = microtime.now() - starttime;
+	starttime = microtime.now();
+
+	//console.log(ipfsfilepath + res[0] + "_index.json");
+
+	function handler2(hash) {
+		//console.log("HASH = " + hash);
+		fileProcessingStatsHandler(starttime, hash, dat);
+	}
+
+	pluggable.getFileHash(path, onlyHashMerkle, handler2);
+	return starttime;
+}
+
 function generateipfs(dat, merkleTools) {
 	var starttime = microtime.now();
 	const {tree, str} = generateTreeJson(merkleTools, dat);
@@ -330,51 +394,7 @@ function generateipfs(dat, merkleTools) {
 		analysis[af][ai].files.index[progresscount].merkleTree.IPFSHash = hash;
 
 		function innerhandler1(output) {
-			analysis[af][ai].files.index[progresscount].merkleTree.filesize = output.cumulativeSize;
-			//analysis[af][ai].files.index[progresscount].merkleTree.size = stats.size;
-			starttime = microtime.now();
-			dat.ipfshashtree = hash;
-			index = {};
-			index.merkleipfs = dat.ipfshashtree;
-			index.merkleroot = dat.merkleroot;
-			leaveslevel = tree.levels.length - 1;
-			index.data = {};
-			for (var x = 0; x < dat.total; x++) {
-				index.data[tree.levels[leaveslevel][x]] = x;
-			}
-			path = ipfsfilepath + res[0] + "_index.json";
-			//console.log(path);
-			fs.writeFileSync(path, JSON.stringify(index));	
-			
-			analysis[af][ai].files.index[progresscount].IPFSIndex.indexJSONFileCreation = microtime.now() - starttime;
-			starttime = microtime.now();
-			
-			//console.log(ipfsfilepath + res[0] + "_index.json");
-
-			function handler2(hash) {
-				//console.log("HASH = " + hash);
-				analysis[af][ai].files.index[progresscount].IPFSIndex.treeIPFSWriteTime = microtime.now() - starttime;
-				analysis[af][ai].files.index[progresscount].IPFSIndex.IPFSHash = hash;
-
-				function innerhandler2(output) {
-					analysis[af][ai].files.index[progresscount].IPFSIndex.filesize = output.cumulativeSize;
-					//analysis[af][ai].files.index[progresscount].IPFSIndex.size = stats.size;
-					dat.ipfsindex = hash;
-					//console.log(result);
-					dat.enc = getBytes32FromIpfsHash(dat.ipfsindex);
-					ind = processdata.treesandindexes.length;
-					processdata.treesandindexes[ind] = {};
-					processdata.treesandindexes[ind].treeipfs = dat.ipfshashtree;
-					processdata.treesandindexes[ind].indexipfs = dat.ipfsindex;
-					processdata.treesandindexes[ind].indexipfsbytes32 = dat.enc;
-					processdata.treesandindexes[ind].file = dat.file;
-					processdata.treesandindexes[ind].indexIndex = dat.indexIndex;
-					progresscount++;
-					processfiles();
-				}
-				fileStatsIPFS(hash, onlyHashIndex, innerhandler2);
-			}
-			pluggable.getFileHash(path, onlyHashMerkle, handler2);
+			starttime = indexHandler(output, starttime, dat, hash, tree);
 		}
 		fileStatsIPFS(hash, onlyHashMerkle, innerhandler1);
 	}
