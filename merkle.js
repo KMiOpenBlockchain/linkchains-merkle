@@ -6,8 +6,9 @@ var settings = {
     },
 };
 
+var MerkleTools = require('merkle-tools/merkletools');
 var fs = require('fs');
-var MerkleTools = require('merkle-tools');
+
 const web3_extended = require('web3_ipc');
 //var keccak256 = require('js-sha3').keccak_256;
 const countLinesInFile = require('count-lines-in-file');
@@ -246,10 +247,13 @@ function  readthelines (dat) {
 	var starttime = microtime.now();
 	//console.log(sortedpath + dat.file);
 	rd = readline(sortedpath + dat.file);
-	rd.on('line', readRow(data, dat, linecount));
+	rd.on('line', function ( data, linecount) {
+			readRow(data, dat, linecount, starttime);
+		}
+	);
 }
 
-function readRow(data, dat, linecount) {
+function readRow(data, dat, linecount, starttime) {
 	if (linecount == dat.total) {
 		if (data.trim() != "") {
 			if (linecount % 10000 == 0) console.log(linecount);

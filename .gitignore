@@ -8,4 +8,5 @@ config-sample.js
 node_modules
 dataset
 .idea/
-/dataforipfs/dbpedia-20000/object_64_0x1/indextoindex.json
+dataforipfs/
+datasorted/
