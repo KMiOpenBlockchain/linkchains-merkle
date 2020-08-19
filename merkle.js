@@ -155,7 +155,35 @@ ipfs.pin.rm(hash, function (err, pinset) {
 */
 
 
+function ipfsStatsHandler(output, hash) {
+	//console.log(output);
+	analysis[af][ai].files.indextoindex.filesize = output.cumulativeSize;
 
+	cfg.data[dataLoopCount].indextoindex = hash;
+	cfg.data[dataLoopCount].treesandindexes = processdata.treesandindexes.length;
+
+	var json = "cfg = " + JSON.stringify(cfg, null, 4);
+	fs.writeFile("./config.js", json, function (err) {
+			if (err) throw err;
+			console.log('config.js data updated');
+			dataLoopCount += 1;
+			processAllData();
+		}
+	);
+}
+
+function ipfsHandler(hash, starttime) {
+	//console.log("HASH = " + hash);
+	analysis[af][ai].files.indextoindex.ipfshash = hash;
+	analysis[af][ai].files.indextoindex.IPFSWriteTime = microtime.now() - starttime;
+	processdata.ipfsindextoindex = hash;
+
+	function innerhandler(output) {
+		ipfsStatsHandler(output, hash);
+	}
+
+	fileStatsIPFS(hash, onlyHashIndexToIndex, innerhandler);
+}
 
 function processfiles() {
 	if (progresscount == count) {
@@ -165,43 +193,11 @@ function processfiles() {
 		}
 		path = ipfsfilepath + "indextoindex.json";
 		fs.writeFileSync(path, JSON.stringify(indextoindex));
-		//console.log(indextoindex);
-		
+
 		var starttime = microtime.now();
 
-
 		function handler(hash) {
-			//console.log("HASH = " + hash);
-			analysis[af][ai].files.indextoindex.ipfshash = hash;
-			analysis[af][ai].files.indextoindex.IPFSWriteTime = microtime.now() - starttime;
-			processdata.ipfsindextoindex = hash;
-
-			function innerhandler(output) {
-				//console.log(output);
-				analysis[af][ai].files.indextoindex.filesize = output.cumulativeSize;
-
-				/*
-				fs.writeFile(ipfsfilepath + "sampledata.json", JSON.stringify(processdata), function(err) {
-					if (err) throw err;
-					console.log("FINISHED " + rdfdatafile + " " + indexType);
-					dataLoopCount += 1;
-					processAllData();
-				});
-				*/
-				cfg.data[dataLoopCount].indextoindex = hash;
-				cfg.data[dataLoopCount].treesandindexes = processdata.treesandindexes.length;
-				
-				var json = "cfg = " + JSON.stringify(cfg, null, 4);
-				fs.writeFile ("./config.js", json, function(err) {
-					if (err) throw err;
-						console.log('config,js data updated');
-						dataLoopCount += 1;
-						processAllData();
-					}
-				);	
-				
-			}
-			fileStatsIPFS(hash, onlyHashIndexToIndex, innerhandler);
+			ipfsHandler(hash, starttime);
 		}
 		pluggable.getFileHash(path, onlyHashIndexToIndex, handler);
 	} else {
@@ -297,23 +293,30 @@ function makeTree(dat) {
 	generateipfs(dat, merkleTools);
 }
 
-function generateipfs(dat, merkleTools) {
-	var starttime = microtime.now();
+function generateTreeJson(merkleTools, dat) {
 	tree = merkleTools.getMerkleTree();
 	//console.log("tree leaves length = " + tree.leaves.length);
 	for (var x = 0; x < tree.levels.length; x++) {
 		//console.log("level " + x + "  = " + tree.levels[x].length);
 		for (var y = 0; y < tree.levels[x].length; y++) {
 			tree.levels[x][y] = tree.levels[x][y].toString('hex');
-		}   	
+		}
 	}
-	
-    res = dat.file.split(".");
+
 	out = {};
 	out.merkletree = tree.levels;
 	//out.merkleleaves = tree.leaves;
 	str = JSON.stringify(out);
+	return {tree, str};
+}
+
+function generateipfs(dat, merkleTools) {
+	var starttime = microtime.now();
+	const {tree, str} = generateTreeJson(merkleTools, dat);
+
+	res = dat.file.split(".");
 	path = ipfsfilepath + res[0] + ".json";
+
 	fs.writeFileSync(path, str);
 	
 	analysis[af][ai].files.index[progresscount].merkleTree.treeJSONFileCreation = microtime.now() - starttime;
