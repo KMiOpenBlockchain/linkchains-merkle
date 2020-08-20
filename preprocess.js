@@ -34,18 +34,16 @@ var indexType;
 var lsds;
 var divisor;
 var divisorInt;
-var alldatafile = new Array();
+var processedAllDataRelatedToFolder = new Array();
 var quadHashes;
-var quadres, quad, quadString;
 
 var count =  0;
 var dataLoopCount = 0;
 var reg = new RegExp('^\\d+$');
 var allQuadHashesTestArr = new Array();
 var analysis = {};
-var ai = 0;
-var af;
-var analcount = 0;
+var dataFolder;
+var statIndex = 0;
 var fileArray;
 var filecaount;
 var processTimes = new Array();
@@ -82,7 +80,7 @@ function processAllData() {
 processAllData();
 
 function finishAnalysis() {
-	if (analcount >= cfg.data.length) {
+	if (statIndex >= cfg.data.length) {
 		//console.log(JSON.stringify(analysis));
 		
 		var json = JSON.stringify(analysis, null, 4);
@@ -94,15 +92,15 @@ function finishAnalysis() {
 		
 		//console.log("ANALYSIS FINISHED");
 	} else {
-		lsds = cfg.data[analcount].lsd;
-		divisor = cfg.data[analcount].divisor;
-		indexType = cfg.data[analcount].indexType;
+		lsds = cfg.data[statIndex].lsd;
+		divisor = cfg.data[statIndex].divisor;
+		indexType = cfg.data[statIndex].indexType;
 		sortedpath = folderpath + "sorted/";
-		rdfdatafile = cfg.data[analcount].datafile;
+		rdfdatafile = cfg.data[statIndex].datafile;
 		res = rdfdatafile.split(".");
 		res.pop();
 		var folder = res.join(".");
-		af = folder;
+		dataFolder = folder;
 		sortedpath = sortedpath + folder + "/";
 		
 		sortedpath = sortedpath + indexType + "_" + lsds + "_" + divisor +  "/";
@@ -127,17 +125,17 @@ function finishAnalysis() {
 
 function analysisPerFile() {
 	if (filecaount >= fileArray.length) {
-		analcount += 1;
+		statIndex += 1;
 		finishAnalysis();
 	} else {
-		fl = analysis[af].variants[analcount].files.length;
+		fl = analysis[dataFolder].variants[statIndex].files.length;
 		f = sortedpath + fileArray[filecaount];
-		analysis[af].variants[analcount].files[fl] = {};
-		analysis[af].variants[analcount].files[fl].filename = fileArray[filecaount];
-		analysis[af].variants[analcount].fileSortTime = processTimes[analcount];
+		analysis[dataFolder].variants[statIndex].files[fl] = {};
+		analysis[dataFolder].variants[statIndex].files[fl].filename = fileArray[filecaount];
+		analysis[dataFolder].variants[statIndex].fileSortTime = processTimes[statIndex];
 		countLinesInFile(f, (error, numberOfLines) => {
-			analysis[af].variants[analcount].files[fl].count = numberOfLines;
-			analysis[af].variants[analcount].files[fl].filesize = fs.statSync(f).size;
+			analysis[dataFolder].variants[statIndex].files[fl].count = numberOfLines;
+			analysis[dataFolder].variants[statIndex].files[fl].filesize = fs.statSync(f).size;
 			filecaount += 1;
 			analysisPerFile();
 		});
@@ -150,23 +148,23 @@ function setUpFolderPaths() {
 	res = rdfdatafile.split(".");
 	res.pop();
 	var folder = res.join(".");
-	af = folder;
+	dataFolder = folder;
 	//var folder = res[0];
 	console.log(folder);
 	
-	if (alldatafile[af] == undefined) alldatafile[af] = 1;
+	if (processedAllDataRelatedToFolder[dataFolder] === undefined) processedAllDataRelatedToFolder[dataFolder] = true;
 	
 	sortedpath = sortedpath + folder + "/";
 	parentdatafolder = sortedpath;
-	if (analysis[af] == undefined) analysis[af] = {};
-	if (analysis[af].allhashes == undefined) analysis[af].allhashes = {};
-	if (analysis[af].variants == undefined) analysis[af].variants = new Array();
-	ai = analysis[af].variants.length;
-	analysis[af].variants[ai] = {};
-	analysis[af].variants[ai].type = indexType;
-	analysis[af].variants[ai].lsd = lsds;
-	analysis[af].variants[ai].divisor = divisor;
-	analysis[af].variants[ai].files = new Array();
+	if (analysis[dataFolder] == undefined) analysis[dataFolder] = {};
+	if (analysis[dataFolder].allhashes == undefined) analysis[dataFolder].allhashes = {};
+	if (analysis[dataFolder].variants == undefined) analysis[dataFolder].variants = new Array();
+	var folderIndex = analysis[dataFolder].variants.length;
+	analysis[dataFolder].variants[folderIndex] = {};
+	analysis[dataFolder].variants[folderIndex].type = indexType;
+	analysis[dataFolder].variants[folderIndex].lsd = lsds;
+	analysis[dataFolder].variants[folderIndex].divisor = divisor;
+	analysis[dataFolder].variants[folderIndex].files = new Array();
 	
 	if (!fs.existsSync(sortedpath)){
 		fs.mkdirSync(sortedpath);
@@ -186,106 +184,136 @@ function cleanUpFilesAndFolders() {
 	}
 	if (allQuadHashesTestArr[parentdatafolder] == undefined) {
 		allQuadHashesTestArr[parentdatafolder] = 1;
-		fs.unlink(parentdatafolder + "allquadhashes.txt", function(err) {
-			if(err && err.code == 'ENOENT') {
-				// file doens't exist
-				console.info("allquadhashes.txt file doesn't exist, won't remove it.");
-				readthelines();
-			} else if (err) {
-				// other errors, e.g. maybe we don't have enough permission
-				console.error("Error occurred while trying to remove file");
+		fs.unlink(parentdatafolder + "allquadhashes.txt", function(err)
+		{
+			if (err) {
+				if(err.code == 'ENOENT') {
+					// file doens't exist
+					console.info("allquadhashes.txt file doesn't exist, won't remove it.");
+					readthelines();
+				} else {	// other errors, e.g. maybe we don't have enough permission
+					console.error("Error occurred while trying to remove file");
+				}
 			} else {
 				console.info("removed allquadhashes.txt");
 				readthelines();
-			}
-		});
+			}}
+		);
 	} else {
 		readthelines();
 	}
+}
+
+function makeQuadTerm(value) {
+	return '<' + value + '>';
+}
+
+function makeQuadValue(value) {
+	return '"' + value + '"';
+}
+
+
+function makeQuadString(quad) {
+	var subjectTerm = makeQuadTerm(quad.subject.value);
+	var predicate = makeQuadTerm(quad.predicate.value);
+	var objectTerm;
+	if (quad.object.termType != "Literal") {
+		objectTerm = makeQuadTerm(quad.object.value);
+	} else {
+		objectTerm = makeQuadValue(quad.object.value);
+		if (quad.object.language) {
+			objectTerm += '@' + quad.object.language;
+		}
+		if (quad.object.datatype) {
+			objectTerm += '^^' + makeQuadTerm(quad.object.datatype.value);
+		}
+	}
+	var graph = (quad.graph.value ? makeQuadTerm(quad.graph.value) : '');
+
+	var quadString = subjectTerm + ' ' + predicate + ' ' + objectTerm + ' ' + graph + ' .';
+	return {subjectTerm, predicate, objectTerm, graph, quadString};
+}
+
+function makeHashIndex(subjectTerm, predicate, objectTerm, graph) {
+	if (indexType == "uniform") {
+		hash = quadHash;
+	} else if (indexType == "subject") {
+		hash = pluggable.quadHash.thefunction(subjectTerm, pluggable.quadHash.parameters);
+	} else if (indexType == "predicate") {
+		hash = pluggable.quadHash.thefunction(predicate, pluggable.quadHash.parameters);
+	} else if (indexType == "object") {
+		hash = pluggable.quadHash.thefunction(objectTerm, pluggable.quadHash.parameters);
+	} else if (indexType == "graph") {
+		hash = pluggable.quadHash.thefunction(graph, pluggable.quadHash.parameters);
+	} else if (indexType == "subjectobject") {
+		hash = pluggable.quadHash.thefunction(subjectTerm + " " + objectTerm, pluggable.quadHash.parameters);
+	}
+	lastdigits = hash.substr(hash.length - lsds);
+	decimalInt = BigInt("0x" + lastdigits);
+	index = decimalInt / divisorInt;
+	return index;
+}
+
+function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime) {
+	if (processedAllDataRelatedToFolder[dataFolder] === false) {
+		const index = makeHashIndex(subjectTerm, predicate, objectTerm, graph);
+		fs.appendFile(sortedpath + index + ".txt", text, function (err) {
+			if (err) return console.log(err);
+		});
+
+		//if (linecount % 10000 == 0) console.log(linecount);
+		if (linecount == total) {
+			processTimes[dataLoopCount] = microtime.now() - starttime;
+			console.log("File read finished");
+			dataLoopCount += 1;
+			processAllData();
+		}
+	} else {
+		fs.appendFile(parentdatafolder + "allquadhashes.txt", text, function (err) {
+			if (err) return console.log(err);
+		});
+		if (linecount == total) {
+			analysis[dataFolder].allhashes.count = total;
+			analysis[dataFolder].allhashes.time = microtime.now() - starttime;
+			analysis[dataFolder].allhashes.filesize = fs.statSync(parentdatafolder + "allquadhashes.txt").size;
+			processedAllDataRelatedToFolder[dataFolder] = false;
+			fs.unlink(parentdatafolder + "allquadhashes.txt", function (err) {
+				if (err && err.code == 'ENOENT') {
+					// file doens't exist
+					console.info("allquadhashes.txt file doesn't exist, won't remove it.");
+					readthelines();
+				} else if (err) {
+					// other errors, e.g. maybe we don't have enough permission
+					console.error("Error occurred while trying to remove file");
+				} else {
+					console.info("removed allquadhashes.txt");
+					readthelines();
+				}
+			});
+		}
+	}
+}
+
+function readRow(data, linecount, starttime) {
+	var quadres = parser.parse(data);
+	var quad = quadres[0];
+	var {subjectTerm, predicate, objectTerm, graph, quadString} = makeQuadString(quad);
+
+	quadHash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);
+	text = quadHash + "\n";
+
+	possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime);
+	count++;
 }
 
 function  readthelines() {
 	var starttime = microtime.now();
 	rd = readline(path);
 	rd.on('line', function(data, linecount) {
-		quadres = parser.parse(data);
-		quad = quadres[0];
-		
-		subject = '<' + quad.subject.value + '>';
-		predicate = '<' + quad.predicate.value + '>';
-		if (quad.object.termType != "Literal") {
-			object = '<' + quad.object.value + '>';
-		} else {
-			object = '"' + quad.object.value + '"';
-			if (quad.object.language) {
-				object += '@' + quad.object.language;
-			}
-			if (quad.object.datatype) {
-				object += '^^<' + quad.object.datatype.value + '>';
-			}			
+			readRow(data, linecount, starttime);
 		}
-		graph = (quad.graph.value ? '<' + quad.graph.value + '>' : '');
-		
-		quadString = subject + ' ' + predicate + ' ' + object + ' ' + graph + ' .';
-		
-		quadHash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);
-		
-		text = quadHash + "\n";
-		
-		if (alldatafile[af] == 0) {
-			if (indexType == "uniform") {
-				hash = quadHash;
-			} else if (indexType == "subject") {
-				hash = pluggable.quadHash.thefunction(subject, pluggable.quadHash.parameters);
-			} else if (indexType == "predicate") {
-				hash = pluggable.quadHash.thefunction(predicate, pluggable.quadHash.parameters);
-			} else if (indexType == "object") {
-				hash = pluggable.quadHash.thefunction(object, pluggable.quadHash.parameters);
-			} else if (indexType == "graph") {
-				hash = pluggable.quadHash.thefunction(graph, pluggable.quadHash.parameters);
-			} else if (indexType == "subjectobject") {
-				hash = pluggable.quadHash.thefunction(subject + " " + object, pluggable.quadHash.parameters);
-			}
-			lastdigits = hash.substr(hash.length - lsds);
-			decimalInt = BigInt("0x" + lastdigits);
-			index = decimalInt/divisorInt;
-			fs.appendFile(sortedpath + index + ".txt", text, function (err) {
-				if (err) return console.log(err);
-			});
-				
-			//if (linecount % 10000 == 0) console.log(linecount);
-			if (linecount == total) {
-				processTimes[dataLoopCount] = microtime.now() - starttime;
-				console.log("File read finished");
-				dataLoopCount += 1;
-				processAllData();
-			}
-		} else {
-			fs.appendFile(parentdatafolder + "allquadhashes.txt", text, function (err) {
-				if (err) return console.log(err);
-			});
-			if (linecount == total) {
-				analysis[af].allhashes.count = total;
-				analysis[af].allhashes.time = microtime.now() - starttime;
-				analysis[af].allhashes.filesize = fs.statSync(parentdatafolder + "allquadhashes.txt").size;
-				alldatafile[af] = 0;
-				fs.unlink(parentdatafolder + "allquadhashes.txt", function(err) {
-					if(err && err.code == 'ENOENT') {
-						// file doens't exist
-						console.info("allquadhashes.txt file doesn't exist, won't remove it.");
-						readthelines();
-					} else if (err) {
-						// other errors, e.g. maybe we don't have enough permission
-						console.error("Error occurred while trying to remove file");
-					} else {
-						console.info("removed allquadhashes.txt");
-						readthelines();
-					}
-				});
-			}
-		}
-		count++;
-	});
+
+	);
 }
 
 
