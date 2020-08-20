@@ -59,8 +59,8 @@ function processAllData() {
 		//console.log(JSON.stringify(analysis));
 		
 
-		var json = JSON.stringify(analysis, null, 4);
-		fs.writeFile (folderpath + "sorted/merkle.json", json, function(err) {
+		var analysisJson = JSON.stringify(analysis, null, 4);
+		fs.writeFile (folderpath + "sorted/merkle.json", analysisJson, function(err) {
 			if (err) throw err;
 				//
 				process.exit();
@@ -85,15 +85,7 @@ function processAllData() {
 }
 processAllData();
 
-function setUpFolderPaths() {
-	res = rdfdatafile.split(".");
-	res.pop();
-	var folder = res.join(".");
-	af = folder;
-	console.log(folder);
-	sortedpath = sortedpath + folder + "/";
-	parentdatafolder = sortedpath;
-	
+function resetStatsData() {
 	if (analysis[af] == undefined) analysis[af] = new Array();
 	ai = analysis[af].length;
 	analysis[af][ai] = {};
@@ -103,7 +95,18 @@ function setUpFolderPaths() {
 	analysis[af][ai].files = {};
 	analysis[af][ai].files.indextoindex = {};
 	analysis[af][ai].files.index = new Array();
-	
+}
+
+function setUpFolderPaths() {
+	res = rdfdatafile.split(".");
+	res.pop();
+	var folder = res.join(".");
+	af = folder;
+	console.log(folder);
+	sortedpath = sortedpath + folder + "/";
+	parentdatafolder = sortedpath;
+	resetStatsData();
+
 	sortedpath = sortedpath + indexType + "_" + lsds + "_" + divisor + "/";
 
 	if (!fs.existsSync(sortedpath)){
@@ -172,10 +175,14 @@ function ipfsStatsHandler(output, hash) {
 	);
 }
 
-function ipfsHandler(hash, starttime) {
-	//console.log("HASH = " + hash);
+function setHashAndTimeInStatsData(hash, starttime) {
 	analysis[af][ai].files.indextoindex.ipfshash = hash;
 	analysis[af][ai].files.indextoindex.IPFSWriteTime = microtime.now() - starttime;
+}
+
+function ipfsHandler(hash, starttime) {
+	//console.log("HASH = " + hash);
+	setHashAndTimeInStatsData(hash, starttime);
 	processdata.ipfsindextoindex = hash;
 
 	function innerhandler(output) {
@@ -206,15 +213,15 @@ function processfiles() {
 }
 
 
-
-
-
-
-function start(file) {
+function setCurrentDataInStats(file) {
 	analysis[af][ai].files.index[progresscount] = {};
 	analysis[af][ai].files.index[progresscount].sourceFile = sortedpath + file;
 	analysis[af][ai].files.index[progresscount].merkleTree = {};
 	analysis[af][ai].files.index[progresscount].IPFSIndex = {};
+}
+
+function start(file) {
+	setCurrentDataInStats(file);
 	ipfshashtree = "";
 	ipfsindex = "";
 	merkleroot = "";
@@ -249,6 +256,11 @@ function  readthelines (dat) {
 	);
 }
 
+function setDataInStatsArrays(starttime, linecount) {
+	analysis[af][ai].files.index[progresscount].merkleTree.leafArrayReadTime = microtime.now() - starttime;
+	analysis[af][ai].files.index[progresscount].count = linecount;
+}
+
 function readRow(data, dat, linecount, starttime) {
 	if (linecount == dat.total) {
 		if (data.trim() != "") {
@@ -257,9 +269,7 @@ function readRow(data, dat, linecount, starttime) {
 		}
 		//console.log("File " + dat.file + " read finished");
 		//addExtraLeafs(dat);
-
-		analysis[af][ai].files.index[progresscount].merkleTree.leafArrayReadTime = microtime.now() - starttime;
-		analysis[af][ai].files.index[progresscount].count = linecount;
+		setDataInStatsArrays(starttime, linecount);
 		makeTree(dat);
 	} else {
 		//if (linecount % 10000 == 0) console.log(linecount);
