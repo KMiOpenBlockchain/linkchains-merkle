@@ -97,6 +97,12 @@ function resetStatsData() {
 	analysis[af][ai].files.index = new Array();
 }
 
+function mkDirIfNotPresent(folders) {
+	if (!fs.existsSync(folders)) {
+		fs.mkdirSync(folders, {recursive: true});
+	}
+}
+
 function setUpFolderPaths() {
 	res = rdfdatafile.split(".");
 	res.pop();
@@ -108,23 +114,17 @@ function setUpFolderPaths() {
 	resetStatsData();
 
 	sortedpath = sortedpath + indexType + "_" + lsds + "_" + divisor + "/";
+	mkDirIfNotPresent(sortedpath);
 
-	if (!fs.existsSync(sortedpath)){
-		fs.mkdirSync(sortedpath, {recursive:true});
-	}
-	
 	ipfsfilepath = ipfsfilepath + folder + "/";
 	parentipfsdatafolder = ipfsfilepath;
-	if (!fs.existsSync(ipfsfilepath)){
-		fs.mkdirSync(ipfsfilepath, {recursive:true});
-	}
+	mkDirIfNotPresent(ipfsfilepath);
+
 	ipfsfilepath = ipfsfilepath + indexType + "_" + lsds + "_" + divisor + "/";
 	
 	deleteFolderRecursive(ipfsfilepath);
-	if (!fs.existsSync(ipfsfilepath)){
-		fs.mkdirSync(ipfsfilepath, {recursive:true});
-	}
-	
+	mkDirIfNotPresent(ipfsfilepath);
+
 	fs.readdir(sortedpath, function (err, files) {
 		//console.log(files);
 		//handling error
@@ -192,12 +192,17 @@ function ipfsHandler(hash, starttime) {
 	fileStatsIPFS(hash, onlyHashIndexToIndex, innerhandler);
 }
 
+function createIndexToIndex() {
+	var indextoindex = {}
+	for (i = 0; i < processdata.treesandindexes.length; i++) {
+		indextoindex["" + processdata.treesandindexes[i].indexIndex] = processdata.treesandindexes[i].indexipfs;
+	}
+	return indextoindex;
+}
+
 function processfiles() {
 	if (progresscount == count) {
-		var indextoindex = {}
-		for (i = 0; i < processdata.treesandindexes.length; i++) {
-			indextoindex["" + processdata.treesandindexes[i].indexIndex] = processdata.treesandindexes[i].indexipfs;
-		}
+		var indextoindex = createIndexToIndex();
 		path = ipfsfilepath + "indextoindex.json";
 		fs.writeFileSync(path, JSON.stringify(indextoindex));
 
