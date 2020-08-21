@@ -25,6 +25,7 @@ var analysisFlag = true;
 
 var folderpath = cfg.dataFolder;
 var datasetFolder;
+var sortedFolder;
 var rdfdatafile;
 var path;
 var parentdatafolder;
@@ -41,14 +42,62 @@ var count =  0;
 var dataLoopCount = 0;
 var reg = new RegExp('^\\d+$');
 var allQuadHashesTestArr = new Array();
-var analysis = {};
-var dataFolder;
-var statIndex = 0;
-var fileArray;
-var filecaount;
-var processTimes = new Array();
 
 
+class Stats {
+	analysis = {}
+	fileArray;
+	counter;
+	index;
+	processTimes = new Array();
+	curFolder = {}
+	constructor () {
+		this.index = 0;
+		this.counter = 0;
+	}
+	resetCurStats() {
+		if (this.analysis[this.curFolder] == undefined) this.analysis[this.curFolder] = {};
+		if (this.analysis[this.curFolder].allhashes == undefined) this.analysis[this.curFolder].allhashes = {};
+		if (this.analysis[this.curFolder].variants == undefined) this.analysis[this.curFolder].variants = new Array();
+		var folderIndex = this.analysis[this.curFolder].variants.length;
+		this.analysis[this.curFolder].variants[folderIndex] = {};
+		this.analysis[this.curFolder].variants[folderIndex].type = indexType;
+		this.analysis[this.curFolder].variants[folderIndex].lsd = lsds;
+		this.analysis[this.curFolder].variants[folderIndex].divisor = divisor;
+		this.analysis[this.curFolder].variants[folderIndex].files = new Array();
+	}
+
+	storeTotalAndDataFolder(curTotal, starttime, curParentDataFolder) {
+		this.analysis[this.curFolder].allhashes.count = curTotal;
+		this.analysis[this.curFolder].allhashes.time = microtime.now() - starttime;
+		this.analysis[this.curFolder].allhashes.filesize = fs.statSync(curParentDataFolder + "allquadhashes.txt").size;
+	}
+
+	setCurStats() {
+		var length = this.analysis[this.curFolder].variants[this.index].files.length;
+		var storedData = sortedFolder + stats.fileArray[stats.counter];
+		this.analysis[this.curFolder].variants[this.index].files[length] = {};
+		this.analysis[this.curFolder].variants[this.index].files[length].filename = stats.fileArray[stats.counter];
+		this.analysis[this.curFolder].variants[this.index].fileSortTime = this.processTimes[this.index];
+		return storedData;
+	}
+
+	getJson(){
+		return JSON.stringify(this.analysis, null, 4);
+	}
+
+	curStatsFromStoredData( numberOfLines ) {
+		var length = this.analysis[this.curFolder].variants[this.index].files.length;
+		var storedData = sortedFolder + stats.fileArray[stats.counter];
+		this.analysis[this.curFolder].variants[this.index].files[length - 1].count = numberOfLines;
+		this.analysis[this.curFolder].variants[this.index].files[length - 1].filesize = fs.statSync(storedData).size;
+		return storedData;
+	}
+
+
+}
+
+const stats = new Stats();
 
 function processAllData() {
 	if (dataLoopCount >= cfg.data.length) {
@@ -65,7 +114,7 @@ function processAllData() {
 		total = 0;
 		target = 0;
 		
-		sortedpath = folderpath + "sorted/";
+		sortedFolder = folderpath + "sorted/";
 		quadHashes = new Array();
 		datasetFolder = cfg.data[dataLoopCount].datafolder;
 		rdfdatafile = cfg.data[dataLoopCount].datafile;
@@ -80,11 +129,10 @@ function processAllData() {
 processAllData();
 
 function finishAnalysis() {
-	if (statIndex >= cfg.data.length) {
+	if (stats.index >= cfg.data.length) {
 		//console.log(JSON.stringify(analysis));
 		
-		var json = JSON.stringify(analysis, null, 4);
-		fs.writeFile (folderpath + "sorted/preprocess.json", json, function(err) {
+		fs.writeFile (folderpath + "sorted/preprocess.json", stats.getJson(), function(err) {
 			if (err) throw err;
 				//
 			process.exit();
@@ -92,22 +140,22 @@ function finishAnalysis() {
 		
 		//console.log("ANALYSIS FINISHED");
 	} else {
-		lsds = cfg.data[statIndex].lsd;
-		divisor = cfg.data[statIndex].divisor;
-		indexType = cfg.data[statIndex].indexType;
-		sortedpath = folderpath + "sorted/";
-		rdfdatafile = cfg.data[statIndex].datafile;
+		lsds = cfg.data[stats.index].lsd;
+		divisor = cfg.data[stats.index].divisor;
+		indexType = cfg.data[stats.index].indexType;
+		sortedFolder = folderpath + "sorted/";
+		rdfdatafile = cfg.data[stats.index].datafile;
 		res = rdfdatafile.split(".");
 		res.pop();
 		var folder = res.join(".");
-		dataFolder = folder;
-		sortedpath = sortedpath + folder + "/";
+		stats.curFolder = folder;
+		sortedFolder = sortedFolder + folder + "/";
 		
-		sortedpath = sortedpath + indexType + "_" + lsds + "_" + divisor +  "/";
-		fileArray = new Array();
-		filecaount = 0;
+		sortedFolder = sortedFolder + indexType + "_" + lsds + "_" + divisor +  "/";
+		stats.fileArray = new Array();
+		stats.counter = 0;
 		
-		fs.readdir(sortedpath, function (err, files) {
+		fs.readdir(sortedFolder, function (err, files) {
 			//handling error
 			if (err) {
 				return console.log('Unable to scan directory: ' + err);
@@ -116,60 +164,47 @@ function finishAnalysis() {
 			files.forEach(function (file) {
 				// Do whatever you want to do with the file
 				//console.log(file); 
-				fileArray.push(file);
+				stats.fileArray.push(file);
 			});
 			analysisPerFile();
 		});	
 	}
 }
 
+
 function analysisPerFile() {
-	if (filecaount >= fileArray.length) {
-		statIndex += 1;
+	if (stats.counter >= stats.fileArray.length) {
+		stats.index += 1;
 		finishAnalysis();
 	} else {
-		fl = analysis[dataFolder].variants[statIndex].files.length;
-		f = sortedpath + fileArray[filecaount];
-		analysis[dataFolder].variants[statIndex].files[fl] = {};
-		analysis[dataFolder].variants[statIndex].files[fl].filename = fileArray[filecaount];
-		analysis[dataFolder].variants[statIndex].fileSortTime = processTimes[statIndex];
-		countLinesInFile(f, (error, numberOfLines) => {
-			analysis[dataFolder].variants[statIndex].files[fl].count = numberOfLines;
-			analysis[dataFolder].variants[statIndex].files[fl].filesize = fs.statSync(f).size;
-			filecaount += 1;
+		var storedData = stats.setCurStats();
+		countLinesInFile(storedData, (error, numberOfLines) => {
+			stats.curStatsFromStoredData( numberOfLines);
+			stats.counter += 1;
 			analysisPerFile();
 		});
 	}
 }
 
 
-
 function setUpFolderPaths() {
 	res = rdfdatafile.split(".");
 	res.pop();
 	var folder = res.join(".");
-	dataFolder = folder;
+	stats.curFolder = folder;
 	//var folder = res[0];
 	console.log(folder);
 	
-	if (processedAllDataRelatedToFolder[dataFolder] === undefined) processedAllDataRelatedToFolder[dataFolder] = true;
+	if (processedAllDataRelatedToFolder[stats.curFolder] === undefined) processedAllDataRelatedToFolder[stats.curFolder] = true;
 	
-	sortedpath = sortedpath + folder + "/";
-	parentdatafolder = sortedpath;
-	if (analysis[dataFolder] == undefined) analysis[dataFolder] = {};
-	if (analysis[dataFolder].allhashes == undefined) analysis[dataFolder].allhashes = {};
-	if (analysis[dataFolder].variants == undefined) analysis[dataFolder].variants = new Array();
-	var folderIndex = analysis[dataFolder].variants.length;
-	analysis[dataFolder].variants[folderIndex] = {};
-	analysis[dataFolder].variants[folderIndex].type = indexType;
-	analysis[dataFolder].variants[folderIndex].lsd = lsds;
-	analysis[dataFolder].variants[folderIndex].divisor = divisor;
-	analysis[dataFolder].variants[folderIndex].files = new Array();
-	
-	if (!fs.existsSync(sortedpath)){
-		fs.mkdirSync(sortedpath);
+	sortedFolder = sortedFolder + folder + "/";
+	parentdatafolder = sortedFolder;
+	stats.resetCurStats();
+
+	if (!fs.existsSync(sortedFolder)){
+		fs.mkdirSync(sortedFolder);
 	}
-	sortedpath = sortedpath + indexType + "_" + lsds + "_" + divisor +  "/";
+	sortedFolder = sortedFolder + indexType + "_" + lsds + "_" + divisor +  "/";
 	countLinesInFile(path, (error, numberOfLines) => {
 		total = numberOfLines;
 		console.log("total lines = " + total);
@@ -178,9 +213,9 @@ function setUpFolderPaths() {
 }
 
 function cleanUpFilesAndFolders() {
-	deleteFolderRecursive(sortedpath);
-	if (!fs.existsSync(sortedpath)){
-		fs.mkdirSync(sortedpath);
+	deleteFolderRecursive(sortedFolder);
+	if (!fs.existsSync(sortedFolder)){
+		fs.mkdirSync(sortedFolder);
 	}
 	if (allQuadHashesTestArr[parentdatafolder] == undefined) {
 		allQuadHashesTestArr[parentdatafolder] = 1;
@@ -254,16 +289,17 @@ function makeHashIndex(subjectTerm, predicate, objectTerm, graph) {
 	return index;
 }
 
+
 function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime) {
-	if (processedAllDataRelatedToFolder[dataFolder] === false) {
+	if (processedAllDataRelatedToFolder[stats.curFolder] === false) {
 		const index = makeHashIndex(subjectTerm, predicate, objectTerm, graph);
-		fs.appendFile(sortedpath + index + ".txt", text, function (err) {
+		fs.appendFile(sortedFolder + index + ".txt", text, function (err) {
 			if (err) return console.log(err);
 		});
 
 		//if (linecount % 10000 == 0) console.log(linecount);
 		if (linecount == total) {
-			processTimes[dataLoopCount] = microtime.now() - starttime;
+			stats.processTimes[dataLoopCount] = microtime.now() - starttime;
 			console.log("File read finished");
 			dataLoopCount += 1;
 			processAllData();
@@ -273,10 +309,8 @@ function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, li
 			if (err) return console.log(err);
 		});
 		if (linecount == total) {
-			analysis[dataFolder].allhashes.count = total;
-			analysis[dataFolder].allhashes.time = microtime.now() - starttime;
-			analysis[dataFolder].allhashes.filesize = fs.statSync(parentdatafolder + "allquadhashes.txt").size;
-			processedAllDataRelatedToFolder[dataFolder] = false;
+			stats.storeTotalAndDataFolder(total, starttime, parentdatafolder);
+			processedAllDataRelatedToFolder[stats.curFolder] = false;
 			fs.unlink(parentdatafolder + "allquadhashes.txt", function (err) {
 				if (err && err.code == 'ENOENT') {
 					// file doens't exist
@@ -329,6 +363,6 @@ function deleteFolderRecursive(path) {
     });
     fs.rmdirSync(path);
   }
-};
+}
 
 
