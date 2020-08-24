@@ -8,6 +8,7 @@ var settings = {
 
 var MerkleTools = require('merkle-tools/merkletools');
 var fs = require('fs');
+var stringify=require('json-stable-stringify');
 
 const web3_extended = require('web3_ipc');
 //var keccak256 = require('js-sha3').keccak_256;
@@ -56,10 +57,8 @@ var onlyHashIndexToIndex = cfg.ipfs.onlyHash.indextoindex;
 function processAllData() {
 	if (dataLoopCount == cfg.data.length) {
 		console.log("FINISHED");
-		//console.log(JSON.stringify(analysis));
-		
 
-		var analysisJson = JSON.stringify(analysis, null, 4);
+		var analysisJson = stringify(analysis, {space: 4});
 		fs.writeFile (folderpath + "sorted/merkle.json", analysisJson, function(err) {
 			if (err) throw err;
 				//
@@ -165,7 +164,7 @@ function ipfsStatsHandler(output, hash) {
 	cfg.data[dataLoopCount].indextoindex = hash;
 	cfg.data[dataLoopCount].treesandindexes = processdata.treesandindexes.length;
 
-	var json = "cfg = " + JSON.stringify(cfg, null, 4);
+	var json = "cfg = " + stringify(cfg, {space: 4});
 	fs.writeFile("./config.js", json, function (err) {
 			if (err) throw err;
 			console.log('config.js data updated');
@@ -204,7 +203,7 @@ function processfiles() {
 	if (progresscount == count) {
 		var indextoindex = createIndexToIndex();
 		path = ipfsfilepath + "indextoindex.json";
-		fs.writeFileSync(path, JSON.stringify(indextoindex));
+		fs.writeFileSync(path, stringify(indextoindex, {space: 4}));
 
 		var starttime = microtime.now();
 
@@ -321,7 +320,7 @@ function generateTreeJson(merkleTools, dat) {
 	out = {};
 	out.merkletree = tree.levels;
 	//out.merkleleaves = tree.leaves;
-	str = JSON.stringify(out);
+	str = stringify(out);
 	return {tree, str};
 }
 
@@ -373,7 +372,7 @@ function indexHandler(output, starttime, dat, hash, tree) {
 	var index = createIndex(dat, tree);
 	path = ipfsfilepath + res[0] + "_index.json";
 	//console.log(path);
-	fs.writeFileSync(path, JSON.stringify(index));
+	fs.writeFileSync(path, stringify(index));
 
 	analysis[af][ai].files.index[progresscount].IPFSIndex.indexJSONFileCreation = microtime.now() - starttime;
 	starttime = microtime.now();
@@ -461,7 +460,7 @@ function writejsons(hash, proof, loopcount) {
 	var json = {};
 	json.root = merkleroot;
 	json.proof = proof;
-	str = JSON.stringify(json);
+	str = stringify(json);
 	fs.writeFile(folderpath + "/jsons/" + hash + ".json", str, function(err) {
 		if (err) throw err;
 		loopcount++;

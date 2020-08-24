@@ -7,6 +7,7 @@ var microtime = require('microtime');
 const N3 = require('n3');
 const parser = new N3.Parser();
 require("./config.js");
+var stringify = require('json-stable-stringify');
 
 var settings = {
     "pluggableFunctions": {
@@ -83,7 +84,7 @@ class Stats {
 	}
 
 	getJson(){
-		return JSON.stringify(this.analysis, null, 4);
+		return stringify(this.analysis, {space: 4});
 	}
 
 	curStatsFromStoredData( numberOfLines ) {
@@ -130,8 +131,7 @@ processAllData();
 
 function finishAnalysis() {
 	if (stats.index >= cfg.data.length) {
-		//console.log(JSON.stringify(analysis));
-		
+
 		fs.writeFile (folderpath + "sorted/preprocess.json", stats.getJson(), function(err) {
 			if (err) throw err;
 				//

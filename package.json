@@ -14,6 +14,7 @@
     "got": "^10.7.0",
     "ipfs-http-client": "^42.0.0",
     "js-sha3": "^0.8.0",
+    "json-stable-stringify": "^1.0.1",
     "linebyline": "^1.3.0",
     "merkle-tools": "https://github.com/KMiOpenBlockchain/merkle-tools.git",
     "microtime": "^3.0.0",
