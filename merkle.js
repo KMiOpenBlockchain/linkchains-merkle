@@ -57,7 +57,7 @@ var onlyHashIndex = cfg.ipfs.onlyHash.index;
 var onlyHashIndexToIndex = cfg.ipfs.onlyHash.indextoindex;
 
 class Stats {
-	analysis = {};
+	data = {};
 	progresscount;
 	ai;
 	af;
@@ -67,45 +67,43 @@ class Stats {
 	}
 
 	resetStatsData() {
-		if (this.analysis[this.af] == undefined) this.analysis[this.af] = new Array();
-		this.ai = this.analysis[this.af].length;
-		this.analysis[this.af][this.ai] = {};
-		this.analysis[this.af][this.ai].type = indexType;
-		this.analysis[this.af][this.ai].lsd = lsds;
-		this.analysis[this.af][this.ai].divisor = divisor;
-		this.analysis[this.af][this.ai].files = {};
-		this.analysis[this.af][this.ai].files.indextoindex = {};
-		this.analysis[this.af][this.ai].files.index = new Array();
+		if (this.data[this.af] == undefined) this.data[this.af] = new Array();
+		this.ai = this.data[this.af].length;
+		this.data[this.af][this.ai] = {};
+		this.data[this.af][this.ai].type = indexType;
+		this.data[this.af][this.ai].lsd = lsds;
+		this.data[this.af][this.ai].divisor = divisor;
+		this.data[this.af][this.ai].files = {};
+		this.data[this.af][this.ai].files.indextoindex = {};
+		this.data[this.af][this.ai].files.index = new Array();
 	}
 
 	setHashAndTimeInStatsData(hash, starttime) {
-		this.analysis[this.af][this.ai].files.indextoindex.ipfshash = hash;
-		this.analysis[this.af][this.ai].files.indextoindex.IPFSWriteTime = microtime.now() - starttime;
+		this.data[this.af][this.ai].files.indextoindex.ipfshash = hash;
+		this.data[this.af][this.ai].files.indextoindex.IPFSWriteTime = microtime.now() - starttime;
 	}
 
 	setCurrentDataInStats(file) {
-		this.analysis[this.af][this.ai].files.index[this.progresscount] = {};
-		this.analysis[this.af][this.ai].files.index[this.progresscount].sourceFile = sortedpath + file;
-		this.analysis[this.af][this.ai].files.index[this.progresscount].merkleTree = {};
-		this.analysis[this.af][this.ai].files.index[this.progresscount].IPFSIndex = {};
+		this.data[this.af][this.ai].files.index[this.progresscount] = {};
+		this.data[this.af][this.ai].files.index[this.progresscount].sourceFile = sortedpath + file;
+		this.data[this.af][this.ai].files.index[this.progresscount].merkleTree = {};
+		this.data[this.af][this.ai].files.index[this.progresscount].IPFSIndex = {};
 	}
 
 	setDataInStatsArrays(starttime, linecount) {
-		this.analysis[this.af][this.ai].files.index[this.progresscount].merkleTree.leafArrayReadTime = microtime.now() - starttime;
-		this.analysis[this.af][this.ai].files.index[this.progresscount].count = linecount;
+		this.data[this.af][this.ai].files.index[this.progresscount].merkleTree.leafArrayReadTime = microtime.now() - starttime;
+		this.data[this.af][this.ai].files.index[this.progresscount].count = linecount;
 	}
 
 }
 
 
-function processAllData() {
-	var stats = new Stats();
-
+function processAllData(stats) {
 	if (dataLoopCount == cfg.data.length) {
 		console.log("FINISHED");
 
-		var analysisJson = stringify(stats.analysis, {space: 4});
-		fs.writeFile (folderpath + "sorted/merkle.json", analysisJson, function(err) {
+		var dataJson = stringify(stats.data, {space: 4});
+		fs.writeFile (folderpath + "sorted/merkle.json", dataJson, function(err) {
 			if (err) throw err;
 				//
 				process.exit();
@@ -257,7 +255,7 @@ function start(file, stats) {
 
 function ipfsStatsHandler(output, hash, stats) {
 	//console.log(output);
-	stats.analysis[stats.af][stats.ai].files.indextoindex.filesize = output.cumulativeSize;
+	stats.data[stats.af][stats.ai].files.indextoindex.filesize = output.cumulativeSize;
 
 	cfg.data[dataLoopCount].indextoindex = hash;
 	cfg.data[dataLoopCount].treesandindexes = processdata.treesandindexes.length;
@@ -267,7 +265,7 @@ function ipfsStatsHandler(output, hash, stats) {
 			if (err) throw err;
 			console.log('config.js data updated');
 			dataLoopCount += 1;
-			processAllData();
+			processAllData(stats);
 		}
 	);
 }
@@ -318,7 +316,7 @@ function makeTree(dat, stats) {
 	var merkleTools = new MerkleTools(treeOptions);
 	merkleTools.addLeaves(dat.jsonhasharray, false);
 	merkleTools.makeTree();
-	stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeCreationTime = microtime.now() - starttime;
+	stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeCreationTime = microtime.now() - starttime;
 	var rootbuffer = merkleTools.getMerkleRoot();
 	dat.merkleroot = rootbuffer.toString('hex');
 	//console.log(dat.merkleroot);
@@ -335,15 +333,15 @@ function generateipfs(dat, merkleTools, stats) {
 
 	fs.writeFileSync(path, str);
 
-	stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeJSONFileCreation = microtime.now() - starttime;
+	stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeJSONFileCreation = microtime.now() - starttime;
 	starttime = microtime.now();
 
 
 	function handler1(hash) {
 		//console.log("HASH = " + hash);
 
-		stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeIPFSWriteTime = microtime.now() - starttime;
-		stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.IPFSHash = hash;
+		stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeIPFSWriteTime = microtime.now() - starttime;
+		stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.IPFSHash = hash;
 
 		function innerhandler1(output) {
 			starttime = indexHandler(output, starttime, dat, hash, tree, stats);
@@ -373,8 +371,8 @@ function generateTreeJson(merkleTools, dat) {
 
 
 function indexHandler(output, starttime, dat, hash, tree, stats) {
-	stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.filesize = output.cumulativeSize;
-	//stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.size = stats.size;
+	stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.filesize = output.cumulativeSize;
+	//stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.size = stats.size;
 	starttime = microtime.now();
 	dat.ipfshashtree = hash;
 	var index = createIndex(dat, tree);
@@ -382,7 +380,7 @@ function indexHandler(output, starttime, dat, hash, tree, stats) {
 	//console.log(path);
 	fs.writeFileSync(path, stringify(index));
 
-	stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.indexJSONFileCreation = microtime.now() - starttime;
+	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.indexJSONFileCreation = microtime.now() - starttime;
 	starttime = microtime.now();
 
 	//console.log(ipfsfilepath + res[0] + "_index.json");
@@ -410,8 +408,8 @@ function createIndex(dat, tree) {
 
 
 function fileProcessingStatsHandler(starttime, hash, dat, stats) {
-	stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.treeIPFSWriteTime = microtime.now() - starttime;
-	stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.IPFSHash = hash;
+	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.treeIPFSWriteTime = microtime.now() - starttime;
+	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.IPFSHash = hash;
 
 	function innerhandler2(output) {
 		fileProcessingHandler(output, dat, hash, stats);
@@ -421,8 +419,8 @@ function fileProcessingStatsHandler(starttime, hash, dat, stats) {
 }
 
 function fileProcessingHandler(output, dat, hash, stats) {
-	stats.analysis[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.filesize = output.cumulativeSize;
-	//analysis[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.size = stats.size;
+	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.filesize = output.cumulativeSize;
+	//data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.size = stats.size;
 	dat.ipfsindex = hash;
 	//console.log(result);
 	dat.enc = getBytes32FromIpfsHash(dat.ipfsindex);
@@ -467,4 +465,4 @@ function writejsons(hash, proof, loopcount) {
 	});
 }
 
-processAllData();
+processAllData(new Stats());
