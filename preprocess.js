@@ -76,9 +76,9 @@ class Stats {
 
 	setCurStats() {
 		var length = this.analysis[this.curFolder].variants[this.index].files.length;
-		var storedData = sortedFolder + stats.fileArray[stats.counter];
+		var storedData = sortedFolder + this.fileArray[this.counter];
 		this.analysis[this.curFolder].variants[this.index].files[length] = {};
-		this.analysis[this.curFolder].variants[this.index].files[length].filename = stats.fileArray[stats.counter];
+		this.analysis[this.curFolder].variants[this.index].files[length].filename = this.fileArray[this.counter];
 		this.analysis[this.curFolder].variants[this.index].fileSortTime = this.processTimes[this.index];
 		return storedData;
 	}
@@ -89,7 +89,7 @@ class Stats {
 
 	curStatsFromStoredData( numberOfLines ) {
 		var length = this.analysis[this.curFolder].variants[this.index].files.length;
-		var storedData = sortedFolder + stats.fileArray[stats.counter];
+		var storedData = sortedFolder + this.fileArray[this.counter];
 		this.analysis[this.curFolder].variants[this.index].files[length - 1].count = numberOfLines;
 		this.analysis[this.curFolder].variants[this.index].files[length - 1].filesize = fs.statSync(storedData).size;
 		return storedData;
@@ -98,13 +98,19 @@ class Stats {
 
 }
 
-const stats = new Stats();
+class State{
+	stats;
+	constructor (){
+		this.stats = new Stats();
+	}
 
-function processAllData() {
+}
+
+function processAllData(state) {
 	if (dataLoopCount >= cfg.data.length) {
 		console.log("FINISHED");
 		if (analysisFlag) {
-			finishAnalysis();
+			finishAnalysis(state);
 		} else {
 			process.exit();
 		}
@@ -124,15 +130,15 @@ function processAllData() {
 		lsds = cfg.data[dataLoopCount].lsd;
 		divisor = cfg.data[dataLoopCount].divisor;
 		divisorInt = BigInt(divisor);
-		setUpFolderPaths();
+		setUpFolderPaths(state);
 	}
 }
-processAllData();
+processAllData(new State());
 
-function finishAnalysis() {
-	if (stats.index >= cfg.data.length) {
+function finishAnalysis(state) {
+	if (state.stats.index >= cfg.data.length) {
 
-		fs.writeFile (folderpath + "sorted/preprocess.json", stats.getJson(), function(err) {
+		fs.writeFile (folderpath + "sorted/preprocess.json", state.stats.getJson(), function(err) {
 			if (err) throw err;
 				//
 			process.exit();
@@ -140,20 +146,20 @@ function finishAnalysis() {
 		
 		//console.log("ANALYSIS FINISHED");
 	} else {
-		lsds = cfg.data[stats.index].lsd;
-		divisor = cfg.data[stats.index].divisor;
-		indexType = cfg.data[stats.index].indexType;
+		lsds = cfg.data[state.stats.index].lsd;
+		divisor = cfg.data[state.stats.index].divisor;
+		indexType = cfg.data[state.stats.index].indexType;
 		sortedFolder = folderpath + "sorted/";
-		rdfdatafile = cfg.data[stats.index].datafile;
+		rdfdatafile = cfg.data[state.stats.index].datafile;
 		res = rdfdatafile.split(".");
 		res.pop();
 		var folder = res.join(".");
-		stats.curFolder = folder;
+		state.stats.curFolder = folder;
 		sortedFolder = sortedFolder + folder + "/";
 		
 		sortedFolder = sortedFolder + indexType + "_" + lsds + "_" + divisor +  "/";
-		stats.fileArray = new Array();
-		stats.counter = 0;
+		state.stats.fileArray = new Array();
+		state.stats.counter = 0;
 		
 		fs.readdir(sortedFolder, function (err, files) {
 			//handling error
@@ -164,42 +170,42 @@ function finishAnalysis() {
 			files.forEach(function (file) {
 				// Do whatever you want to do with the file
 				//console.log(file); 
-				stats.fileArray.push(file);
+				state.stats.fileArray.push(file);
 			});
-			analysisPerFile();
+			analysisPerFile(state);
 		});	
 	}
 }
 
 
-function analysisPerFile() {
-	if (stats.counter >= stats.fileArray.length) {
-		stats.index += 1;
-		finishAnalysis();
+function analysisPerFile(state) {
+	if (state.stats.counter >= state.stats.fileArray.length) {
+		state.stats.index += 1;
+		finishAnalysis(state);
 	} else {
-		var storedData = stats.setCurStats();
+		var storedData = state.stats.setCurStats();
 		countLinesInFile(storedData, (error, numberOfLines) => {
-			stats.curStatsFromStoredData( numberOfLines);
-			stats.counter += 1;
-			analysisPerFile();
+			state.stats.curStatsFromStoredData( numberOfLines);
+			state.stats.counter += 1;
+			analysisPerFile(state);
 		});
 	}
 }
 
 
-function setUpFolderPaths() {
+function setUpFolderPaths(state) {
 	res = rdfdatafile.split(".");
 	res.pop();
 	var folder = res.join(".");
-	stats.curFolder = folder;
+	state.stats.curFolder = folder;
 	//var folder = res[0];
 	console.log(folder);
 	
-	if (processedAllDataRelatedToFolder[stats.curFolder] === undefined) processedAllDataRelatedToFolder[stats.curFolder] = true;
+	if (processedAllDataRelatedToFolder[state.stats.curFolder] === undefined) processedAllDataRelatedToFolder[state.stats.curFolder] = true;
 	
 	sortedFolder = sortedFolder + folder + "/";
 	parentdatafolder = sortedFolder;
-	stats.resetCurStats();
+	state.stats.resetCurStats();
 
 	if (!fs.existsSync(sortedFolder)){
 		fs.mkdirSync(sortedFolder);
@@ -208,11 +214,11 @@ function setUpFolderPaths() {
 	countLinesInFile(path, (error, numberOfLines) => {
 		total = numberOfLines;
 		console.log("total lines = " + total);
-		cleanUpFilesAndFolders();
+		cleanUpFilesAndFolders(state);
 	});
 }
 
-function cleanUpFilesAndFolders() {
+function cleanUpFilesAndFolders(state) {
 	deleteFolderRecursive(sortedFolder);
 	if (!fs.existsSync(sortedFolder)){
 		fs.mkdirSync(sortedFolder);
@@ -225,17 +231,17 @@ function cleanUpFilesAndFolders() {
 				if(err.code == 'ENOENT') {
 					// file doens't exist
 					console.info("allquadhashes.txt file doesn't exist, won't remove it.");
-					readthelines();
+					readthelines(state);
 				} else {	// other errors, e.g. maybe we don't have enough permission
 					console.error("Error occurred while trying to remove file");
 				}
 			} else {
 				console.info("removed allquadhashes.txt");
-				readthelines();
+				readthelines(state);
 			}}
 		);
 	} else {
-		readthelines();
+		readthelines(state);
 	}
 }
 
@@ -290,8 +296,8 @@ function makeHashIndex(subjectTerm, predicate, objectTerm, graph) {
 }
 
 
-function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime) {
-	if (processedAllDataRelatedToFolder[stats.curFolder] === false) {
+function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime, state) {
+	if (processedAllDataRelatedToFolder[state.stats.curFolder] === false) {
 		const index = makeHashIndex(subjectTerm, predicate, objectTerm, graph);
 		fs.appendFile(sortedFolder + index + ".txt", text, function (err) {
 			if (err) return console.log(err);
@@ -299,36 +305,36 @@ function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, li
 
 		//if (linecount % 10000 == 0) console.log(linecount);
 		if (linecount == total) {
-			stats.processTimes[dataLoopCount] = microtime.now() - starttime;
+			state.stats.processTimes[dataLoopCount] = microtime.now() - starttime;
 			console.log("File read finished");
 			dataLoopCount += 1;
-			processAllData();
+			processAllData(state);
 		}
 	} else {
 		fs.appendFile(parentdatafolder + "allquadhashes.txt", text, function (err) {
 			if (err) return console.log(err);
 		});
 		if (linecount == total) {
-			stats.storeTotalAndDataFolder(total, starttime, parentdatafolder);
-			processedAllDataRelatedToFolder[stats.curFolder] = false;
+			state.stats.storeTotalAndDataFolder(total, starttime, parentdatafolder);
+			processedAllDataRelatedToFolder[state.stats.curFolder] = false;
 			fs.unlink(parentdatafolder + "allquadhashes.txt", function (err) {
 				if (err && err.code == 'ENOENT') {
 					// file doens't exist
 					console.info("allquadhashes.txt file doesn't exist, won't remove it.");
-					readthelines();
+					readthelines(state);
 				} else if (err) {
 					// other errors, e.g. maybe we don't have enough permission
 					console.error("Error occurred while trying to remove file");
 				} else {
 					console.info("removed allquadhashes.txt");
-					readthelines();
+					readthelines(state);
 				}
 			});
 		}
 	}
 }
 
-function readRow(data, linecount, starttime) {
+function readRow(data, linecount, starttime, state) {
 	var quadres = parser.parse(data);
 	var quad = quadres[0];
 	var {subjectTerm, predicate, objectTerm, graph, quadString} = makeQuadString(quad);
@@ -336,15 +342,15 @@ function readRow(data, linecount, starttime) {
 	quadHash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);
 	text = quadHash + "\n";
 
-	possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime);
+	possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime, state);
 	count++;
 }
 
-function  readthelines() {
+function  readthelines(state) {
 	var starttime = microtime.now();
 	rd = readline(path);
 	rd.on('line', function(data, linecount) {
-			readRow(data, linecount, starttime);
+			readRow(data, linecount, starttime, state);
 		}
 
 	);
