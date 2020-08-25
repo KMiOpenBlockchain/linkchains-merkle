@@ -9,6 +9,7 @@
   "private": true,
   "dependencies": {
     "bs58": "^4.0.1",
+    "collections": "^5.1.11",
     "count-lines-in-file": "^1.1.0",
     "events": "^3.2.0",
     "got": "^10.7.0",

@@ -43,7 +43,7 @@ var count =  0;
 var dataLoopCount = 0;
 var reg = new RegExp('^\\d+$');
 var allQuadHashesTestArr = new Array();
-
+var SortedMap = require("collections/sorted-map");
 
 class Stats {
 	analysis = {}
@@ -100,8 +100,12 @@ class Stats {
 
 class State{
 	stats;
+	indexes;
+	preprocess;
 	constructor (){
 		this.stats = new Stats();
+		this.indexes = new SortedMap();
+		this.jsonStatsData = new SortedMap();
 	}
 
 }
@@ -109,8 +113,14 @@ class State{
 function processAllData(state) {
 	if (dataLoopCount >= cfg.data.length) {
 		console.log("FINISHED");
+
+		writeIndexes(state.indexes);
+
 		if (analysisFlag) {
 			finishAnalysis(state);
+
+			writeStatsJson(state.jsonStatsData);
+
 		} else {
 			process.exit();
 		}
@@ -133,17 +143,30 @@ function processAllData(state) {
 		setUpFolderPaths(state);
 	}
 }
-processAllData(new State());
+
+function writeIndexes(indexes) {
+	for (let [indexKey, indexValue] of indexes.entries()) {
+		fs.appendFile(indexKey, indexValue, function (err) {
+			if (err) return console.log(err);
+		});
+	}
+}
+
+function writeStatsJson(jsonStatsData){
+	for (let [jsonKey, jsonValue] of jsonStatsData.entries()) {
+		fs.writeFile(jsonKey, jsonValue, function (err) {
+			if (err) throw err;
+			//
+			process.exit();
+		});
+	}
+}
 
 function finishAnalysis(state) {
 	if (state.stats.index >= cfg.data.length) {
 
-		fs.writeFile (folderpath + "sorted/preprocess.json", state.stats.getJson(), function(err) {
-			if (err) throw err;
-				//
-			process.exit();
-		});	
-		
+		state.jsonStatsData.add(state.stats.getJson(), folderpath + "sorted/preprocess.json");
+
 		//console.log("ANALYSIS FINISHED");
 	} else {
 		lsds = cfg.data[state.stats.index].lsd;
@@ -182,6 +205,9 @@ function analysisPerFile(state) {
 	if (state.stats.counter >= state.stats.fileArray.length) {
 		state.stats.index += 1;
 		finishAnalysis(state);
+
+		writeStatsJson(state.jsonStatsData);
+
 	} else {
 		var storedData = state.stats.setCurStats();
 		countLinesInFile(storedData, (error, numberOfLines) => {
@@ -299,9 +325,8 @@ function makeHashIndex(subjectTerm, predicate, objectTerm, graph) {
 function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime, state) {
 	if (processedAllDataRelatedToFolder[state.stats.curFolder] === false) {
 		const index = makeHashIndex(subjectTerm, predicate, objectTerm, graph);
-		fs.appendFile(sortedFolder + index + ".txt", text, function (err) {
-			if (err) return console.log(err);
-		});
+
+		state.indexes.add(text, sortedFolder + index + ".txt")
 
 		//if (linecount % 10000 == 0) console.log(linecount);
 		if (linecount == total) {
@@ -371,4 +396,4 @@ function deleteFolderRecursive(path) {
   }
 }
 
-
+processAllData(new State());
