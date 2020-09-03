@@ -83,15 +83,6 @@ class Stats {
 		return storedData;
 	}
 
-	getCurIndex() {
-		var length = this.analysis[this.curFolder].variants[this.index].files.length;
-		var storedData = sortedFolder + this.fileArray[this.counter];
-		this.analysis[this.curFolder].variants[this.index].files[length] = {};
-		this.analysis[this.curFolder].variants[this.index].files[length].filename = this.fileArray[this.counter];
-		this.analysis[this.curFolder].variants[this.index].fileSortTime = this.processTimes[this.index];
-		return this.fileArray[this.counter].split(".")[0];
-	}
-
 	getJson(){
 		return stringify(this.analysis, {space: 4});
 	}
@@ -111,6 +102,7 @@ class State{
 	stats;
 	indexes;
 	allQuadHashes;
+	quadText;
 	preprocess;
 	constructor (){
 		this.stats = new Stats();
@@ -137,6 +129,13 @@ class State{
 			return 0;
 		}
 		return data.split(/\r\n|\r|\n/).length;
+	}
+
+	numberOfQuads(data){
+		var quadres = parser.parse(data);
+		var quadNumber = quadres.length;
+		//if (quad !== undefined) {}
+		return quadNumber;
 	}
 }
 
@@ -273,11 +272,13 @@ function setUpFolderPaths(state) {
 		fs.mkdirSync(sortedFolder);
 	}
 	sortedFolder = sortedFolder + indexType + "_" + lsds + "_" + divisor +  "/";
-	countLinesInFile(path, (error, numberOfLines) => {
-		total = numberOfLines;
-		console.log("total lines = " + total);
-		cleanUpFilesAndFolders(state);
-	});
+
+	state.quadText = fs.readFileSync(path, 'UTF-8')
+
+	total = state.numberOfQuads(state.quadText);
+	console.log("total lines = " + total);
+	cleanUpFilesAndFolders(state);
+
 }
 
 function cleanUpFilesAndFolders(state) {
@@ -352,7 +353,7 @@ function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, li
 		state.indexes.add(text, sortedFolder + index + ".txt")
 
 		//if (linecount % 10000 == 0) console.log(linecount);
-		if (linecount == total) {
+		if (linecount == total - 1 ) {
 			state.stats.processTimes[dataLoopCount] = microtime.now() - starttime;
 			console.log("File read finished");
 			dataLoopCount += 1;
@@ -360,7 +361,7 @@ function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, li
 		}
 	} else {
 		state.appendAllQuadHashes(text);
-		if (linecount == total) {
+		if (linecount == total - 1) {
 			state.stats.storeTotalAndDataFolder(total, starttime, parentdatafolder, state);
 			processedAllDataRelatedToFolder[state.stats.curFolder] = false;
 			state.resetAllQuadHashes();
@@ -372,23 +373,27 @@ function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, li
 function readRow(data, linecount, starttime, state) {
 	var quadres = parser.parse(data);
 	var quad = quadres[0];
-	var {subjectTerm, predicate, objectTerm, graph, quadString} = makeQuadString(quad);
+	if (quad !== undefined) {
+		var {subjectTerm, predicate, objectTerm, graph, quadString} = makeQuadString(quad);
 
-	quadHash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);
-	text = quadHash + "\n";
+		quadHash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);
+		text = quadHash + "\n";
 
-	possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime, state);
+		possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime, state);
+		return 1;
+	}
 	count++;
+	return 0;
 }
 
 function  readthelines(state) {
 	var starttime = microtime.now();
-	rd = readline(path);
-	rd.on('line', function(data, linecount) {
-			readRow(data, linecount, starttime, state);
-		}
 
-	);
+	const rows = state.quadText.split(/\r?\n/);
+	var curQuadNumber = 0;
+	for (curRow = 0; curRow < rows.length; curRow++) {
+		curQuadNumber += readRow(rows[curRow], curQuadNumber, starttime, state);
+	}
 }
 
 
