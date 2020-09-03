@@ -68,10 +68,10 @@ class Stats {
 		this.analysis[this.curFolder].variants[folderIndex].files = new Array();
 	}
 
-	storeTotalAndDataFolder(curTotal, starttime, curParentDataFolder) {
+	storeTotalAndDataFolder(curTotal, starttime, curParentDataFolder, state) {
 		this.analysis[this.curFolder].allhashes.count = curTotal;
 		this.analysis[this.curFolder].allhashes.time = microtime.now() - starttime;
-		this.analysis[this.curFolder].allhashes.filesize = fs.statSync(curParentDataFolder + "allquadhashes.txt").size;
+		this.analysis[this.curFolder].allhashes.filesize = state.allQuadHashes.length;
 	}
 
 	setCurStats() {
@@ -101,13 +101,24 @@ class Stats {
 class State{
 	stats;
 	indexes;
+	allQuadHashes;
 	preprocess;
 	constructor (){
 		this.stats = new Stats();
 		this.indexes = new SortedMap();
 		this.jsonStatsData = new SortedMap();
 	}
+	appendAllQuadHashes(data){
+		if (this.allQuadHashes === undefined){
+			this.allQuadHashes = data;
+		} else {
+			this.allQuadHashes += data;
+		}
+	}
 
+	resetAllQuadHashes(){
+		this.allQuadHashes = undefined;
+	}
 }
 
 function processAllData(state) {
@@ -251,21 +262,8 @@ function cleanUpFilesAndFolders(state) {
 	}
 	if (allQuadHashesTestArr[parentdatafolder] == undefined) {
 		allQuadHashesTestArr[parentdatafolder] = 1;
-		fs.unlink(parentdatafolder + "allquadhashes.txt", function(err)
-		{
-			if (err) {
-				if(err.code == 'ENOENT') {
-					// file doens't exist
-					console.info("allquadhashes.txt file doesn't exist, won't remove it.");
-					readthelines(state);
-				} else {	// other errors, e.g. maybe we don't have enough permission
-					console.error("Error occurred while trying to remove file");
-				}
-			} else {
-				console.info("removed allquadhashes.txt");
-				readthelines(state);
-			}}
-		);
+		state.resetAllQuadHashes();
+		readthelines(state);
 	} else {
 		readthelines(state);
 	}
@@ -336,25 +334,12 @@ function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, li
 			processAllData(state);
 		}
 	} else {
-		fs.appendFile(parentdatafolder + "allquadhashes.txt", text, function (err) {
-			if (err) return console.log(err);
-		});
+		state.appendAllQuadHashes(text);
 		if (linecount == total) {
-			state.stats.storeTotalAndDataFolder(total, starttime, parentdatafolder);
+			state.stats.storeTotalAndDataFolder(total, starttime, parentdatafolder, state);
 			processedAllDataRelatedToFolder[state.stats.curFolder] = false;
-			fs.unlink(parentdatafolder + "allquadhashes.txt", function (err) {
-				if (err && err.code == 'ENOENT') {
-					// file doens't exist
-					console.info("allquadhashes.txt file doesn't exist, won't remove it.");
-					readthelines(state);
-				} else if (err) {
-					// other errors, e.g. maybe we don't have enough permission
-					console.error("Error occurred while trying to remove file");
-				} else {
-					console.info("removed allquadhashes.txt");
-					readthelines(state);
-				}
-			});
+			state.resetAllQuadHashes();
+			readthelines(state);
 		}
 	}
 }
