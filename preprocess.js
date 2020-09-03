@@ -111,7 +111,6 @@ class State{
 	stats;
 	indexes;
 	allQuadHashes;
-	storedDataMap;
 	preprocess;
 	constructor (){
 		this.stats = new Stats();
