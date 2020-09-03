@@ -83,15 +83,24 @@ class Stats {
 		return storedData;
 	}
 
+	getCurIndex() {
+		var length = this.analysis[this.curFolder].variants[this.index].files.length;
+		var storedData = sortedFolder + this.fileArray[this.counter];
+		this.analysis[this.curFolder].variants[this.index].files[length] = {};
+		this.analysis[this.curFolder].variants[this.index].files[length].filename = this.fileArray[this.counter];
+		this.analysis[this.curFolder].variants[this.index].fileSortTime = this.processTimes[this.index];
+		return this.fileArray[this.counter].split(".")[0];
+	}
+
 	getJson(){
 		return stringify(this.analysis, {space: 4});
 	}
 
-	curStatsFromStoredData( numberOfLines ) {
+	curStatsFromStoredData( numberOfLines, state) {
 		var length = this.analysis[this.curFolder].variants[this.index].files.length;
 		var storedData = sortedFolder + this.fileArray[this.counter];
 		this.analysis[this.curFolder].variants[this.index].files[length - 1].count = numberOfLines;
-		this.analysis[this.curFolder].variants[this.index].files[length - 1].filesize = fs.statSync(storedData).size;
+		this.analysis[this.curFolder].variants[this.index].files[length - 1].filesize = state.indexes.get(storedData).length;
 		return storedData;
 	}
 
@@ -102,11 +111,13 @@ class State{
 	stats;
 	indexes;
 	allQuadHashes;
+	storedDataMap;
 	preprocess;
 	constructor (){
 		this.stats = new Stats();
 		this.indexes = new SortedMap();
 		this.jsonStatsData = new SortedMap();
+		this.storedDataMap = new SortedMap();
 	}
 	appendAllQuadHashes(data){
 		if (this.allQuadHashes === undefined){
@@ -119,22 +130,35 @@ class State{
 	resetAllQuadHashes(){
 		this.allQuadHashes = undefined;
 	}
+
+	numberOfRows(data){
+		if (data === undefined ){
+			// Not reading all indexes issue
+			console.log("Issue");
+			return 0;
+		}
+		return data.split(/\r\n|\r|\n/).length;
+	}
+}
+
+function endProgram(state) {
+	console.log("FINISHED");
+
+	writeIndexes(state.indexes);
+
+	if (analysisFlag) {
+		finishAnalysis(state);
+
+		writeStatsJson(state.jsonStatsData);
+
+	} else {
+		//process.exit();
+	}
 }
 
 function processAllData(state) {
 	if (dataLoopCount >= cfg.data.length) {
-		console.log("FINISHED");
-
-		writeIndexes(state.indexes);
-
-		if (analysisFlag) {
-			finishAnalysis(state);
-
-			writeStatsJson(state.jsonStatsData);
-
-		} else {
-			process.exit();
-		}
+		endProgram(state);
 	} else {
 		//console.log(cfg.data[i]);
 		console.log(dataLoopCount);
@@ -194,7 +218,8 @@ function finishAnalysis(state) {
 		sortedFolder = sortedFolder + indexType + "_" + lsds + "_" + divisor +  "/";
 		state.stats.fileArray = new Array();
 		state.stats.counter = 0;
-		
+
+
 		fs.readdir(sortedFolder, function (err, files) {
 			//handling error
 			if (err) {
@@ -221,11 +246,12 @@ function analysisPerFile(state) {
 
 	} else {
 		var storedData = state.stats.setCurStats();
-		countLinesInFile(storedData, (error, numberOfLines) => {
-			state.stats.curStatsFromStoredData( numberOfLines);
-			state.stats.counter += 1;
-			analysisPerFile(state);
-		});
+		if (state.indexes.get(storedData) !== undefined ){
+			var numberOfRows = state.numberOfRows(state.indexes.get(storedData));
+			state.stats.curStatsFromStoredData( numberOfRows, state);
+		}
+		state.stats.counter += 1;
+		analysisPerFile(state);
 	}
 }
 
@@ -381,4 +407,10 @@ function deleteFolderRecursive(path) {
   }
 }
 
-processAllData(new State());
+function processAllDataJson(){
+	var state = new State();
+	processAllData(state);
+//	endProgram(state);
+}
+
+processAllDataJson()
