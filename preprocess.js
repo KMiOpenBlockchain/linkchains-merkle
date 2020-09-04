@@ -108,7 +108,6 @@ class State{
 		this.stats = new Stats();
 		this.indexes = new SortedMap();
 		this.jsonStatsData = new SortedMap();
-		this.storedDataMap = new SortedMap();
 	}
 	appendAllQuadHashes(data){
 		if (this.allQuadHashes === undefined){
@@ -134,7 +133,6 @@ class State{
 	numberOfQuads(data){
 		var quadres = parser.parse(data);
 		var quadNumber = quadres.length;
-		//if (quad !== undefined) {}
 		return quadNumber;
 	}
 }
@@ -156,7 +154,7 @@ function endProgram(state) {
 
 function processAllData(state) {
 	if (dataLoopCount >= cfg.data.length) {
-		endProgram(state);
+		//endProgram(state);
 	} else {
 		//console.log(cfg.data[i]);
 		console.log(dataLoopCount);
@@ -414,7 +412,7 @@ function deleteFolderRecursive(path) {
 function processAllDataJson(){
 	var state = new State();
 	processAllData(state);
-//	endProgram(state);
+	endProgram(state);
 }
 
 processAllDataJson()
