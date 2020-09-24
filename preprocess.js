@@ -101,6 +101,7 @@ class Stats {
 class State{
 	stats;
 	indexes;
+	folder;
 	allQuadHashes;
 	quadText;
 	preprocess;
@@ -108,6 +109,7 @@ class State{
 		this.stats = new Stats();
 		this.indexes = new SortedMap();
 		this.jsonStatsData = new SortedMap();
+		this.folder="";
 	}
 	appendAllQuadHashes(data){
 		if (this.allQuadHashes === undefined){
@@ -137,26 +139,22 @@ class State{
 	}
 }
 
-function endProgram(state) {
+function getJsonIndices(state) {
 	console.log("FINISHED");
 
-	writeIndexes(state.indexes);
+	return writeIndexes(state.folder, state.indexes);
 
-	if (analysisFlag) {
-		finishAnalysis(state);
-
-		writeStatsJson(state.jsonStatsData);
-
-	} else {
-		//process.exit();
-	}
+	// if (analysisFlag) {
+	// 	finishAnalysis(state);
+	//
+	// 	writeStatsJson(state.jsonStatsData);
+	//
+	// } else {
+	// 	//process.exit();
+	// }
 }
 
-function processAllData(state) {
-	if (dataLoopCount >= cfg.data.length) {
-		//endProgram(state);
-	} else {
-		//console.log(cfg.data[i]);
+function makeDataReady(state) {
 		console.log(dataLoopCount);
 		count = 0;
 		total = 0;
@@ -172,25 +170,27 @@ function processAllData(state) {
 		divisor = cfg.data[dataLoopCount].divisor;
 		divisorInt = BigInt(divisor);
 		setUpFolderPaths(state);
-	}
 }
 
-function writeIndexes(indexes) {
-	for (let [indexKey, indexValue] of indexes.entries()) {
-		fs.appendFile(indexKey, indexValue, function (err) {
-			if (err) return console.log(err);
-		});
-	}
+function writeIndexes(folder, indexes) {
+	// for (let [indexKey, indexValue] of indexes.entries()) {
+	// 	fs.appendFile(indexKey, indexValue, function (err) {
+	// 		if (err) return console.log(err);
+	// 	});
+	// }
+	var jsonIndices = JSON.stringify(indexes, null, 3);
+
+	return jsonIndices;
 }
 
 function writeStatsJson(jsonStatsData){
-	for (let [jsonKey, jsonValue] of jsonStatsData.entries()) {
-		fs.writeFile(jsonKey, jsonValue, function (err) {
-			if (err) throw err;
-			//
-			process.exit();
-		});
-	}
+	// for (let [jsonKey, jsonValue] of jsonStatsData.entries()) {
+	// 	fs.writeFile(jsonKey, jsonValue, function (err) {
+	// 		if (err) throw err;
+	// 		//
+	// 		process.exit();
+	// 	});
+	// }
 }
 
 function finishAnalysis(state) {
@@ -252,6 +252,15 @@ function analysisPerFile(state) {
 }
 
 
+function getQuadText(path) {
+	return fs.readFileSync(path, 'UTF-8');
+}
+
+function getNumberOfQuads(state) {
+	total = state.numberOfQuads(state.quadText);
+	console.log("total lines = " + total);
+}
+
 function setUpFolderPaths(state) {
 	res = rdfdatafile.split(".");
 	res.pop();
@@ -271,25 +280,24 @@ function setUpFolderPaths(state) {
 	}
 	sortedFolder = sortedFolder + indexType + "_" + lsds + "_" + divisor +  "/";
 
-	state.quadText = fs.readFileSync(path, 'UTF-8')
-
-	total = state.numberOfQuads(state.quadText);
-	console.log("total lines = " + total);
-	cleanUpFilesAndFolders(state);
+	state.quadText = getQuadText(path);
 
 }
 
-function cleanUpFilesAndFolders(state) {
-	deleteFolderRecursive(sortedFolder);
-	if (!fs.existsSync(sortedFolder)){
-		fs.mkdirSync(sortedFolder);
-	}
+function clearHashesAndReadRows(state) {
 	if (allQuadHashesTestArr[parentdatafolder] == undefined) {
 		allQuadHashesTestArr[parentdatafolder] = 1;
 		state.resetAllQuadHashes();
 		readthelines(state);
 	} else {
 		readthelines(state);
+	}
+}
+
+function cleanUpFilesAndFolders(state) {
+	deleteFolderRecursive(sortedFolder);
+	if (!fs.existsSync(sortedFolder)){
+		fs.mkdirSync(sortedFolder);
 	}
 }
 
@@ -348,14 +356,13 @@ function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, li
 	if (processedAllDataRelatedToFolder[state.stats.curFolder] === false) {
 		const index = makeHashIndex(subjectTerm, predicate, objectTerm, graph);
 
-		state.indexes.add(text, sortedFolder + index + ".txt")
+		state.indexes.add(text, index.toString());
+		state.folder = sortedFolder;
 
 		//if (linecount % 10000 == 0) console.log(linecount);
 		if (linecount == total - 1 ) {
 			state.stats.processTimes[dataLoopCount] = microtime.now() - starttime;
 			console.log("File read finished");
-			dataLoopCount += 1;
-			processAllData(state);
 		}
 	} else {
 		state.appendAllQuadHashes(text);
@@ -409,10 +416,43 @@ function deleteFolderRecursive(path) {
   }
 }
 
-function processAllDataJson(){
-	var state = new State();
-	processAllData(state);
-	endProgram(state);
+function writeJsonIndices(state, jsonIndices) {
+	fs.appendFile(state.folder + "indices.json", jsonIndices, function (err) {
+		if (err) return console.log(err);
+	});
 }
 
-processAllDataJson()
+function makeHashReady() {
+	lsds = cfg.data[dataLoopCount].lsd;
+	indexType = cfg.data[dataLoopCount].indexType;
+	divisor = cfg.data[dataLoopCount].divisor;
+	divisorInt = BigInt(divisor);
+}
+
+function processAllDataJson(state) {
+	getNumberOfQuads(state);
+	makeHashReady();
+	clearHashesAndReadRows(state);
+	var jsonIndices = getJsonIndices(state);
+	return jsonIndices;
+}
+
+function processAndWriteAllData(){
+	var state = new State();
+	makeDataReady(state);
+	cleanUpFilesAndFolders(state);
+	var jsonIndices = processAllDataJson(state);
+	writeJsonIndices(state, jsonIndices);
+}
+
+function processAllData(quads){
+	var state = new State();
+	state.stats.resetCurStats();
+	state.quadText = quads;
+	var jsonIndices = processAllDataJson(state);
+	return jsonIndices;
+}
+
+//processAndWriteAllData();
+
+exports.processAllData = processAllData
