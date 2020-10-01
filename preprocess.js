@@ -137,6 +137,13 @@ class State{
 		var quadNumber = quadres.length;
 		return quadNumber;
 	}
+
+	addToIndices(key, value){
+		if (!this.indexes.has(key)){
+			this.indexes.set(key,[]);
+		}
+		this.indexes.get(key).push(value);
+	}
 }
 
 function getJsonIndices(state) {
@@ -356,7 +363,7 @@ function possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, li
 	if (processedAllDataRelatedToFolder[state.stats.curFolder] === false) {
 		const index = makeHashIndex(subjectTerm, predicate, objectTerm, graph);
 
-		state.indexes.add(text, index.toString());
+		state.addToIndices(index.toString(), text);
 		state.folder = sortedFolder;
 
 		//if (linecount % 10000 == 0) console.log(linecount);
