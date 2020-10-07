@@ -389,7 +389,7 @@ function readRow(data, linecount, starttime, state) {
 		var {subjectTerm, predicate, objectTerm, graph, quadString} = makeQuadString(quad);
 
 		quadHash = pluggable.quadHash.thefunction(quadString, pluggable.quadHash.parameters);
-		text = quadHash + "\n";
+		text = quadHash;
 
 		possiblyAppendHashIndexes(subjectTerm, predicate, objectTerm, graph, linecount, starttime, state);
 		return 1;
