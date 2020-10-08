@@ -2,7 +2,7 @@ require("./config.js");
 
 var settings = {
     "pluggableFunctions": {
-        "getFileHash": addFileToIPFS
+        "getFileHash": addObjectToIPFS
     },
 }
 
@@ -11,6 +11,15 @@ async function addFileToIPFS(file, hashonly, returnhandler) {
 		hash = bs58.encode(result.cid.multihash);
 		returnhandler(hash);
 	}
+}
+
+async function addObjectToIPFS(object, hashonly, returnhandler) {
+	var localObject = new Object();
+	localObject.Data = object;
+	localObject.Links = [];
+	const cid = await ipfs.object.put(localObject);
+	hash = bs58.encode(cid.multihash);
+	returnhandler(hash);
 }
 
 var MerkleTools = require('merkle-tools/merkletools');
@@ -97,15 +106,37 @@ class Stats {
 
 }
 
+class TreeInfo{
+	tree = {};
+	generatedInfo = [];
+
+	addTree(passedTree){
+		this.tree = passedTree;
+	}
+
+	addGeneratedInfo(passedGeneratedInfo){
+		this.generatedInfo.push(passedGeneratedInfo);
+	}
+}
+
 class State {
-	loadedHashes ={}
+	loadedHashes ={};
+	treeInfoArray = [];
+	indexToIndex = {};
 
 	loadHashes (folder){
 		var jsonString = fs.readFileSync(folder + "indices.json", 'UTF-8');
 		this.loadedHashes = JSON.parse(jsonString);
 	}
-}
 
+	addTreeInfo(treeInfo){
+		this.treeInfoArray.push(treeInfo);
+	}
+
+	addIndexToIndex(indexToIndex){
+		this.indexToIndex = indexToIndex;
+	}
+}
 
 function processAllData(stats, state) {
 	if (dataLoopCount == cfg.data.length) {
@@ -117,7 +148,15 @@ function processAllData(stats, state) {
 				//
 				process.exit();
 			}
-		);			
+		);
+
+		var stateJson = stringify(state, {space: 4});
+		fs.writeFile (folderpath + "sorted/state.json", stateJson, function(err) {
+				if (err) throw err;
+				//
+				process.exit();
+			}
+		);
 		
 	} else {
 		//console.log(cfg.data[i]);
@@ -155,7 +194,9 @@ function setUpFolderPaths(stats, state) {
 
 	ipfsfilepath = ipfsfilepath + indexType + "_" + lsds + "_" + divisor + "/";
 
-	deleteFolderRecursive(ipfsfilepath);
+	//TODO not needed
+	// deleteFolderRecursive(ipfsfilepath);
+
 	mkDirIfNotPresent(ipfsfilepath);
 
 	state.loadHashes(sortedpath);
@@ -207,15 +248,21 @@ function deleteFolderRecursive(path) {
 function processfiles(stats, state) {
 	if (stats.progresscount === count) {
 		var indextoindex = createIndexToIndex();
-		path = ipfsfilepath + "indextoindex.json";
-		fs.writeFileSync(path, stringify(indextoindex, {space: 4}));
+		state.addIndexToIndex(indextoindex);
+
+		//TODO not needed
+		//path = ipfsfilepath + "indextoindex.json";
+		//fs.writeFileSync(path, stringify(indextoindex, {space: 4}));
 
 		var starttime = microtime.now();
 
 		function handler(hash) {
 			ipfsHandler(hash, starttime, stats, state);
 		}
-		pluggable.getFileHash(path, onlyHashIndexToIndex, handler);
+		pluggable.getFileHash(indextoindex, onlyHashIndexToIndex, handler);
+
+		// TODO not needed
+		// pluggable.getFileHash(path, onlyHashIndexToIndex, handler);
 	} else {
 		start(state.loadedHashes[stats.progresscount], stats, state);
 	}
@@ -362,10 +409,16 @@ function generateipfs(dat, merkleTools, stats, state) {
 	var starttime = microtime.now();
 	const {tree, str} = generateTreeJson(merkleTools, dat);
 
-	res = dat.file.split(".");
-	path = ipfsfilepath + res[0] + ".json";
+	var treeInfo = new TreeInfo();
+	treeInfo.addTree(tree);
+	state.addTreeInfo(treeInfo);
 
-	fs.writeFileSync(path, str);
+
+	// TODO not needed
+	// res = dat.file.split(".");
+	// path = ipfsfilepath + res[0] + ".json";
+	// fs.writeFileSync(path, str);
+
 
 	stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeJSONFileCreation = microtime.now() - starttime;
 	starttime = microtime.now();
@@ -378,11 +431,14 @@ function generateipfs(dat, merkleTools, stats, state) {
 		stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.IPFSHash = hash;
 
 		function innerhandler1(output) {
-			starttime = indexHandler(output, starttime, dat, hash, tree, stats, state);
+			starttime = indexHandler(output, starttime, dat, hash, tree, stats, state, treeInfo);
 		}
 		fileStatsIPFS(hash, onlyHashMerkle, innerhandler1);
 	}
-	pluggable.getFileHash(path, onlyHashMerkle, handler1);
+
+	pluggable.getFileHash(tree, onlyHashMerkle, handler1);
+	//TODO not needed
+	// pluggable.getFileHash(path, onlyHashMerkle, handler1);
 
 }
 
@@ -404,15 +460,18 @@ function generateTreeJson(merkleTools, dat) {
 }
 
 
-function indexHandler(output, starttime, dat, hash, tree, stats, state) {
+function indexHandler(output, starttime, dat, hash, tree, stats, state, treeInfo) {
 	stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.filesize = output.cumulativeSize;
 	//stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.size = stats.size;
 	starttime = microtime.now();
 	dat.ipfshashtree = hash;
 	var index = createIndex(dat, tree);
-	path = ipfsfilepath + res[0] + "_index.json";
-	//console.log(path);
-	fs.writeFileSync(path, stringify(index));
+	treeInfo.addGeneratedInfo(index);
+
+	// TODO not needed
+	// path = ipfsfilepath + res[0] + "_index.json";
+	// //console.log(path);
+	// fs.writeFileSync(path, stringify(index));
 
 	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.indexJSONFileCreation = microtime.now() - starttime;
 	starttime = microtime.now();
@@ -424,7 +483,9 @@ function indexHandler(output, starttime, dat, hash, tree, stats, state) {
 		fileProcessingStatsHandler(starttime, hash, dat, stats, state);
 	}
 
-	pluggable.getFileHash(path, onlyHashMerkle, handler2);
+	pluggable.getFileHash(index, onlyHashMerkle, handler2);
+	// TODO not needed
+	// pluggable.getFileHash(path, onlyHashMerkle, handler2);
 	return starttime;
 }
 
