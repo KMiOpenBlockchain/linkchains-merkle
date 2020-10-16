@@ -13,19 +13,27 @@ async function addFileToIPFS(file, hashonly, returnhandler) {
 	}
 }
 
-async function addObjectToIPFS(object, hashonly, returnhandler) {
-	var localObject = new Object();
-	localObject.Data = object;
-	localObject.Links = [];
-	const cid = await ipfs.object.put(localObject);
-	hash = bs58.encode(cid.multihash);
-	returnhandler(hash);
+async function addObjectToIPFS(jsonObject, hashonly, returnhandler) {
+	for await (const result of ipfs.add([JSON.stringify(jsonObject)], { onlyHash: hashonly })) {
+		hash = bs58.encode(result.cid.multihash);
+		returnhandler(hash);
+	}
 }
+
+// async function addObjectToIPFS(object, hashonly, returnhandler) {
+// 	var localObject = new Object();
+// 	localObject.Data = object;
+// 	localObject.Links = [];
+// 	const cid = await ipfs.object.put(localObject);
+// 	hash = bs58.encode(cid.multihash);
+// 	returnhandler(hash);
+// }
 
 var MerkleTools = require('merkle-tools/merkletools');
 var fs = require('fs');
 var stringify=require('json-stable-stringify');
 
+var onComplete = function(){};
 const web3_extended = require('web3_ipc');
 //var keccak256 = require('js-sha3').keccak_256;
 const countLinesInFile = require('count-lines-in-file');
@@ -39,6 +47,7 @@ var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:56000')
 var ipfsurl = "http://" + cfg.ipfs.domain + ":" + cfg.ipfs.APIPort;
 //var ipfs = ipfsClient(cfg.ipfsDomain, cfg.ipfsAPIPort, { protocol: 'http' });
 var ipfs = ipfsClient(ipfsurl);
+const util = require('util');
 var randomHash = web3.utils.sha3("dummy data");  // web3 keccak256
 var reg = new RegExp('^\\d+$');
 
@@ -138,27 +147,13 @@ class State {
 	}
 }
 
-function processAllData(stats, state) {
-	if (dataLoopCount == cfg.data.length) {
-		console.log("FINISHED");
+function endProcess(stats, state) {
+	onComplete();
+	//process.exit();
+}
 
-		var dataJson = stringify(stats.data, {space: 4});
-		fs.writeFile (folderpath + "sorted/merkle.json", dataJson, function(err) {
-			if (err) throw err;
-				//
-				process.exit();
-			}
-		);
-
-		var stateJson = stringify(state, {space: 4});
-		fs.writeFile (folderpath + "sorted/state.json", stateJson, function(err) {
-				if (err) throw err;
-				//
-				process.exit();
-			}
-		);
-		
-	} else {
+async function processAllData(stats, state) {
+	if (dataLoopCount !== cfg.data.length) {
 		//console.log(cfg.data[i]);
 		count = 0;
 		stats.progresscount = 0;
@@ -175,7 +170,7 @@ function processAllData(stats, state) {
 	}
 }
 
-function setUpFolderPaths(stats, state) {
+async function setUpFolderPaths(stats, state) {
 	res = rdfdatafile.split(".");
 	res.pop();
 	var folder = res.join(".");
@@ -203,7 +198,7 @@ function setUpFolderPaths(stats, state) {
 
 	count = state.loadedHashes.length;
 
-	processfiles(stats, state);
+	await processfiles(stats, state);
 	// fs.readdir(sortedpath, function (err, files) {
 	// 	//console.log(files);
 	// 	//handling error
@@ -245,7 +240,7 @@ function deleteFolderRecursive(path) {
 	}
 }
 
-function processfiles(stats, state) {
+async function processfiles(stats, state) {
 	if (stats.progresscount === count) {
 		var indextoindex = createIndexToIndex();
 		state.addIndexToIndex(indextoindex);
@@ -256,8 +251,8 @@ function processfiles(stats, state) {
 
 		var starttime = microtime.now();
 
-		function handler(hash) {
-			ipfsHandler(hash, starttime, stats, state);
+		async function handler(hash) {
+			await ipfsHandler(hash, starttime, stats, state);
 		}
 		pluggable.getFileHash(indextoindex, onlyHashIndexToIndex, handler);
 
@@ -276,13 +271,13 @@ function createIndexToIndex() {
 	return indextoindex;
 }
 
-function ipfsHandler(hash, starttime, stats, state) {
+async function ipfsHandler(hash, starttime, stats, state) {
 	//console.log("HASH = " + hash);
 	stats.setHashAndTimeInStatsData(hash, starttime);
 	processdata.ipfsindextoindex = hash;
 
-	function innerhandler(output) {
-		ipfsStatsHandler(output, hash, stats, state);
+	async function innerhandler(output) {
+		await ipfsStatsHandler(output, hash, stats, state);
 	}
 
 	fileStatsIPFS(hash, onlyHashIndexToIndex, innerhandler);
@@ -330,21 +325,40 @@ function start(curHashSequence, stats, state) {
 	// });
 }
 
-function ipfsStatsHandler(output, hash, stats, state) {
+async function ipfsStatsHandler(output, hash, stats, state) {
 	//console.log(output);
 	stats.data[stats.af][stats.ai].files.indextoindex.filesize = output.cumulativeSize;
 
 	cfg.data[dataLoopCount].indextoindex = hash;
 	cfg.data[dataLoopCount].treesandindexes = processdata.treesandindexes.length;
 
-	var json = "cfg = " + stringify(cfg, {space: 4});
-	fs.writeFile("./config.js", json, function (err) {
-			if (err) throw err;
-			console.log('config.js data updated');
+
+
+
 			dataLoopCount += 1;
-			processAllData(stats, state);
-		}
-	);
+			await processAllData(stats, state);
+			if (dataLoopCount == cfg.data.length) {
+				console.log("FINISHED");
+				endProcess(stats, state);
+
+			}
+
+
+
+
+	// var json = "cfg = " + stringify(cfg, {space: 4});
+	// fs.writeFile("./config.js", json, async function (err) {
+	// 		if (err) throw err;
+	// 		console.log('config.js data updated');
+	// 		dataLoopCount += 1;
+	// 		await processAllData(stats, state);
+	// 		if (dataLoopCount == cfg.data.length) {
+	// 			console.log("FINISHED");
+	// 			writeData(stats, state);
+	//
+	// 		}
+	// 	}
+	// );
 }
 
 async function fileStatsIPFS(hash, hashonly, returnhandler) {
@@ -560,4 +574,21 @@ function writejsons(hash, proof, loopcount) {
 	});
 }
 
-processAllData(new Stats(), new State());
+async function processAllDataMain(getResult){
+
+	var stats = new Stats();
+	var state = new State();
+	await processAllData(stats, state);
+
+	async function returnJson(){
+		var stateJson = stringify(state, {space: 4});
+		console.log('Returning Json');
+		getResult(stateJson);
+	}
+
+	onComplete = returnJson;
+}
+
+
+exports.processAllDataMain = processAllDataMain
+//processAllDataMain();
