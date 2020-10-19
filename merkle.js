@@ -138,6 +138,10 @@ class State {
 		this.loadedHashes = JSON.parse(jsonString);
 	}
 
+	storeHashes (dataJson){
+		this.loadedHashes = JSON.parse(dataJson);
+	}
+
 	addTreeInfo(treeInfo){
 		this.treeInfoArray.push(treeInfo);
 	}
@@ -166,11 +170,15 @@ async function processAllData(stats, state) {
 		indexType = cfg.data[dataLoopCount].indexType;
 		lsds = cfg.data[dataLoopCount].lsd;
 		divisor = cfg.data[dataLoopCount].divisor;
+
+		makeReadyforReading(stats);
+		state.loadHashes(sortedpath);
+
 		setUpFolderPaths(stats, state);
 	}
 }
 
-async function setUpFolderPaths(stats, state) {
+function makeReadyforReading(stats) {
 	res = rdfdatafile.split(".");
 	res.pop();
 	var folder = res.join(".");
@@ -193,8 +201,9 @@ async function setUpFolderPaths(stats, state) {
 	// deleteFolderRecursive(ipfsfilepath);
 
 	mkDirIfNotPresent(ipfsfilepath);
+}
 
-	state.loadHashes(sortedpath);
+async function setUpFolderPaths(stats, state) {
 
 	count = state.loadedHashes.length;
 
@@ -574,11 +583,32 @@ function writejsons(hash, proof, loopcount) {
 	});
 }
 
+function readCfg(stats) {
+	//console.log(cfg.data[i]);
+	count = 0;
+	stats.progresscount = 0;
+	sortedpath = folderpath + "sorted/";
+	ipfsfilepath = folderpath + "foripfs/";
+	fileArray = new Array();
+	processdata = {};
+	processdata.treesandindexes = new Array();
+	rdfdatafile = cfg.data[dataLoopCount].datafile;
+	indexType = cfg.data[dataLoopCount].indexType;
+	lsds = cfg.data[dataLoopCount].lsd;
+	divisor = cfg.data[dataLoopCount].divisor;
+}
+
 async function processAllDataMain(getResult){
 
 	var stats = new Stats();
 	var state = new State();
-	await processAllData(stats, state);
+
+	if (dataLoopCount !== cfg.data.length) {
+		readCfg(stats);
+		makeReadyforReading(stats);
+		state.loadHashes(sortedpath);
+		setUpFolderPaths(stats, state);
+	}
 
 	async function returnJson(){
 		var stateJson = stringify(state, {space: 4});
@@ -589,6 +619,24 @@ async function processAllDataMain(getResult){
 	state.onComplete = returnJson;
 }
 
+async function processAllDataFromJson(hashes, getResult){
 
-exports.processAllDataMain = processAllDataMain
+	var stats = new Stats();
+	var state = new State();
+
+	readCfg(stats);
+	stats.resetStatsData();
+	state.storeHashes(hashes);
+	setUpFolderPaths(stats, state);
+
+	async function returnJson(){
+		var stateJson = stringify(state, {space: 4});
+		console.log('Returning Json');
+		getResult(stateJson);
+	}
+
+	state.onComplete = returnJson;
+}
+
+exports.processAllDataFromJson = processAllDataFromJson
 //processAllDataMain();
