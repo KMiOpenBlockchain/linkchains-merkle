@@ -33,7 +33,6 @@ var MerkleTools = require('merkle-tools/merkletools');
 var fs = require('fs');
 var stringify=require('json-stable-stringify');
 
-var onComplete = function(){};
 const web3_extended = require('web3_ipc');
 //var keccak256 = require('js-sha3').keccak_256;
 const countLinesInFile = require('count-lines-in-file');
@@ -132,6 +131,7 @@ class State {
 	loadedHashes ={};
 	treeInfoArray = [];
 	indexToIndex = {};
+	onComplete = function(){};
 
 	loadHashes (folder){
 		var jsonString = fs.readFileSync(folder + "indices.json", 'UTF-8');
@@ -148,7 +148,7 @@ class State {
 }
 
 function endProcess(stats, state) {
-	onComplete();
+	state.onComplete();
 	//process.exit();
 }
 
@@ -586,7 +586,7 @@ async function processAllDataMain(getResult){
 		getResult(stateJson);
 	}
 
-	onComplete = returnJson;
+	state.onComplete = returnJson;
 }
 
 
