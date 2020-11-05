@@ -41,13 +41,10 @@ const ipfsClient = require('ipfs-http-client');
 const globSource = require('ipfs-utils/src/files/glob-source');
 const bs58 = require('bs58');
 var microtime = require('microtime');
-const Web3 = require('web3');
-var web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:56000'));
 var ipfsurl = "http://" + cfg.ipfs.domain + ":" + cfg.ipfs.APIPort;
 //var ipfs = ipfsClient(cfg.ipfsDomain, cfg.ipfsAPIPort, { protocol: 'http' });
 var ipfs = ipfsClient(ipfsurl);
 const util = require('util');
-var randomHash = web3.utils.sha3("dummy data");  // web3 keccak256
 var reg = new RegExp('^\\d+$');
 
 var treeOptions = {
