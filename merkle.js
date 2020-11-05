@@ -635,5 +635,18 @@ async function processAllDataFromJson(hashes, getResult){
 	state.onComplete = returnJson;
 }
 
+async function processAllDataReturnJson(hashes){
+
+	var result ={};
+
+	function getResult(passedResult){
+		result = passedResult;
+	}
+
+	await processAllDataFromJson(hashes, getResult);
+
+	return result;
+}
+
 exports.processAllDataFromJson = processAllDataFromJson
-//processAllDataMain();
+exports.processAllDataReturnJson = processAllDataReturnJson
