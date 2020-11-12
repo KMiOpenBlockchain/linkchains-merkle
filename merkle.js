@@ -57,6 +57,7 @@ var ipfsfilepath;
 var parentdatafolder;
 var parentipfsdatafolder;
 var rdfdatafile;
+var jsonldcontext;
 var indexType;
 var lsds;
 var divisor;
@@ -121,14 +122,35 @@ class TreeInfo{
 
 	addGeneratedInfo(passedGeneratedInfo){
 		this.generatedInfo.push(passedGeneratedInfo);
+		this.tree.merkleroot = passedGeneratedInfo.merkleroot;
+		this.tree.merkleipfs = passedGeneratedInfo.merkleipfs;
+		this.tree.index = passedGeneratedInfo.index;
+	}
+
+	toObject() {
+		var treeObj = {};
+		treeObj.index = this.tree.index;
+		treeObj.containerhash = this.tree.merkleipfs;
+		treeObj.containerhashalg = "IPFSHash";  //Made up, clearly wrong, and needs to be sensitive to pluggable hash functions :-)
+		treeObj.merkleroot = this.tree.merkleroot;
+		treeObj.leaves = {
+			"@list" : this.tree.leaves
+		};
+		return treeObj;
 	}
 }
 
 class State {
+	config = {};
 	loadedHashes ={};
 	treeInfoArray = [];
 	indexToIndex = {};
+	indexToIndexHash = 0;
 	onComplete = function(){};
+
+	setConfig(configObj) {
+		this.config = configObj;
+	}
 
 	loadHashes (folder){
 		var jsonString = fs.readFileSync(folder + "indices.json", 'UTF-8');
@@ -145,6 +167,26 @@ class State {
 
 	addIndexToIndex(indexToIndex){
 		this.indexToIndex = indexToIndex;
+	}
+
+	addIndexToIndexHash(hash) {
+		this.indexToIndexHash = hash;
+	}
+
+
+
+	toObject() {
+		var results = {};
+		results["@context"] = jsonldcontext;
+		results.indexToTrees = {};
+		results.indexToTrees.indexhash = this.indexToIndexHash;
+		results.indexToTrees.indexhashalg = "IPFSHash"; //Made up, clearly wrong, and needs to be sensitive to pluggable hash functions :-)
+		results.indexToTrees.treesettings = this.config;
+		results.indexToTrees.trees = [];
+		for (var i = 0; i < this.treeInfoArray.length; i++) {
+			results.indexToTrees.trees.push(this.treeInfoArray[i].toObject());
+		}
+		return results;
 	}
 }
 
@@ -281,6 +323,7 @@ async function ipfsHandler(hash, starttime, stats, state) {
 	//console.log("HASH = " + hash);
 	stats.setHashAndTimeInStatsData(hash, starttime);
 	processdata.ipfsindextoindex = hash;
+	state.addIndexToIndexHash(hash);
 
 	async function innerhandler(output) {
 		await ipfsStatsHandler(output, hash, stats, state);
@@ -513,6 +556,7 @@ function createIndex(dat, tree) {
 	var index = {};
 	index.merkleipfs = dat.ipfshashtree;
 	index.merkleroot = dat.merkleroot;
+	index.index = dat.indexIndex;
 	var leaveslevel = tree.levels.length - 1;
 	index.data = {};
 	for (var x = 0; x < dat.total; x++) {
@@ -590,6 +634,7 @@ function readCfg(stats) {
 	processdata = {};
 	processdata.treesandindexes = new Array();
 	rdfdatafile = cfg.data[dataLoopCount].datafile;
+	jsonldcontext = cfg.jsonldcontext;
 	indexType = cfg.data[dataLoopCount].indexType;
 	lsds = cfg.data[dataLoopCount].lsd;
 	divisor = cfg.data[dataLoopCount].divisor;
@@ -602,13 +647,18 @@ async function processAllDataMain(getResult){
 
 	if (dataLoopCount !== cfg.data.length) {
 		readCfg(stats);
+		var config = {};
+		config.indexType = indexType;
+		config.lsds = lsds;
+		config.divisor = divisor;
+		state.setConfig(config);
 		makeReadyforReading(stats);
 		state.loadHashes(sortedpath);
 		setUpFolderPaths(stats, state);
 	}
 
 	async function returnJson(){
-		var stateJson = stringify(state, {space: 4});
+		var stateJson = stringify(state.toObject(), {space: 4});
 		console.log('Returning Json');
 		getResult(stateJson);
 	}
@@ -622,12 +672,17 @@ async function processAllDataFromJson(hashes, getResult){
 	var state = new State();
 
 	readCfg(stats);
+	var config = {};
+	config.indexType = indexType;
+	config.lsds = lsds;
+	config.divisor = divisor;
+	state.setConfig(config);
 	stats.resetStatsData();
 	state.storeHashes(hashes);
 	setUpFolderPaths(stats, state);
 
 	async function returnJson(){
-		var stateJson = stringify(state, {space: 4});
+		var stateJson = stringify(state.toObject(), {space: 4});
 		console.log('Returning Json');
 		getResult(stateJson);
 	}

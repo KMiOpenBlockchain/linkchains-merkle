@@ -35,41 +35,28 @@ describe('generatesIndexes', function() {
                 var json = resultJson;
 
                 var jsonToGenerate = "{\n" +
-                    "    \"indexToIndex\": {\n" +
-                    "        \"39423203430592103997374671506331876705003930407886206958728470964150059233118\": \"QmdbQCfQuDJPZvhuCWYvXR2KSgMCacTYQ4QDN1H2ZnSckW\"\n" +
-                    "    },\n" +
-                    "    \"loadedHashes\": [\n" +
-                    "        [\n" +
-                    "            \"39423203430592103997374671506331876705003930407886206958728470964150059233118\",\n" +
-                    "            [\n" +
-                    "                \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
-                    "            ]\n" +
-                    "        ]\n" +
-                    "    ],\n" +
-                    "    \"treeInfoArray\": [\n" +
-                    "        {\n" +
-                    "            \"generatedInfo\": [\n" +
-                    "                {\n" +
-                    "                    \"data\": {\n" +
-                    "                        \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\": 0\n" +
-                    "                    },\n" +
-                    "                    \"merkleipfs\": \"QmYCjiWouUKEY5YcPoXget3s49JyBgJRLwbzeStVejV5qb\",\n" +
-                    "                    \"merkleroot\": \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
-                    "                }\n" +
-                    "            ],\n" +
-                    "            \"tree\": {\n" +
-                    "                \"isReady\": true,\n" +
-                    "                \"leaves\": [\n" +
-                    "                    \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
-                    "                ],\n" +
-                    "                \"levels\": [\n" +
-                    "                    [\n" +
+                    "    \"indexToTrees\": {\n" +
+                    "        \"indexhash\": \"QmSUpikCncebHi2iqfPzufrGibKoyS7Pqwx6bZ8zdFU8E7\",\n" +
+                    "        \"indexhashalg\": \"IPFSHash\",\n" +
+                    "        \"trees\": [\n" +
+                    "            {\n" +
+                    "                \"containerhash\": \"QmYCjiWouUKEY5YcPoXget3s49JyBgJRLwbzeStVejV5qb\",\n" +
+                    "                \"containerhashalg\": \"IPFSHash\",\n" +
+                    "                \"index\": \"39423203430592103997374671506331876705003930407886206958728470964150059233118\",\n" +
+                    "                \"leaves\": {\n" +
+                    "                    \"@list\": [\n" +
                     "                        \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
                     "                    ]\n" +
-                    "                ]\n" +
+                    "                },\n" +
+                    "                \"merkleroot\": \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
                     "            }\n" +
+                    "        ],\n" +
+                    "        \"treesettings\": {\n" +
+                    "            \"divisor\": \"0x1\",\n" +
+                    "            \"indexType\": \"object\",\n" +
+                    "            \"lsds\": 64\n" +
                     "        }\n" +
-                    "    ]\n" +
+                    "    }\n" +
                     "}";
 
                 try {

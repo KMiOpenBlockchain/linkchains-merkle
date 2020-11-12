@@ -23,6 +23,14 @@ cfg = {
         "domain": "SOCKET_DOMAIN",
         "port": "SOCKET_PORT"
     },
+    "jsonldcontext" : {
+        "@vocab":"https://blockchain.open.ac.uk/vocab/",
+        "indexToTrees":"merkletrees",
+        "index":"merkletreeid",
+        "root":"merklecontainerroot",
+        "leaves":"merkleleaves",
+        "leaf":"merkleleaf"
+     },
     "data": [
         {
             "datafile": "dbpedia-20000.nq",
