@@ -21,6 +21,14 @@ describe('generatesIndexes', function() {
                     "treesandindexes": 78
                 }
             ];
+            cfg.jsonldcontext = {
+                "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
+                "index": "merkletreeid_0",
+                "indexToTrees": "merkletrees_0",
+                "leaf": "merkleleaf_0",
+                "leaves": "merkleleaves_0",
+                "root": "merklecontainerroot_0"
+                };
 
             var hashesJson = "[\n" +
                 "   [\n" +
@@ -35,6 +43,14 @@ describe('generatesIndexes', function() {
                 var json = resultJson;
 
                 var jsonToGenerate = "{\n" +
+                    "    \"@context\": {\n" +
+                    "        \"@vocab\": \"https://blockchain.open.ac.uk/vocab_0/\",\n" +
+                    "        \"index\": \"merkletreeid_0\",\n" +
+                    "        \"indexToTrees\": \"merkletrees_0\",\n" +
+                    "        \"leaf\": \"merkleleaf_0\",\n" +
+                    "        \"leaves\": \"merkleleaves_0\",\n" +
+                    "        \"root\": \"merklecontainerroot_0\"\n" +
+                    "    },\n" +
                     "    \"indexToTrees\": {\n" +
                     "        \"indexhash\": \"QmSUpikCncebHi2iqfPzufrGibKoyS7Pqwx6bZ8zdFU8E7\",\n" +
                     "        \"indexhashalg\": \"IPFSHash\",\n" +

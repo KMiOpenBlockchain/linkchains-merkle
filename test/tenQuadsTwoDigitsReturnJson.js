@@ -20,6 +20,15 @@ describe('generatesIndexes', function() {
                     "treesandindexes": 78
                 }
             ];
+            cfg.jsonldcontext = {
+                "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
+                "index": "merkletreeid_0",
+                "indexToTrees": "merkletrees_0",
+                "leaf": "merkleleaf_0",
+                "leaves": "merkleleaves_0",
+                "root": "merklecontainerroot_0"
+            };
+
 
             var jsonHashes = "[\n" +
                 "   [\n" +
