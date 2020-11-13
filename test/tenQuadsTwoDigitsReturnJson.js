@@ -320,7 +320,7 @@ describe('generatesIndexes', function() {
                 "    }\n" +
                 "}";
 
-            var jsonPromise = merkle.processAllDataReturnJson(jsonHashes);
+            var jsonPromise = merkle.processAllDataReturnPromise(jsonHashes);
 
             jsonPromise.then((resultJson)=>{
                 try {

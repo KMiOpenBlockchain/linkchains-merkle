@@ -690,7 +690,7 @@ async function processAllDataFromJson(hashes, getResult){
 	state.onComplete = returnJson;
 }
 
-async function processAllDataReturnJson(hashes){
+async function processAllDataReturnPromise(hashes){
 
 	var result ={};
 
@@ -722,4 +722,4 @@ async function processAllDataReturnJson(hashes){
 }
 
 exports.processAllDataFromJson = processAllDataFromJson
-exports.processAllDataReturnJson = processAllDataReturnJson
+exports.processAllDataReturnPromise = processAllDataReturnPromise
