@@ -692,8 +692,6 @@ async function processAllDataFromJson(hashes, getResult){
 
 async function processAllDataReturnPromise(hashes){
 
-	var result ={};
-
 	class PromiseResolverClass{
 		resolver = {}
 		setResolver (resolverFunction){
@@ -712,8 +710,7 @@ async function processAllDataReturnPromise(hashes){
 	})
 
 	function getResult(passedResult){
-		result = passedResult;
-		promiseResolver.actuallyResolve(result);
+		promiseResolver.actuallyResolve(passedResult);
 	}
 
 	await processAllDataFromJson(hashes, getResult);
