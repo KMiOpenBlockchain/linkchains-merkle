@@ -694,13 +694,31 @@ async function processAllDataReturnJson(hashes){
 
 	var result ={};
 
+	class PromiseResolverClass{
+		resolver = {}
+		setResolver (resolverFunction){
+			this.resolver = resolverFunction;
+		}
+
+		actuallyResolve(result){
+			this.resolver(result);
+		}
+	}
+
+	var promiseResolver = new PromiseResolverClass();
+
+	var resultPromise = new Promise(function(resolve){
+		promiseResolver.setResolver(resolve);
+	})
+
 	function getResult(passedResult){
 		result = passedResult;
+		promiseResolver.actuallyResolve(result);
 	}
 
 	await processAllDataFromJson(hashes, getResult);
 
-	return result;
+	return resultPromise;
 }
 
 exports.processAllDataFromJson = processAllDataFromJson
