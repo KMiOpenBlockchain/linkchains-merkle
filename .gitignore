@@ -2,7 +2,7 @@
 ._.DS_Store
 .DS_Store
 package-lock.json
-config.js
+test/config.js
 config-sample.js
 *.nt
 node_modules

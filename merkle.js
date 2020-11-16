@@ -1,4 +1,3 @@
-require("./config.js");
 
 var settings = {
     "pluggableFunctions": {

@@ -1,5 +1,6 @@
 /* test/sum.js */
 
+require("./config.js");
 var rewire = require('rewire');
 var preprocess = rewire('../preprocess.js');
 var assert = require('chai').assert;

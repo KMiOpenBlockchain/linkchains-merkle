@@ -6,7 +6,6 @@ var microtime = require('microtime');
 //const readLastLines = require('read-last-lines');
 const N3 = require('n3');
 const parser = new N3.Parser();
-require("./config.js");
 var stringify = require('json-stable-stringify');
 
 var settings = {

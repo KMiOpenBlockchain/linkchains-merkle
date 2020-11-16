@@ -1,5 +1,6 @@
 /* test/sum.js */
 
+require("./config.js");
 var rewire = require('rewire');
 var merkle = rewire('../merkle.js');
 

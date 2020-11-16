@@ -1,8 +1,10 @@
 /* test/sum.js */
 
+require("./config.js");
 var rewire = require('rewire');
 var merkle = rewire('../merkle.js');
 var assert = require('chai').assert;
+
 
 describe('generatesIndexes', function() {
     this.timeout(40000);
