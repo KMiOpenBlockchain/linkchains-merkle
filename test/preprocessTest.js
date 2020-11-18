@@ -2,14 +2,16 @@
 
 require("./config.js");
 var rewire = require('rewire');
-var preprocess = rewire('../preprocess.js');
+var preprocess = rewire('../preprocess-simple.js');
 var assert = require('chai').assert;
 
-describe('generatesIndexes', function() {
+var stringify = require('json-stable-stringify');
 
-    context('one quad', function() {
+describe('generatesIndexes', function () {
 
-        it('should equals', function() {
+    context('one quad', function () {
+
+        it('should equals', function () {
             cfg.data = [
                 {
                     "datafile": "bio2rdf-affymetrix-20121004.nt",
@@ -25,21 +27,22 @@ describe('generatesIndexes', function() {
                 "lsd": 64
             };
 
-            var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n", 
+            var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n",
                 options);
-            assert.strictEqual(json, "[\n" +
+            var expected = "[\n" +
                 "   [\n" +
                 "      \"39423203430592103997374671506331876705003930407886206958728470964150059233118\",\n" +
                 "      [\n" +
                 "         \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
                 "      ]\n" +
-                "   ]\n]", "Not equal");
+                "   ]\n]";
+            assert.strictEqual(json, stringify(JSON.parse(expected), { space: 4 }), "Not equal");
         })
     })
 
-    context('ten quads', function() {
+    context('ten quads', function () {
 
-        it('should equals', function() {
+        it('should equals', function () {
             cfg.data = [
                 {
                     "datafile": "bio2rdf-affymetrix-20121004.nt",
@@ -69,7 +72,7 @@ describe('generatesIndexes', function() {
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/ATH1-121501.na32.annot.nt.gz>  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz>  .\n",
                 options);
-            assert.strictEqual(json, "[\n" +
+            var expected = "[\n" +
                 "   [\n" +
                 "      \"108057060919655353969319073675659250028494167884234799905735708689541595748352\",\n" +
                 "      [\n" +
@@ -130,149 +133,152 @@ describe('generatesIndexes', function() {
                 "         \"b83b6dc5be3e15b1ca4664b1bd288c92dda3f2e1ec6fe21f9c3d13e07eb6ec94\"\n" +
                 "      ]\n" +
                 "   ]\n" +
-                "]", "Not equal");
+                "]";
+            assert.strictEqual(json, stringify(JSON.parse(expected), { space: 4 }), "Not equal");
         })
     })
 
-    context('less digits', function() {
+    context('less digits', function () {
 
-            it('should equals', function() {
-                cfg.data = [
-                    {
-                        "datafile": "bio2rdf-affymetrix-20121004.nt",
-                        "datafolder": "/quads/",
-                        "divisor": "0xA",
-                        "indexType": "object",
-                        "lsd": 2,
-                        "treesandindexes": 78
-                    }
-                ]
-
-                var options = {
-                    "quadHash": 'KECCAK256',
+        it('should equals', function () {
+            cfg.data = [
+                {
+                    "datafile": "bio2rdf-affymetrix-20121004.nt",
+                    "datafolder": "/quads/",
                     "divisor": "0xA",
                     "indexType": "object",
-                    "lsd": 2
-                };
+                    "lsd": 2,
+                    "treesandindexes": 78
+                }
+            ]
 
-                var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/creator> <https://github.com/bio2rdf/bio2rdf-scripts/blob/master/affymetrix/affymetrix.php>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/publisher> <http://bio2rdf.org>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"use-share-modify\"  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"attribution\"  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"restricted-by-source-license\"  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/ATH1-121501.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Canine.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Canine_2.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Celegans.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Chicken.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Citrus.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Cotton.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/DrosGenome1.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Drosophila_2.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/E_coli_2.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Ecoli_ASv2.na32.annot.nt.gz>  .",
-                    options);
-                assert.strictEqual(json, "[\n" +
-                    "   [\n" +
-                    "      \"0\",\n" +
-                    "      [\n" +
-                    "         \"7bec02ebbbae659711e5a093947882220dbc1f857092862e81f1c813db4f55e4\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"11\",\n" +
-                    "      [\n" +
-                    "         \"79892d3addd677abcc7451dcb8b098f81a976987c035f9d8b0ea56ae9d558f18\",\n" +
-                    "         \"318d0d4f4687f612388d2c3397b17b9720bb51d2915efa99eaf97d854aae7dcc\",\n" +
-                    "         \"d47ec3b234895b897eee46b388760852599b06d037661de58d561662e25a41f2\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"14\",\n" +
-                    "      [\n" +
-                    "         \"c1fcd6ed7f92652191c485dfc30f1af44e091af68094f279cfdd92c342f3dd1e\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"16\",\n" +
-                    "      [\n" +
-                    "         \"cde2d8c978dfd9fd3018f5c243b6227339512e9e2adc101af4a130a5edf2ae5e\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"17\",\n" +
-                    "      [\n" +
-                    "         \"097f7209a6d2ead48258990bcb4f2fc97d1930893e6a50ce10349b89164b9517\",\n" +
-                    "         \"e1d62565a10af2617660a74c834011054ac665b1d36d2b9ee4874bc06a0d28e7\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"19\",\n" +
-                    "      [\n" +
-                    "         \"c7e7910bfc8c2a258ba061bd8627ab78bb9db3b9dc9d0b68c8630bd0786fb59c\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"20\",\n" +
-                    "      [\n" +
-                    "         \"b7af01bf84198e2a2111adedbffecdef33b63a25d7fada0240663b3e100c4ece\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"21\",\n" +
-                    "      [\n" +
-                    "         \"b6cbed171d586a2ef654fdc8cd16aae70a3af9b2ef6e04e60d7a84a4950f2065\",\n" +
-                    "         \"ef3a21fcd886ff8c1ddfa0c18e2a7c722ebe2ca89c745bbfe9705ac12e4e04d3\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"22\",\n" +
-                    "      [\n" +
-                    "         \"dc4b3a4c305c135792dd49b10cb0438ee341f044369934e7a59513005aa711ee\",\n" +
-                    "         \"f0892e322c05f11075564e372470b4a676adc0636baa8281c41dff95477019c2\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"24\",\n" +
-                    "      [\n" +
-                    "         \"39794d6b2efc3b4e974753bde38c7070d30ddf3b5b0bff23c56bf42a923ba433\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"3\",\n" +
-                    "      [\n" +
-                    "         \"3551024291e2998a1a452642deb45bc424a9969ec801047263822570045d7781\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"6\",\n" +
-                    "      [\n" +
-                    "         \"b83b6dc5be3e15b1ca4664b1bd288c92dda3f2e1ec6fe21f9c3d13e07eb6ec94\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"7\",\n" +
-                    "      [\n" +
-                    "         \"2f526d48bd043347eabfbc7ef43410de7e8c00f91b388790c590202e4466950b\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"8\",\n" +
-                    "      [\n" +
-                    "         \"a00a9964ff1bcde9e603c745039fa076b2952bcaa45d3a148cea366b2ba79a44\"\n" +
-                    "      ]\n" +
-                    "   ],\n" +
-                    "   [\n" +
-                    "      \"9\",\n" +
-                    "      [\n" +
-                    "         \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
-                    "      ]\n" +
-                    "   ]\n" +
-                    "]", "Not equal");
-            })
+            var options = {
+                "quadHash": 'KECCAK256',
+                "divisor": "0xA",
+                "indexType": "object",
+                "lsd": 2
+            };
+
+            var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/creator> <https://github.com/bio2rdf/bio2rdf-scripts/blob/master/affymetrix/affymetrix.php>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/publisher> <http://bio2rdf.org>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"use-share-modify\"  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"attribution\"  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"restricted-by-source-license\"  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/ATH1-121501.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Canine.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Canine_2.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Celegans.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Chicken.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Citrus.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Cotton.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/DrosGenome1.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Drosophila_2.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/E_coli_2.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Ecoli_ASv2.na32.annot.nt.gz>  .",
+                options);
+            var expected = "[\n" +
+                "   [\n" +
+                "      \"0\",\n" +
+                "      [\n" +
+                "         \"7bec02ebbbae659711e5a093947882220dbc1f857092862e81f1c813db4f55e4\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"11\",\n" +
+                "      [\n" +
+                "         \"79892d3addd677abcc7451dcb8b098f81a976987c035f9d8b0ea56ae9d558f18\",\n" +
+                "         \"318d0d4f4687f612388d2c3397b17b9720bb51d2915efa99eaf97d854aae7dcc\",\n" +
+                "         \"d47ec3b234895b897eee46b388760852599b06d037661de58d561662e25a41f2\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"14\",\n" +
+                "      [\n" +
+                "         \"c1fcd6ed7f92652191c485dfc30f1af44e091af68094f279cfdd92c342f3dd1e\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"16\",\n" +
+                "      [\n" +
+                "         \"cde2d8c978dfd9fd3018f5c243b6227339512e9e2adc101af4a130a5edf2ae5e\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"17\",\n" +
+                "      [\n" +
+                "         \"097f7209a6d2ead48258990bcb4f2fc97d1930893e6a50ce10349b89164b9517\",\n" +
+                "         \"e1d62565a10af2617660a74c834011054ac665b1d36d2b9ee4874bc06a0d28e7\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"19\",\n" +
+                "      [\n" +
+                "         \"c7e7910bfc8c2a258ba061bd8627ab78bb9db3b9dc9d0b68c8630bd0786fb59c\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"20\",\n" +
+                "      [\n" +
+                "         \"b7af01bf84198e2a2111adedbffecdef33b63a25d7fada0240663b3e100c4ece\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"21\",\n" +
+                "      [\n" +
+                "         \"b6cbed171d586a2ef654fdc8cd16aae70a3af9b2ef6e04e60d7a84a4950f2065\",\n" +
+                "         \"ef3a21fcd886ff8c1ddfa0c18e2a7c722ebe2ca89c745bbfe9705ac12e4e04d3\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"22\",\n" +
+                "      [\n" +
+                "         \"dc4b3a4c305c135792dd49b10cb0438ee341f044369934e7a59513005aa711ee\",\n" +
+                "         \"f0892e322c05f11075564e372470b4a676adc0636baa8281c41dff95477019c2\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"24\",\n" +
+                "      [\n" +
+                "         \"39794d6b2efc3b4e974753bde38c7070d30ddf3b5b0bff23c56bf42a923ba433\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"3\",\n" +
+                "      [\n" +
+                "         \"3551024291e2998a1a452642deb45bc424a9969ec801047263822570045d7781\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"6\",\n" +
+                "      [\n" +
+                "         \"b83b6dc5be3e15b1ca4664b1bd288c92dda3f2e1ec6fe21f9c3d13e07eb6ec94\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"7\",\n" +
+                "      [\n" +
+                "         \"2f526d48bd043347eabfbc7ef43410de7e8c00f91b388790c590202e4466950b\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"8\",\n" +
+                "      [\n" +
+                "         \"a00a9964ff1bcde9e603c745039fa076b2952bcaa45d3a148cea366b2ba79a44\"\n" +
+                "      ]\n" +
+                "   ],\n" +
+                "   [\n" +
+                "      \"9\",\n" +
+                "      [\n" +
+                "         \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
+                "      ]\n" +
+                "   ]\n" +
+                "]";
+
+            assert.strictEqual(stringify(json, { space : 4 }), stringify(JSON.parse(expected), { space: 4 }), "Not equal");
+        })
     })
 })
