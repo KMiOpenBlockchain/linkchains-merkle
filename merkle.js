@@ -147,8 +147,42 @@ class State {
 	indexToIndexHash = 0;
 	onComplete = function(){};
 
-	setConfig(configObj) {
-		this.config = configObj;
+	constructor(options) {
+		this.readOptions(options);
+	}
+
+	readOptions(options) {
+		/* var defaultHash = 'KECCAK256';
+		var quadHash = options.quadHash ? options.quadHash : defaultHash;
+		var treeHash = options.treeHash ? options.treeHash : defaultHash;
+		var indexHash = options.indexHash ? options.indexHash : defaultHash;
+		pluggable = {
+			"quadHash": {
+				"getHash": (input) => {
+					return hashingFunctions.getHash(input, {
+						"type": quadHash
+					});
+				}
+			},
+			"treeHash": {
+				"getHash": (input) => {
+					return hashingFunctions.getHash(input, {
+						"type": treeHash
+					});
+				}
+			},
+			"indexHash": {
+				"getHash": (input) => {
+					return hashingFunctions.getHash(input, {
+						"type": indexHash
+					});
+				}
+			}
+		} */
+		lsds = options.lsd ? options.lsd : 64;
+		indexType = options.indexType ? options.indexType : 'subject';
+		divisor = options.divisor ? options.divisor : 0x1;
+		this.config = options;
 	}
 
 	loadHashes (folder){
@@ -205,10 +239,7 @@ async function processAllData(stats, state) {
 		processdata = {};
 		processdata.treesandindexes = new Array();
 		rdfdatafile = cfg.data[dataLoopCount].datafile;
-		indexType = cfg.data[dataLoopCount].indexType;
-		lsds = cfg.data[dataLoopCount].lsd;
-		divisor = cfg.data[dataLoopCount].divisor;
-
+		
 		makeReadyforReading(stats);
 		state.loadHashes(sortedpath);
 
@@ -634,23 +665,15 @@ function readCfg(stats) {
 	processdata.treesandindexes = new Array();
 	rdfdatafile = cfg.data[dataLoopCount].datafile;
 	jsonldcontext = cfg.jsonldcontext;
-	indexType = cfg.data[dataLoopCount].indexType;
-	lsds = cfg.data[dataLoopCount].lsd;
-	divisor = cfg.data[dataLoopCount].divisor;
 }
 
-async function processAllDataMain(getResult){
+async function processAllDataMain(options, getResult){
 
 	var stats = new Stats();
-	var state = new State();
+	var state = new State(options);
 
 	if (dataLoopCount !== cfg.data.length) {
 		readCfg(stats);
-		var config = {};
-		config.indexType = indexType;
-		config.lsds = lsds;
-		config.divisor = divisor;
-		state.setConfig(config);
 		makeReadyforReading(stats);
 		state.loadHashes(sortedpath);
 		setUpFolderPaths(stats, state);
@@ -658,38 +681,32 @@ async function processAllDataMain(getResult){
 
 	async function returnJson(){
 		var stateJson = stringify(state.toObject(), {space: 4});
-		console.log('Returning Json');
+		console.log('Returning Json ');
 		getResult(stateJson);
 	}
 
 	state.onComplete = returnJson;
 }
 
-async function processAllDataFromJson(hashes, getResult){
-
+async function processAllDataFromJson(hashes, options, getResult){
 	var stats = new Stats();
-	var state = new State();
+	var state = new State(options);
 
 	readCfg(stats);
-	var config = {};
-	config.indexType = indexType;
-	config.lsds = lsds;
-	config.divisor = divisor;
-	state.setConfig(config);
 	stats.resetStatsData();
 	state.storeHashes(hashes);
 	setUpFolderPaths(stats, state);
 
 	async function returnJson(){
 		var stateJson = stringify(state.toObject(), {space: 4});
-		console.log('Returning Json');
+		console.log('Returning Json: ');
 		getResult(stateJson);
 	}
 
 	state.onComplete = returnJson;
 }
 
-async function processAllDataReturnPromise(hashes){
+async function processAllDataReturnPromise(hashes, options){
 
 	class PromiseResolverClass{
 		resolver = {}
@@ -712,7 +729,7 @@ async function processAllDataReturnPromise(hashes){
 		promiseResolver.actuallyResolve(passedResult);
 	}
 
-	await processAllDataFromJson(hashes, getResult);
+	await processAllDataFromJson(hashes, options, getResult);
 
 	return resultPromise;
 }
