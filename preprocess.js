@@ -104,12 +104,49 @@ class State{
 	allQuadHashes;
 	quadText;
 	preprocess;
-	constructor (){
+
+	constructor (options){
 		this.stats = new Stats();
 		this.indexes = new SortedMap();
 		this.jsonStatsData = new SortedMap();
 		this.folder="";
+		this.readOptions(options);
 	}
+
+	readOptions(options) {
+		/* var defaultHash = 'KECCAK256';
+		var quadHash = options.quadHash ? options.quadHash : defaultHash;
+		var treeHash = options.treeHash ? options.treeHash : defaultHash;
+		var indexHash = options.indexHash ? options.indexHash : defaultHash;
+		pluggable = {
+			"quadHash": {
+				"getHash": (input) => {
+					return hashingFunctions.getHash(input, {
+						"type": quadHash
+					});
+				}
+			},
+			"treeHash": {
+				"getHash": (input) => {
+					return hashingFunctions.getHash(input, {
+						"type": treeHash
+					});
+				}
+			},
+			"indexHash": {
+				"getHash": (input) => {
+					return hashingFunctions.getHash(input, {
+						"type": indexHash
+					});
+				}
+			}
+		} */
+		lsds = options.lsd ? options.lsd : 64;
+		indexType = options.indexType ? options.indexType : 'subject';
+		divisor = options.divisor ? options.divisor : 0x1;
+		divisorInt = BigInt(divisor);
+	};
+
 	appendAllQuadHashes(data){
 		if (this.allQuadHashes === undefined){
 			this.allQuadHashes = data;
@@ -171,10 +208,6 @@ function makeDataReady(state) {
 		datasetFolder = cfg.data[dataLoopCount].datafolder;
 		rdfdatafile = cfg.data[dataLoopCount].datafile;
 		path = folderpath + datasetFolder + rdfdatafile;
-		indexType = cfg.data[dataLoopCount].indexType;
-		lsds = cfg.data[dataLoopCount].lsd;
-		divisor = cfg.data[dataLoopCount].divisor;
-		divisorInt = BigInt(divisor);
 		setUpFolderPaths(state);
 }
 
@@ -206,9 +239,6 @@ function finishAnalysis(state) {
 
 		//console.log("ANALYSIS FINISHED");
 	} else {
-		lsds = cfg.data[state.stats.index].lsd;
-		divisor = cfg.data[state.stats.index].divisor;
-		indexType = cfg.data[state.stats.index].indexType;
 		sortedFolder = folderpath + "sorted/";
 		rdfdatafile = cfg.data[state.stats.index].datafile;
 		res = rdfdatafile.split(".");
@@ -428,31 +458,23 @@ function writeJsonIndices(state, jsonIndices) {
 	});
 }
 
-function makeHashReady() {
-	lsds = cfg.data[dataLoopCount].lsd;
-	indexType = cfg.data[dataLoopCount].indexType;
-	divisor = cfg.data[dataLoopCount].divisor;
-	divisorInt = BigInt(divisor);
-}
-
 function processAllDataJson(state) {
 	getNumberOfQuads(state);
-	makeHashReady();
 	clearHashesAndReadRows(state);
 	var jsonIndices = getJsonIndices(state);
 	return jsonIndices;
 }
 
-function processAndWriteAllData(){
-	var state = new State();
+function processAndWriteAllData(options){
+	var state = new State(options);
 	makeDataReady(state);
 	cleanUpFilesAndFolders(state);
 	var jsonIndices = processAllDataJson(state);
 	writeJsonIndices(state, jsonIndices);
 }
 
-function processAllData(quads){
-	var state = new State();
+function processAllData(quads, options) {
+	var state = new State(options);
 	state.stats.resetCurStats();
 	state.quadText = quads;
 	var jsonIndices = processAllDataJson(state);

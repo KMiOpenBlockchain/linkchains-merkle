@@ -14,14 +14,19 @@ describe('generatesIndexes', function() {
                 {
                     "datafile": "bio2rdf-affymetrix-20121004.nt",
                     "datafolder": "/quads/",
-                    "divisor": "0x1",
-                    "indexType": "object",
-                    "lsd": 64,
                     "treesandindexes": 78
                 }
             ];
 
-            var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n");
+            var options = {
+                "quadHash": 'KECCAK256',
+                "divisor": "0x1",
+                "indexType": "object",
+                "lsd": 64
+            };
+
+            var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n", 
+                options);
             assert.strictEqual(json, "[\n" +
                 "   [\n" +
                 "      \"39423203430592103997374671506331876705003930407886206958728470964150059233118\",\n" +
@@ -46,6 +51,13 @@ describe('generatesIndexes', function() {
                 }
             ];
 
+            var options = {
+                "quadHash": 'KECCAK256',
+                "divisor": "0x1",
+                "indexType": "object",
+                "lsd": 64
+            };
+
             var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
@@ -55,7 +67,8 @@ describe('generatesIndexes', function() {
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"attribution\"  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"restricted-by-source-license\"  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/ATH1-121501.na32.annot.nt.gz>  .\n" +
-                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz>  .\n");
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz>  .\n",
+                options);
             assert.strictEqual(json, "[\n" +
                 "   [\n" +
                 "      \"108057060919655353969319073675659250028494167884234799905735708689541595748352\",\n" +
@@ -134,6 +147,14 @@ describe('generatesIndexes', function() {
                         "treesandindexes": 78
                     }
                 ]
+
+                var options = {
+                    "quadHash": 'KECCAK256',
+                    "divisor": "0xA",
+                    "indexType": "object",
+                    "lsd": 2
+                };
+
                 var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
                     "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
                     "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
@@ -153,7 +174,8 @@ describe('generatesIndexes', function() {
                     "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/DrosGenome1.na32.annot.nt.gz>  .\n" +
                     "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Drosophila_2.na32.annot.nt.gz>  .\n" +
                     "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/E_coli_2.na32.annot.nt.gz>  .\n" +
-                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Ecoli_ASv2.na32.annot.nt.gz>  .");
+                    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Ecoli_ASv2.na32.annot.nt.gz>  .",
+                    options);
                 assert.strictEqual(json, "[\n" +
                     "   [\n" +
                     "      \"0\",\n" +

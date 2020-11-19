@@ -16,12 +16,16 @@ describe('generatesIndexes', function() {
                     {
                         "datafile": "bio2rdf-affymetrix-20121004.nt",
                         "datafolder": "/quads/",
-                        "divisor": "0xA",
-                        "indexType": "object",
-                        "lsd": 2,
                         "treesandindexes": 78
                     }
                 ];
+
+                var options = {
+                    "divisor": "0xA",
+                    "indexType": "object",
+                    "lsd": 2
+                };
+
                 cfg.jsonldcontext = {
                     "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
                     "index": "merkletreeid_0",
@@ -320,7 +324,7 @@ describe('generatesIndexes', function() {
                             "        \"treesettings\": {\n" +
                             "            \"divisor\": \"0xA\",\n" +
                             "            \"indexType\": \"object\",\n" +
-                            "            \"lsds\": 2\n" +
+                            "            \"lsd\": 2\n" +
                             "        }\n" +
                             "    }\n" +
                             "}";
@@ -331,7 +335,7 @@ describe('generatesIndexes', function() {
                     }
                 }
 
-                merkle.processAllDataFromJson(hashesJson,getResult);
+                merkle.processAllDataFromJson(hashesJson, options, getResult);
             })
     })
 })
