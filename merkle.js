@@ -1,204 +1,102 @@
-
-var settings = {
-    "pluggableFunctions": {
-        "getFileHash": addObjectToIPFS
-    },
-}
-
-async function addFileToIPFS(file, hashonly, returnhandler) {
-	for await (const result of ipfs.add(globSource(file), { onlyHash: hashonly })) {
-		hash = bs58.encode(result.cid.multihash);
-		returnhandler(hash);
-	}
-}
-
-async function addObjectToIPFS(jsonObject, hashonly, returnhandler) {
-	for await (const result of ipfs.add([JSON.stringify(jsonObject)], { onlyHash: hashonly })) {
-		hash = bs58.encode(result.cid.multihash);
-		returnhandler(hash);
-	}
-}
-
-// async function addObjectToIPFS(object, hashonly, returnhandler) {
-// 	var localObject = new Object();
-// 	localObject.Data = object;
-// 	localObject.Links = [];
-// 	const cid = await ipfs.object.put(localObject);
-// 	hash = bs58.encode(cid.multihash);
-// 	returnhandler(hash);
-// }
-
 var MerkleTools = require('merkle-tools/merkletools');
-var fs = require('fs');
-var stringify=require('json-stable-stringify');
+var stringify = require('json-stable-stringify');
 
-const web3_extended = require('web3_ipc');
-//var keccak256 = require('js-sha3').keccak_256;
-const countLinesInFile = require('count-lines-in-file');
-var readline = require('linebyline');
-const ipfsClient = require('ipfs-http-client');
-const globSource = require('ipfs-utils/src/files/glob-source');
-const bs58 = require('bs58');
-var microtime = require('microtime');
-var ipfsurl = "http://" + cfg.ipfs.domain + ":" + cfg.ipfs.APIPort;
-//var ipfs = ipfsClient(cfg.ipfsDomain, cfg.ipfsAPIPort, { protocol: 'http' });
-var ipfs = ipfsClient(ipfsurl);
-const util = require('util');
-var reg = new RegExp('^\\d+$');
+const hashingFunctions = require('./hashing');
 
-var treeOptions = {
-	hashType: cfg.treeHash.type // optional, defaults to 'sha256'
-}
+var utils;
 
-var folderpath = cfg.dataFolder;
-var sortedpath;
-var ipfsfilepath;
-var parentdatafolder;
-var parentipfsdatafolder;
-var rdfdatafile;
-var jsonldcontext;
-var indexType;
-var lsds;
-var divisor;
-var count;
-var dataLoopCount = 0;
-var processdata;
-var fileArray;
-var pluggable = settings.pluggableFunctions;
-
-var onlyHashMerkle = cfg.ipfs.onlyHash.merkleTree;
-var onlyHashIndex = cfg.ipfs.onlyHash.index;
-var onlyHashIndexToIndex = cfg.ipfs.onlyHash.indextoindex;
-
-class Stats {
-	data = {};
-	progresscount;
-	ai;
-	af;
-
-	constructor(){
-		this.ai =0;
-	}
-
-	resetStatsData() {
-		if (this.data[this.af] == undefined) this.data[this.af] = new Array();
-		this.ai = this.data[this.af].length;
-		this.data[this.af][this.ai] = {};
-		this.data[this.af][this.ai].type = indexType;
-		this.data[this.af][this.ai].lsd = lsds;
-		this.data[this.af][this.ai].divisor = divisor;
-		this.data[this.af][this.ai].files = {};
-		this.data[this.af][this.ai].files.indextoindex = {};
-		this.data[this.af][this.ai].files.index = new Array();
-	}
-
-	setHashAndTimeInStatsData(hash, starttime) {
-		this.data[this.af][this.ai].files.indextoindex.ipfshash = hash;
-		this.data[this.af][this.ai].files.indextoindex.IPFSWriteTime = microtime.now() - starttime;
-	}
-
-	setCurrentDataInStats(file) {
-		this.data[this.af][this.ai].files.index[this.progresscount] = {};
-		this.data[this.af][this.ai].files.index[this.progresscount].sourceFile = sortedpath + file;
-		this.data[this.af][this.ai].files.index[this.progresscount].merkleTree = {};
-		this.data[this.af][this.ai].files.index[this.progresscount].IPFSIndex = {};
-	}
-
-	setDataInStatsArrays(starttime, linecount) {
-		this.data[this.af][this.ai].files.index[this.progresscount].merkleTree.leafArrayReadTime = microtime.now() - starttime;
-		this.data[this.af][this.ai].files.index[this.progresscount].count = linecount;
-	}
-
-}
-
-class TreeInfo{
+class TreeInfo {
 	tree = {};
-	generatedInfo = [];
+	config = {};
 
-	addTree(passedTree){
-		this.tree = passedTree;
+	constructor(state) {
+		this.config = state.config;
 	}
 
-	addGeneratedInfo(passedGeneratedInfo){
-		this.generatedInfo.push(passedGeneratedInfo);
-		this.tree.merkleroot = passedGeneratedInfo.merkleroot;
-		this.tree.merkleipfs = passedGeneratedInfo.merkleipfs;
-		this.tree.index = passedGeneratedInfo.index;
+	addMerkleTree(passedTree) {
+		this.tree.merkletree = passedTree;
+	}
+
+	getMerkleTree() {
+		return this.tree.merkletree;
+	}
+
+	addLeaves(leaves) {
+		this.tree.leaves = {
+			"@list": leaves
+		};
 	}
 
 	toObject() {
 		var treeObj = {};
-		treeObj.index = this.tree.index;
-		treeObj.containerhash = this.tree.merkleipfs;
-		treeObj.containerhashalg = "IPFSHash";  //Made up, clearly wrong, and needs to be sensitive to pluggable hash functions :-)
-		treeObj.merkleroot = this.tree.merkleroot;
-		treeObj.leaves = {
-			"@list" : this.tree.leaves
-		};
+		treeObj.index = this.index;
+		treeObj.containerhash = this.merkleipfs;
+		treeObj.containerhashalg = this.config.indexHash;  
+		treeObj.merkleroot = this.merkleroot;
+		treeObj.leaves = this.tree.leaves;
 		return treeObj;
 	}
 }
 
 class State {
 	config = {};
-	loadedHashes ={};
+	loadedHashes = {};
 	treeInfoArray = [];
 	indexToIndex = {};
 	indexToIndexHash = 0;
-	onComplete = function(){};
+	onComplete = function () { };
 
 	constructor(options) {
 		this.readOptions(options);
 	}
 
 	readOptions(options) {
-		/* var defaultHash = 'KECCAK256';
-		var quadHash = options.quadHash ? options.quadHash : defaultHash;
-		var treeHash = options.treeHash ? options.treeHash : defaultHash;
-		var indexHash = options.indexHash ? options.indexHash : defaultHash;
-		pluggable = {
-			"quadHash": {
-				"getHash": (input) => {
-					return hashingFunctions.getHash(input, {
-						"type": quadHash
-					});
-				}
-			},
-			"treeHash": {
-				"getHash": (input) => {
-					return hashingFunctions.getHash(input, {
-						"type": treeHash
-					});
-				}
-			},
-			"indexHash": {
-				"getHash": (input) => {
-					return hashingFunctions.getHash(input, {
-						"type": indexHash
-					});
-				}
-			}
-		} */
-		lsds = options.lsd ? options.lsd : 64;
-		indexType = options.indexType ? options.indexType : 'subject';
-		divisor = options.divisor ? options.divisor : 0x1;
-		this.config = options;
+		var defaultHash = 'KECCAK-256';
+		this.config.quadHash = options.quadHash ? options.quadHash : defaultHash;
+		this.config.treeHash = options.treeHash ? options.treeHash : defaultHash;
+		this.config.indexHash = options.indexHash ? options.indexHash : defaultHash;
+		var quadHashFunction = async function(input) {
+			return hashingFunctions.getHash(input, {
+				"type": this.config.quadHash
+			});
+		};
+		var treeHashFunction = async function(input) {
+			return hashingFunctions.getHash(input, {
+				"type": this.config.treeHash
+			});
+		};
+		var indexHashFunction = async function(input) {
+			return hashingFunctions.getHash(input, {
+				"type": options.indexHash ? options.indexHash : defaultHash
+			});
+		};
+		utils = {
+			quadHash: quadHashFunction,
+			treeHash: treeHashFunction,
+			indexHash: indexHashFunction
+		}
+		this.config.lsd = options.lsd ? options.lsd : 64;
+		this.config.indexType = options.indexType ? options.indexType : 'subject';
+		this.config.divisor = options.divisor ? options.divisor : 0x1;
+		this.config.jsonldcontext = options.jsonldcontext ? options.jsonldcontext : {
+			"@vocab": "https://blockchain.open.ac.uk/vocab/",
+			"index": "merkletreeid",
+			"indexToTrees": "merkletrees",
+			"leaf": "merkleleaf",
+			"leaves": "merkleleaves",
+			"root": "merklecontainerroot"
+		};
 	}
 
-	loadHashes (folder){
-		var jsonString = fs.readFileSync(folder + "indices.json", 'UTF-8');
-		this.loadedHashes = JSON.parse(jsonString);
+	storeHashes(data) {
+		this.loadedHashes = data;
 	}
 
-	storeHashes (dataJson){
-		this.loadedHashes = JSON.parse(dataJson);
-	}
-
-	addTreeInfo(treeInfo){
+	addTreeInfo(treeInfo) {
 		this.treeInfoArray.push(treeInfo);
 	}
 
-	addIndexToIndex(indexToIndex){
+	addIndexToIndex(indexToIndex) {
 		this.indexToIndex = indexToIndex;
 	}
 
@@ -206,15 +104,14 @@ class State {
 		this.indexToIndexHash = hash;
 	}
 
-
-
 	toObject() {
 		var results = {};
-		results["@context"] = jsonldcontext;
+		results["@context"] = this.config.jsonldcontext;
 		results.indexToTrees = {};
 		results.indexToTrees.indexhash = this.indexToIndexHash;
-		results.indexToTrees.indexhashalg = "IPFSHash"; //Made up, clearly wrong, and needs to be sensitive to pluggable hash functions :-)
+		results.indexToTrees.indexhashalg = this.config.indexHash; 
 		results.indexToTrees.treesettings = this.config;
+		delete results.indexToTrees.treesettings.jsonldcontext;
 		results.indexToTrees.trees = [];
 		for (var i = 0; i < this.treeInfoArray.length; i++) {
 			results.indexToTrees.trees.push(this.treeInfoArray[i].toObject());
@@ -223,516 +120,84 @@ class State {
 	}
 }
 
-function endProcess(stats, state) {
-	state.onComplete();
-	//process.exit();
-}
-
-async function processAllData(stats, state) {
-	if (dataLoopCount !== cfg.data.length) {
-		//console.log(cfg.data[i]);
-		count = 0;
-		stats.progresscount = 0;
-		sortedpath = folderpath + "sorted/";
-		ipfsfilepath = folderpath + "foripfs/";
-		fileArray = new Array();
-		processdata = {};
-		processdata.treesandindexes = new Array();
-		rdfdatafile = cfg.data[dataLoopCount].datafile;
-		
-		makeReadyforReading(stats);
-		state.loadHashes(sortedpath);
-
-		setUpFolderPaths(stats, state);
-	}
-}
-
-function makeReadyforReading(stats) {
-	res = rdfdatafile.split(".");
-	res.pop();
-	var folder = res.join(".");
-	stats.af = folder;
-	console.log(folder);
-	sortedpath = sortedpath + folder + "/";
-	parentdatafolder = sortedpath;
-	stats.resetStatsData();
-
-	sortedpath = sortedpath + indexType + "_" + lsds + "_" + divisor + "/";
-	mkDirIfNotPresent(sortedpath);
-
-	ipfsfilepath = ipfsfilepath + folder + "/";
-	parentipfsdatafolder = ipfsfilepath;
-	mkDirIfNotPresent(ipfsfilepath);
-
-	ipfsfilepath = ipfsfilepath + indexType + "_" + lsds + "_" + divisor + "/";
-
-	//TODO not needed
-	// deleteFolderRecursive(ipfsfilepath);
-
-	mkDirIfNotPresent(ipfsfilepath);
-}
-
-async function setUpFolderPaths(stats, state) {
-
-	count = state.loadedHashes.length;
-
-	await processfiles(stats, state);
-	// fs.readdir(sortedpath, function (err, files) {
-	// 	//console.log(files);
-	// 	//handling error
-	// 	if (err) {
-	// 		return console.log('Unable to scan directory: ' + err);
-	// 	}
-	//
-	// 	files.forEach(function (file) {
-	// 		res = file.split(".");
-	// 		//console.log(res[0]);
-	// 		if (res[0] != "") {
-	// 			fileArray[fileArray.length] = file;
-	// 		}
-	// 	});
-	// 	count = fileArray.length;
-	// 	//console.log(count + " " + sortedpath);
-	// 	processfiles(stats, state);
-	// });
-}
-
-
-function mkDirIfNotPresent(folders) {
-	if (!fs.existsSync(folders)) {
-		fs.mkdirSync(folders, {recursive: true});
-	}
-}
-
-function deleteFolderRecursive(path) {
-	if( fs.existsSync(path) ) {
-		fs.readdirSync(path).forEach(function(file,index){
-			var curPath = path + "/" + file;
-			if(fs.lstatSync(curPath).isDirectory()) { // recurse
-				deleteFolderRecursive(curPath);
-			} else { // delete file
-				fs.unlinkSync(curPath);
-			}
-		});
-		fs.rmdirSync(path);
-	}
-}
-
-async function processfiles(stats, state) {
-	if (stats.progresscount === count) {
-		var indextoindex = createIndexToIndex();
-		state.addIndexToIndex(indextoindex);
-
-		//TODO not needed
-		//path = ipfsfilepath + "indextoindex.json";
-		//fs.writeFileSync(path, stringify(indextoindex, {space: 4}));
-
-		var starttime = microtime.now();
-
-		async function handler(hash) {
-			await ipfsHandler(hash, starttime, stats, state);
-		}
-		pluggable.getFileHash(indextoindex, onlyHashIndexToIndex, handler);
-
-		// TODO not needed
-		// pluggable.getFileHash(path, onlyHashIndexToIndex, handler);
-	} else {
-		start(state.loadedHashes[stats.progresscount], stats, state);
-	}
-}
-
-function createIndexToIndex() {
-	var indextoindex = {}
-	for (i = 0; i < processdata.treesandindexes.length; i++) {
-		indextoindex["" + processdata.treesandindexes[i].indexIndex] = processdata.treesandindexes[i].indexipfs;
-	}
-	return indextoindex;
-}
-
-async function ipfsHandler(hash, starttime, stats, state) {
-	//console.log("HASH = " + hash);
-	stats.setHashAndTimeInStatsData(hash, starttime);
-	processdata.ipfsindextoindex = hash;
-	state.addIndexToIndexHash(hash);
-
-	async function innerhandler(output) {
-		await ipfsStatsHandler(output, hash, stats, state);
+async function processHashsets(state) {
+	for (var currentHashset = 0; currentHashset < state.loadedHashes.length; currentHashset++) {
+		var tree = await makeTree(state, state.loadedHashes[currentHashset]);
+		state.addTreeInfo(tree);
 	}
 
-	fileStatsIPFS(hash, onlyHashIndexToIndex, innerhandler);
+	var indextoindex = createIndexToIndex(state);
+	state.addIndexToIndex(indextoindex);
+
+	var indexToIndexHash = await utils.indexHash(JSON.stringify(indextoindex));
+	
+	state.addIndexToIndexHash(indexToIndexHash);
 }
 
-function start(curHashSequence, stats, state) {
-	var hashNumber = curHashSequence[0];
-	stats.setCurrentDataInStats(hashNumber);
-	ipfshashtree = "";
-	ipfsindex = "";
-	merkleroot = "";
-	jsonhasharray = new Array();
 
-	var curHashSequenceHashes = curHashSequence[1];
+async function makeTree(state, hashset) {
+	var tree = new TreeInfo(state);
+	tree.treehashalg = state.config.treeHash;
+	tree.index = hashset[0];
 
-	dat = {};
-	dat.total = curHashSequenceHashes.length;
-	dat.target = Math.ceil(Math.log(dat.total)/Math.log(2));
-	dat.extras = Math.pow(2, dat.target) - dat.total;
-	dat.file = hashNumber;
-	res = hashNumber.split(".");
-	//res.pop();
-	dat.indexIndex = res.join(".");
+	var merkleTools = new MerkleTools({ hashType: tree.treehashalg });
 
-	dat.jsonhasharray = new Array();
-	dat.merkleroot = "";
+	merkleTools.addLeaves(hashset[1], false);
+	tree.addLeaves(hashset[1]);
 
-	readthelines (dat, stats, state, curHashSequenceHashes);
-	// countLinesInFile(sortedpath + file, (error, numberOfLines) => {
-	// 	dat = {};
-	// 	dat.total = numberOfLines;
-	// 	dat.target = Math.ceil(Math.log(dat.total)/Math.log(2));
-	// 	dat.extras = Math.pow(2, dat.target) - dat.total;
-	// 	dat.file = file;
-	// 	res = file.split(".");
-	// 	res.pop();
-	// 	dat.indexIndex = res.join(".");
-	//
-	// 	dat.jsonhasharray = new Array();
-	// 	dat.merkleroot = "";
-	// 	//console.log(file + " " + dat.total);
-	// 	//console.log(dat.extras);
-	// 	//console.log(dat.file);
-	// 	readthelines (dat, stats, state);
-	// });
-}
-
-async function ipfsStatsHandler(output, hash, stats, state) {
-	//console.log(output);
-	stats.data[stats.af][stats.ai].files.indextoindex.filesize = output.cumulativeSize;
-
-	cfg.data[dataLoopCount].indextoindex = hash;
-	cfg.data[dataLoopCount].treesandindexes = processdata.treesandindexes.length;
-
-
-
-
-			dataLoopCount += 1;
-			await processAllData(stats, state);
-			if (dataLoopCount == cfg.data.length) {
-				console.log("FINISHED");
-				endProcess(stats, state);
-
-			}
-
-
-
-
-	// var json = "cfg = " + stringify(cfg, {space: 4});
-	// fs.writeFile("./config.js", json, async function (err) {
-	// 		if (err) throw err;
-	// 		console.log('config.js data updated');
-	// 		dataLoopCount += 1;
-	// 		await processAllData(stats, state);
-	// 		if (dataLoopCount == cfg.data.length) {
-	// 			console.log("FINISHED");
-	// 			writeData(stats, state);
-	//
-	// 		}
-	// 	}
-	// );
-}
-
-async function fileStatsIPFS(hash, hashonly, returnhandler) {
-	if(hashonly) {
-		stats = {"cumulativeSize": 0};
-		returnhandler(stats);
-	} else {
-		try {
-			stats = await ipfs.files.stat("/ipfs/" + hash);
-			returnhandler(stats);
-		} catch (e) {
-			console.log(e);
-		}
-	}
-}
-
-function  readthelines (dat, stats, state, curHashSequenceHashes) {
-	var starttime = microtime.now();
-	//console.log(sortedpath + dat.file);
-	for (var curHashNumber = 1; curHashNumber <= curHashSequenceHashes.length; curHashNumber++) {
-		readRow(curHashSequenceHashes[curHashNumber - 1], dat, curHashNumber, starttime, stats, state);
-	}
-
-	// rd = readline(sortedpath + dat.file);
-	// rd.on('line', function ( data, linecount) {
-	// 		readRow(data, dat, linecount, starttime, stats, state);
-	// 	}
-	// );
-}
-
-function readRow(data, dat, linecount, starttime, stats, state) {
-	if (linecount == dat.total) {
-		if (data.trim() != "") {
-			if (linecount % 10000 == 0) console.log(linecount);
-			dat.jsonhasharray[linecount - 1] = data;
-		}
-		//console.log("File " + dat.file + " read finished");
-		//addExtraLeafs(dat);
-		stats.setDataInStatsArrays(starttime, linecount);
-		makeTree(dat, stats, state);
-	} else {
-		//if (linecount % 10000 == 0) console.log(linecount);
-		dat.jsonhasharray[linecount - 1] = data;
-	}
-}
-
-function makeTree(dat, stats, state) {
-	var starttime = microtime.now();
-	//console.log(microtime.now());
-	var merkleTools = new MerkleTools(treeOptions);
-	merkleTools.addLeaves(dat.jsonhasharray, false);
 	merkleTools.makeTree();
-	stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeCreationTime = microtime.now() - starttime;
+
 	var rootbuffer = merkleTools.getMerkleRoot();
-	dat.merkleroot = rootbuffer.toString('hex');
-	//console.log(dat.merkleroot);
-	//console.log("Tree Made");
-	generateipfs(dat, merkleTools, stats, state);
-}
+	tree.merkleroot = rootbuffer.toString('hex');
 
-function generateipfs(dat, merkleTools, stats, state) {
-	var starttime = microtime.now();
-	const {tree, str} = generateTreeJson(merkleTools, dat);
-
-	var treeInfo = new TreeInfo();
-	treeInfo.addTree(tree);
-	state.addTreeInfo(treeInfo);
-
-
-	// TODO not needed
-	// res = dat.file.split(".");
-	// path = ipfsfilepath + res[0] + ".json";
-	// fs.writeFileSync(path, str);
-
-
-	stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeJSONFileCreation = microtime.now() - starttime;
-	starttime = microtime.now();
-
-
-	function handler1(hash) {
-		//console.log("HASH = " + hash);
-
-		stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.treeIPFSWriteTime = microtime.now() - starttime;
-		stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.IPFSHash = hash;
-
-		function innerhandler1(output) {
-			starttime = indexHandler(output, starttime, dat, hash, tree, stats, state, treeInfo);
-		}
-		fileStatsIPFS(hash, onlyHashMerkle, innerhandler1);
-	}
-
-	pluggable.getFileHash(tree, onlyHashMerkle, handler1);
-	//TODO not needed
-	// pluggable.getFileHash(path, onlyHashMerkle, handler1);
-
-}
-
-function generateTreeJson(merkleTools, dat) {
-	tree = merkleTools.getMerkleTree();
-	//console.log("tree leaves length = " + tree.leaves.length);
-	for (var x = 0; x < tree.levels.length; x++) {
-		//console.log("level " + x + "  = " + tree.levels[x].length);
-		for (var y = 0; y < tree.levels[x].length; y++) {
-			tree.levels[x][y] = tree.levels[x][y].toString('hex');
+	var merkleTree = merkleTools.getMerkleTree();
+	for (var x = 0; x < merkleTree.levels.length; x++) {
+		for (var y = 0; y < merkleTree.levels[x].length; y++) {
+			merkleTree.levels[x][y] = merkleTree.levels[x][y].toString('hex');
 		}
 	}
 
-	out = {};
-	out.merkletree = tree.levels;
-	//out.merkleleaves = tree.leaves;
-	str = stringify(out);
-	return {tree, str};
+	tree.addMerkleTree(merkleTree);
+
+	var fullTreeHash = await utils.indexHash(JSON.stringify(merkleTree));
+	tree.merkleipfs = fullTreeHash;
+	var index = createIndex(tree, merkleTree);
+
+	var indexHash = await utils.indexHash(JSON.stringify(index));
+	tree.ipfsindex = indexHash;
+	
+	return tree;
 }
 
-
-function indexHandler(output, starttime, dat, hash, tree, stats, state, treeInfo) {
-	stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.filesize = output.cumulativeSize;
-	//stats.data[stats.af][stats.ai].files.index[stats.progresscount].merkleTree.size = stats.size;
-	starttime = microtime.now();
-	dat.ipfshashtree = hash;
-	var index = createIndex(dat, tree);
-	treeInfo.addGeneratedInfo(index);
-
-	// TODO not needed
-	// path = ipfsfilepath + res[0] + "_index.json";
-	// //console.log(path);
-	// fs.writeFileSync(path, stringify(index));
-
-	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.indexJSONFileCreation = microtime.now() - starttime;
-	starttime = microtime.now();
-
-	//console.log(ipfsfilepath + res[0] + "_index.json");
-
-	function handler2(hash) {
-		//console.log("HASH = " + hash);
-		fileProcessingStatsHandler(starttime, hash, dat, stats, state);
-	}
-
-	pluggable.getFileHash(index, onlyHashMerkle, handler2);
-	// TODO not needed
-	// pluggable.getFileHash(path, onlyHashMerkle, handler2);
-	return starttime;
-}
-
-function createIndex(dat, tree) {
+function createIndex(tree) {
 	var index = {};
-	index.merkleipfs = dat.ipfshashtree;
-	index.merkleroot = dat.merkleroot;
-	index.index = dat.indexIndex;
-	var leaveslevel = tree.levels.length - 1;
+	index.merkleipfs = tree.merkleipfs;
+	index.merkleroot = tree.merkleroot;
+	index.index = tree.index;
+	var leaveslevel = tree.getMerkleTree().levels.length - 1;
 	index.data = {};
-	for (var x = 0; x < dat.total; x++) {
-		index.data[tree.levels[leaveslevel][x]] = x;
+	for (var x = 0; x < tree.getMerkleTree().leaves.length; x++) {
+		index.data[tree.getMerkleTree().levels[leaveslevel][x]] = x;
 	}
 	return index;
 }
 
-
-function fileProcessingStatsHandler(starttime, hash, dat, stats, state) {
-	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.treeIPFSWriteTime = microtime.now() - starttime;
-	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.IPFSHash = hash;
-
-	function innerhandler2(output) {
-		fileProcessingHandler(output, dat, hash, stats, state);
+function createIndexToIndex(state) {
+	var indextoindex = {}
+	for (var tree = 0; tree < state.treeInfoArray.length; tree++) {
+		indextoindex["" + state.treeInfoArray[tree].index] = state.treeInfoArray[tree].ipfsindex;
 	}
-
-	fileStatsIPFS(hash, onlyHashIndex, innerhandler2);
+	return indextoindex;
 }
 
-function fileProcessingHandler(output, dat, hash, stats, state) {
-	stats.data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.filesize = output.cumulativeSize;
-	//data[stats.af][stats.ai].files.index[stats.progresscount].IPFSIndex.size = stats.size;
-	dat.ipfsindex = hash;
-	//console.log(result);
-	dat.enc = getBytes32FromIpfsHash(dat.ipfsindex);
-	ind = processdata.treesandindexes.length;
-	processdata.treesandindexes[ind] = {};
-	processdata.treesandindexes[ind].treeipfs = dat.ipfshashtree;
-	processdata.treesandindexes[ind].indexipfs = dat.ipfsindex;
-	processdata.treesandindexes[ind].indexipfsbytes32 = dat.enc;
-	processdata.treesandindexes[ind].file = dat.file;
-	processdata.treesandindexes[ind].indexIndex = dat.indexIndex;
-	stats.progresscount++;
-	processfiles(stats, state);
-}
-
-function getBytes32FromIpfsHash(ipfsListing) {
-	return "0x"+bs58.decode(ipfsListing).slice(2).toString('hex');
-}
-
-// Return base58 encoded ipfs hash from bytes32 hex string,
-// E.g. "0x017dfd85d4f6cb4dcd715a88101f7b1f06cd1e009b2327a0809d01eb9c91f231"
-// --> "QmNSUYVKDSvPUnRLKmuxk9diJ6yS96r1TrAXzjTiBcCLAL"
-
-function getIpfsHashFromBytes32(bytes32Hex) {
-  // Add our default ipfs values for first 2 bytes:
-  // function:0x12=sha2, size:0x20=256 bits
-  // and cut off leading "0x"
-  const hashHex = "1220" + bytes32Hex.slice(2)
-  const hashBytes = Buffer.from(hashHex, 'hex');
-  const hashStr = bs58.encode(hashBytes);
-  return hashStr;
-}
-
-function writejsons(hash, proof, loopcount) {
-	var json = {};
-	json.root = merkleroot;
-	json.proof = proof;
-	str = stringify(json);
-	fs.writeFile(folderpath + "/jsons/" + hash + ".json", str, function(err) {
-		if (err) throw err;
-		loopcount++;
-		generateProofs(loopcount);
-	});
-}
-
-function readCfg(stats) {
-	//console.log(cfg.data[i]);
-	count = 0;
-	stats.progresscount = 0;
-	sortedpath = folderpath + "sorted/";
-	ipfsfilepath = folderpath + "foripfs/";
-	fileArray = new Array();
-	processdata = {};
-	processdata.treesandindexes = new Array();
-	rdfdatafile = cfg.data[dataLoopCount].datafile;
-	jsonldcontext = cfg.jsonldcontext;
-}
-
-async function processAllDataMain(options, getResult){
-
-	var stats = new Stats();
+async function processAllDataFromJson(hashes, options) {
 	var state = new State(options);
 
-	if (dataLoopCount !== cfg.data.length) {
-		readCfg(stats);
-		makeReadyforReading(stats);
-		state.loadHashes(sortedpath);
-		setUpFolderPaths(stats, state);
-	}
-
-	async function returnJson(){
-		var stateJson = stringify(state.toObject(), {space: 4});
-		console.log('Returning Json ');
-		getResult(stateJson);
-	}
-
-	state.onComplete = returnJson;
-}
-
-async function processAllDataFromJson(hashes, options, getResult){
-	var stats = new Stats();
-	var state = new State(options);
-
-	readCfg(stats);
-	stats.resetStatsData();
 	state.storeHashes(hashes);
-	setUpFolderPaths(stats, state);
+	await processHashsets(state);
 
-	async function returnJson(){
-		var stateJson = stringify(state.toObject(), {space: 4});
-		console.log('Returning Json: ');
-		getResult(stateJson);
-	}
-
-	state.onComplete = returnJson;
+	return state.toObject();
 }
 
-async function processAllDataReturnPromise(hashes, options){
-
-	class PromiseResolverClass{
-		resolver = {}
-		setResolver (resolverFunction){
-			this.resolver = resolverFunction;
-		}
-
-		actuallyResolve(result){
-			this.resolver(result);
-		}
-	}
-
-	var promiseResolver = new PromiseResolverClass();
-
-	var resultPromise = new Promise(function(resolve){
-		promiseResolver.setResolver(resolve);
-	})
-
-	function getResult(passedResult){
-		promiseResolver.actuallyResolve(passedResult);
-	}
-
-	await processAllDataFromJson(hashes, options, getResult);
-
-	return resultPromise;
-}
 
 exports.processAllDataFromJson = processAllDataFromJson
-exports.processAllDataReturnPromise = processAllDataReturnPromise

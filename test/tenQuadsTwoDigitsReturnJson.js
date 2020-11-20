@@ -5,35 +5,29 @@ var rewire = require('rewire');
 var merkle = rewire('../merkle.js');
 var assert = require('chai').assert;
 
+var stringify = require('json-stable-stringify');
+
 describe('generatesIndexes', function() {
     this.timeout(10000);
 
     context('ten quads', function() {
 
-        it('should equals', function(result) {
-            cfg.data = [
-                {
-                    "datafile": "bio2rdf-affymetrix-20121004.nt",
-                    "datafolder": "/quads/",
-                    "treesandindexes": 78
-                }
-            ];
+        it('should equals', async function() {
 
             var options = {
                 "divisor": "0xa",
                 "indexType": "object",
-                "lsd": 2
+                "lsd": 2,
+                "indexHash" : "IPFSHash",
+                "jsonldcontext" : {
+                    "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
+                    "index": "merkletreeid_0",
+                    "indexToTrees": "merkletrees_0",
+                    "leaf": "merkleleaf_0",
+                    "leaves": "merkleleaves_0",
+                    "root": "merklecontainerroot_0"
+                }
             };
-
-            cfg.jsonldcontext = {
-                "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
-                "index": "merkletreeid_0",
-                "indexToTrees": "merkletrees_0",
-                "leaf": "merkleleaf_0",
-                "leaves": "merkleleaves_0",
-                "root": "merklecontainerroot_0"
-            };
-
 
             var jsonHashes = "[\n" +
                 "   [\n" +
@@ -319,22 +313,17 @@ describe('generatesIndexes', function() {
                 "        ],\n" +
                 "        \"treesettings\": {\n" +
                 "            \"divisor\": \"0xa\",\n" +
+                "            \"indexHash\": \"IPFSHash\",\n" +
                 "            \"indexType\": \"object\",\n" +
-                "            \"lsd\": 2\n" +
+                "            \"lsd\": 2,\n" +
+                "            \"quadHash\": \"KECCAK-256\",\n" +
+                "            \"treeHash\": \"KECCAK-256\"\n" +
                 "        }\n" +
                 "    }\n" +
                 "}";
 
-            var jsonPromise = merkle.processAllDataReturnPromise(jsonHashes, options);
-
-            jsonPromise.then((resultJson)=>{
-                try {
-                    assert.strictEqual(resultJson, jsonToGenerate, "Not equal");
-                    result();
-                } catch (error){
-                    result(error);
-                }
-            })
+                const json = await merkle.processAllDataFromJson(JSON.parse(jsonHashes), options);
+                assert.strictEqual(stringify(json,{ space : 4 }), jsonToGenerate, "Not equal");
         })
     })
 })

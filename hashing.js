@@ -14,7 +14,14 @@ var kmac128 = require('js-sha3').kmac128;
 var kmac256 = require('js-sha3').kmac256;
 var crypto = require('crypto');
 
-exports.getHash= function(messagein, hashMethod) {
+const ipfsClient = require('ipfs-http-client');
+const globSource = require('ipfs-utils/src/files/glob-source');
+const bs58 = require('bs58');
+const { stringify } = require('querystring');
+
+require("./config.js");
+
+exports.getHash = async function (messagein, hashMethod) {
 	switch (hashMethod.type) {
 		case "SHA3-512":
 			return sha3_512(messagein);
@@ -29,15 +36,19 @@ exports.getHash= function(messagein, hashMethod) {
 			return sha3_224(messagein);
 			break;
 		case "KECCAK512":
+		case "KECCAK-512":
 			return keccak512(messagein);
 			break;
 		case "KECCAK384":
+		case "KECCAK-384":
 			return keccak384(messagein);
 			break;
 		case "KECCAK256":
+		case "KECCAK-256":
 			return keccak256(messagein);
 			break;
 		case "KECCAK224":
+		case "KECCAK-512":
 			return keccak224(messagein);
 			break;
 		case "SHAKE128":
@@ -45,6 +56,15 @@ exports.getHash= function(messagein, hashMethod) {
 			break;
 		case "SHAKE256":
 			return shake256(messagein, 512);
+			break;
+		case "IPFSHash":
+			var ipfsurl = "http://" + cfg.ipfs.domain + ":" + cfg.ipfs.APIPort;
+			var ipfs = ipfsClient(ipfsurl);
+
+			for await (const result of ipfs.add([messagein], { onlyHash: true })) {
+				hash = bs58.encode(result.cid.multihash);
+				return hash;
+			}
 			break;
 		default:
 			// valid hashTypes include all crypto hash algorithms
