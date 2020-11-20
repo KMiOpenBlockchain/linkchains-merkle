@@ -2,7 +2,7 @@
 
 require("./config.js");
 var rewire = require('rewire');
-var preprocess = rewire('../preprocess-simple.js');
+var preprocess = rewire('../preprocess.js');
 var assert = require('chai').assert;
 
 var stringify = require('json-stable-stringify');
@@ -11,15 +11,8 @@ describe('generatesIndexes', function () {
 
     context('one quad', function () {
 
-        it('should equals', function () {
-            cfg.data = [
-                {
-                    "datafile": "bio2rdf-affymetrix-20121004.nt",
-                    "datafolder": "/quads/",
-                    "treesandindexes": 78
-                }
-            ];
-
+        it('should equals', async function () {
+            
             var options = {
                 "quadHash": 'KECCAK256',
                 "divisor": "0x1",
@@ -27,7 +20,7 @@ describe('generatesIndexes', function () {
                 "lsd": 64
             };
 
-            var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n",
+            var json = await preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n",
                 options);
             var expected = "[\n" +
                 "   [\n" +
@@ -36,23 +29,13 @@ describe('generatesIndexes', function () {
                 "         \"b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88\"\n" +
                 "      ]\n" +
                 "   ]\n]";
-            assert.strictEqual(json, stringify(JSON.parse(expected), { space: 4 }), "Not equal");
+            assert.strictEqual(stringify(json, { space : 4 }), stringify(JSON.parse(expected), { space: 4 }), "Not equal");
         })
     })
 
     context('ten quads', function () {
 
-        it('should equals', function () {
-            cfg.data = [
-                {
-                    "datafile": "bio2rdf-affymetrix-20121004.nt",
-                    "datafolder": "/quads/",
-                    "divisor": "0x1",
-                    "indexType": "object",
-                    "lsd": 64,
-                    "treesandindexes": 78
-                }
-            ];
+        it('should equals', async function () {
 
             var options = {
                 "quadHash": 'KECCAK256',
@@ -61,7 +44,7 @@ describe('generatesIndexes', function () {
                 "lsd": 64
             };
 
-            var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
+            var json = await preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/creator> <https://github.com/bio2rdf/bio2rdf-scripts/blob/master/affymetrix/affymetrix.php>  .\n" +
@@ -134,23 +117,13 @@ describe('generatesIndexes', function () {
                 "      ]\n" +
                 "   ]\n" +
                 "]";
-            assert.strictEqual(json, stringify(JSON.parse(expected), { space: 4 }), "Not equal");
+            assert.strictEqual(stringify(json, { space : 4 }), stringify(JSON.parse(expected), { space: 4 }), "Not equal");
         })
     })
 
     context('less digits', function () {
 
-        it('should equals', function () {
-            cfg.data = [
-                {
-                    "datafile": "bio2rdf-affymetrix-20121004.nt",
-                    "datafolder": "/quads/",
-                    "divisor": "0xA",
-                    "indexType": "object",
-                    "lsd": 2,
-                    "treesandindexes": 78
-                }
-            ]
+        it('should equals', async function () {
 
             var options = {
                 "quadHash": 'KECCAK256',
@@ -159,7 +132,7 @@ describe('generatesIndexes', function () {
                 "lsd": 2
             };
 
-            var json = preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
+            var json = await preprocess.processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
                 "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/creator> <https://github.com/bio2rdf/bio2rdf-scripts/blob/master/affymetrix/affymetrix.php>  .\n" +

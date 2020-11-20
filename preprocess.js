@@ -1,4 +1,3 @@
-var fs = require('fs');
 const N3 = require('n3');
 const parser = new N3.Parser();
 var stringify = require('json-stable-stringify');
@@ -6,64 +5,47 @@ var SortedMap = require("collections/sorted-map");
 
 const hashingFunctions = require('./hashing');
 
-var settings = {
-    "pluggableFunctions": {
-        "quadHash": {
-            "thefunction": hashingFunctions.getHash,
-            "parameters": {
-                "type": "KECCAK256"
-            }
-        }
-    }
-};
-
-var pluggable = settings.pluggableFunctions;
+var utils;
 
 class State {
     indexType;
-    lsds;
+    lsd;
     divisor;
     divisorInt;
     quadText;
 
     quadCount;
     quads;
-    indices;
-
+	indices;
+	
     constructor(options) {
         this.indices = new SortedMap();
         this.readOptions(options);
     }
 
     readOptions(options) {
-        /* var defaultHash = 'KECCAK256';
-        var quadHash = options.quadHash ? options.quadHash : defaultHash;
-        var treeHash = options.treeHash ? options.treeHash : defaultHash;
-        var indexHash = options.indexHash ? options.indexHash : defaultHash;
-        pluggable = {
-            "quadHash": {
-                "getHash": (input) => {
-                    return hashingFunctions.getHash(input, {
-                        "type": quadHash
-                    });
-                }
-            },
-            "treeHash": {
-                "getHash": (input) => {
-                    return hashingFunctions.getHash(input, {
-                        "type": treeHash
-                    });
-                }
-            },
-            "indexHash": {
-                "getHash": (input) => {
-                    return hashingFunctions.getHash(input, {
-                        "type": indexHash
-                    });
-                }
-            }
-        } */
-        this.lsds = options.lsd ? options.lsd : 64;
+		var defaultHash = 'KECCAK-256';
+		var quadHashFunction = async function(input) {
+			return hashingFunctions.getHash(input, {
+				"type": options.quadHash ? options.quadHash : defaultHash
+			});
+		};
+		var treeHashFunction = async function(input) {
+			return hashingFunctions.getHash(input, {
+				"type": options.treeHash ? options.treeHash : defaultHash
+			});
+		};
+		var indexHashFunction = async function(input) {
+			return hashingFunctions.getHash(input, {
+				"type": options.indexHash ? options.indexHash : defaultHash
+			});
+		};
+		utils = {
+			quadHash: quadHashFunction,
+			treeHash: treeHashFunction,
+			indexHash: indexHashFunction
+		};
+        this.lsd = options.lsd ? options.lsd : 64;
         this.indexType = options.indexType ? options.indexType : 'subject';
         this.divisor = options.divisor ? options.divisor : 0x1;
         this.divisorInt = BigInt(this.divisor);
@@ -118,66 +100,50 @@ function makeQuadString(quad) {
     };
 }
 
-function processQuads(state) {
+async function processQuads(state) {
     for (var currentQuad = 0; currentQuad < state.quads.length; currentQuad++) {
-        processQuad(state, state.quads[currentQuad]);
+        await processQuad(state, state.quads[currentQuad]);
     }
 }
 
-function processQuad(state, quad) {
+async function processQuad(state, quad) {
     if (quad !== undefined) {
         var quadStringsObj = makeQuadString(quad);
 
-        quadStringsObj.quadHash = pluggable.quadHash.thefunction(quadStringsObj.quadString,
-            pluggable.quadHash.parameters);
+        quadStringsObj.quadHash = await utils.quadHash(quadStringsObj.quadString);
 
-        var index = makeHashIndex(state, quadStringsObj);
+        var index = await makeHashIndex(state, quadStringsObj);
         state.addToIndices(index.toString(), quadStringsObj.quadHash);
     }
 }
 
-function makeHashIndex(state, quadStringsObj) {
+async function makeHashIndex(state, quadStringsObj) {
     if (state.indexType == "uniform") {
         hash = quadStringsObj.quadHash;
     } else if (state.indexType == "subject") {
-        hash = pluggable.quadHash.thefunction(quadStringsObj.subjectString,
-            pluggable.quadHash.parameters);
+        hash = await utils.quadHash(quadStringsObj.subjectString);
     } else if (state.indexType == "predicate") {
-        hash = pluggable.quadHash.thefunction(quadStringsObj.predicateString,
-            pluggable.quadHash.parameters);
+        hash = await utils.quadHash(quadStringsObj.predicateString);
     } else if (state.indexType == "object") {
-        hash = pluggable.quadHash.thefunction(quadStringsObj.objectString,
-            pluggable.quadHash.parameters);
+        hash = await utils.quadHash(quadStringsObj.objectString);
     } else if (state.indexType == "graph") {
-        hash = pluggable.quadHash.thefunction(quadStringsObj.graphString,
-            pluggable.quadHash.parameters);
+        hash = await utils.quadHash(quadStringsObj.graphString);
     } else if (state.indexType == "subjectobject") {
-        hash = pluggable.quadHash.thefunction(quadStringsObj.subjectString +
-            " " + quadStringsObj.objectString,
-            pluggable.quadHash.parameters);
-    }
-    var lastdigits = hash.substr(hash.length - state.lsds);
+        hash = await utils.quadHash(quadStringsObj.subjectString +
+            " " + quadStringsObj.objectString);
+	}
+    var lastdigits = hash.substr(hash.length - state.lsd);
     var decimalInt = BigInt("0x" + lastdigits);
     var index = decimalInt / state.divisorInt;
     return index;
 }
 
-function processAllData(quads, options) {
+async function processAllData(quads, options) {
     var state = new State(options);
     state.addAndParseQuads(quads);
 
-    processQuads(state);
+    await processQuads(state);
     return state.indices;
 }
 
 exports.processAllData = processAllData
-
-var options = {
-    "quadHash": 'KECCAK256',
-    "divisor": "0x1",
-    "indexType": "object",
-    "lsd": 64
-};
-
-var json = processAllData("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n", 
-                options);
