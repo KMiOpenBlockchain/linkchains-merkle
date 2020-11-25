@@ -3,7 +3,7 @@
 
 class HashGenerator {
 
-    generateHashes(quads) {
+    generateHashes(quad) {
         return undefined;
     }
 }
@@ -25,17 +25,6 @@ class ProofRetriever {
     }
 }
 
-class ProofMatcher {
-
-    matchesRoot(merkleRoot) {
-        return false;
-    }
-
-    macthesIndexToTree(indexToTree) {
-        return false;
-    }
-}
-
 class ResultGenerator {
     addResult (indexToTree, merkleRoot, merkleProof) {
 
@@ -46,25 +35,49 @@ class ResultGenerator {
     }
 }
 
+class QueryData {
+
+    getLeaves(){
+        return undefined;
+    }
+
+    getMerkleRoot(){
+        return undefined;
+    }
+
+    getIndexToTree(){
+        return undefined;
+    }
+}
+
+function matchesRoot(merkleProof, merkleRoot) {
+    return false;
+}
+
+function macthesIndexToTree(merkleProof, indexToTree) {
+    return false;
+}
 
 function retrieveJson(quads, url, options){
-    var resultGenerator = new resultGenerator();
+    var databaseMediator = new DatabaseProxy(url);
+    var resultGenerator = new ResultGenerator();
     var hashGenerator = new HashGenerator(url, options);
-    var hashes = hashGenerator.generateHashes(quads);
-    for (let hash of hashes){
-        var databaseMediator = new DatabaseProxy(url);
-        var leaves = databaseMediator.getLeaves(hash);
-        var merkleRoot = databaseMediator.getMerkleRoot(hash);
-        var indexToTree = databaseMediator.getIndexToTree(hash);
-        for (let leaf of leaves){
-            var proofRetriever = new ProofRetriever(url);
-            var merkleProof = proofRetriever.getProof(leaf);
-            var proofMatcher = new ProofMatcher(merkleProof);
-            if (proofMatcher.matchesRoot(merkleRoot) && proofMatcher.macthesIndexToTree(indexToTree)){
-                resultGenerator.addResult(indexToTree, merkleRoot, merkleProof);
+    var proofRetriever = new ProofRetriever(url);
+
+    for (let quad of quads){
+        var hashes = hashGenerator.generateHashes(quad);
+        for (let hash of hashes){
+            var queryData  = databaseMediator.getQueryResult(hash);
+            for (let leaf of queryData.getLeaves()){
+                var merkleProof = proofRetriever.getProof(leaf);
+                if (matchesRoot(merkleProof, queryData.getMerkleRoot()) &&
+                    macthesIndexToTree(merkleProof, queryData.getIndexToTree())){
+                    resultGenerator.addResult(quad, queryData.getIndexToTree(), queryData.getMerkleRoot(), merkleProof);
+                }
             }
         }
     }
+
     return resultGenerator.toJsonLd();
 }
 
