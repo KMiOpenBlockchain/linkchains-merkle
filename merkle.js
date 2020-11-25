@@ -1,7 +1,15 @@
-var MerkleTools = require('merkle-tools/merkletools');
-var stringify = require('json-stable-stringify');
+const MerkleTools = require('merkle-tools/merkletools');
+const stringify = require('json-stable-stringify');
 
 const hashingFunctions = require('./hashing');
+
+const DEFAULT_LSD = 64;
+const DEFAULT_INDEXTYPE = 'subject';
+const DEFAULT_DIVISOR = 0x1;
+const DEFAULT_HASH_ALG = 'KECCAK-256';
+const DEFAULT_JSONLD_CONTEXT = {
+	"@vocab": "https://blockchain.open.ac.uk/vocab/"
+};
 
 var utils;
 
@@ -23,17 +31,17 @@ class TreeInfo {
 
 	addLeaves(leaves) {
 		this.tree.leaves = {
+			leafhashalg : this.config.quadHash,
 			"@list": leaves
 		};
 	}
 
 	toObject() {
 		var treeObj = {};
-		treeObj.index = this.index;
-		treeObj.containerhash = this.merkleipfs;
-		treeObj.containerhashalg = this.config.indexHash;  
+		treeObj.merkletreeid = this.indexNo;
+		treeObj.treehashalg = this.config.treeHash;
 		treeObj.merkleroot = this.merkleroot;
-		treeObj.leaves = this.tree.leaves;
+		treeObj.merkleleaves = this.tree.leaves;
 		return treeObj;
 	}
 }
@@ -51,23 +59,22 @@ class State {
 	}
 
 	readOptions(options) {
-		var defaultHash = 'KECCAK-256';
-		this.config.quadHash = options.quadHash ? options.quadHash : defaultHash;
-		this.config.treeHash = options.treeHash ? options.treeHash : defaultHash;
-		this.config.indexHash = options.indexHash ? options.indexHash : defaultHash;
-		var quadHashFunction = async function(input) {
+		this.config.quadHash = options.quadHash ? options.quadHash : DEFAULT_HASH_ALG;
+		this.config.treeHash = options.treeHash ? options.treeHash : DEFAULT_HASH_ALG;
+		this.config.indexHash = options.indexHash ? options.indexHash : DEFAULT_HASH_ALG;
+		var quadHashFunction = async function (input) {
 			return hashingFunctions.getHash(input, {
 				"type": this.config.quadHash
 			});
 		};
-		var treeHashFunction = async function(input) {
+		var treeHashFunction = async function (input) {
 			return hashingFunctions.getHash(input, {
 				"type": this.config.treeHash
 			});
 		};
-		var indexHashFunction = async function(input) {
+		var indexHashFunction = async function (input) {
 			return hashingFunctions.getHash(input, {
-				"type": options.indexHash ? options.indexHash : defaultHash
+				"type": options.indexHash ? options.indexHash : DEFAULT_HASH_ALG
 			});
 		};
 		utils = {
@@ -75,17 +82,10 @@ class State {
 			treeHash: treeHashFunction,
 			indexHash: indexHashFunction
 		}
-		this.config.lsd = options.lsd ? options.lsd : 64;
-		this.config.indexType = options.indexType ? options.indexType : 'subject';
-		this.config.divisor = options.divisor ? options.divisor : 0x1;
-		this.config.jsonldcontext = options.jsonldcontext ? options.jsonldcontext : {
-			"@vocab": "https://blockchain.open.ac.uk/vocab/",
-			"index": "merkletreeid",
-			"indexToTrees": "merkletrees",
-			"leaf": "merkleleaf",
-			"leaves": "merkleleaves",
-			"root": "merklecontainerroot"
-		};
+		this.config.lsd = options.lsd ? options.lsd : DEFAULT_LSD;
+		this.config.indexType = options.indexType ? options.indexType : DEFAULT_INDEXTYPE;
+		this.config.divisor = options.divisor ? options.divisor : DEFAULT_DIVISOR;
+		this.config.jsonldcontext = options.jsonldcontext ? options.jsonldcontext : DEFAULT_JSONLD_CONTEXT;
 	}
 
 	storeHashes(data) {
@@ -105,17 +105,21 @@ class State {
 	}
 
 	toObject() {
-		var results = {};
-		results["@context"] = this.config.jsonldcontext;
-		results.indexToTrees = {};
-		results.indexToTrees.indexhash = this.indexToIndexHash;
-		results.indexToTrees.indexhashalg = this.config.indexHash; 
-		results.indexToTrees.treesettings = this.config;
-		delete results.indexToTrees.treesettings.jsonldcontext;
-		results.indexToTrees.trees = [];
+		var results = {
+			"@context" : this.config.jsonldcontext
+		};
+		results.merkletrees = {};
+		results.merkletrees.indexhash = this.indexToIndexHash;
+		results.merkletrees.indexhashalg = this.config.indexHash;
+		results.merkletrees.treesettings = this.config;
+		delete results.merkletrees.treesettings.jsonldcontext;
+		var treeList = [];
 		for (var i = 0; i < this.treeInfoArray.length; i++) {
-			results.indexToTrees.trees.push(this.treeInfoArray[i].toObject());
+			treeList.push(this.treeInfoArray[i].toObject());
 		}
+		results.merkletrees.trees = {
+			"@list" : treeList
+		};
 		return results;
 	}
 }
@@ -128,9 +132,8 @@ async function processHashsets(state) {
 
 	var indextoindex = createIndexToIndex(state);
 	state.addIndexToIndex(indextoindex);
-
 	var indexToIndexHash = await utils.indexHash(JSON.stringify(indextoindex));
-	
+
 	state.addIndexToIndexHash(indexToIndexHash);
 }
 
@@ -138,7 +141,7 @@ async function processHashsets(state) {
 async function makeTree(state, hashset) {
 	var tree = new TreeInfo(state);
 	tree.treehashalg = state.config.treeHash;
-	tree.index = hashset[0];
+	tree.indexNo = hashset[0];
 
 	var merkleTools = new MerkleTools({ hashType: tree.treehashalg });
 
@@ -159,21 +162,18 @@ async function makeTree(state, hashset) {
 
 	tree.addMerkleTree(merkleTree);
 
-	var fullTreeHash = await utils.indexHash(JSON.stringify(merkleTree));
-	tree.merkleipfs = fullTreeHash;
-	var index = createIndex(tree, merkleTree);
-
-	var indexHash = await utils.indexHash(JSON.stringify(index));
-	tree.ipfsindex = indexHash;
+	var index = createIndex(tree);
 	
+	var indexHash = await utils.indexHash(JSON.stringify(index));
+	tree.indexHash = indexHash;
+
 	return tree;
 }
 
 function createIndex(tree) {
 	var index = {};
-	index.merkleipfs = tree.merkleipfs;
 	index.merkleroot = tree.merkleroot;
-	index.index = tree.index;
+	index.merkletreeid = tree.indexNo;
 	var leaveslevel = tree.getMerkleTree().levels.length - 1;
 	index.data = {};
 	for (var x = 0; x < tree.getMerkleTree().leaves.length; x++) {
@@ -185,19 +185,18 @@ function createIndex(tree) {
 function createIndexToIndex(state) {
 	var indextoindex = {}
 	for (var tree = 0; tree < state.treeInfoArray.length; tree++) {
-		indextoindex["" + state.treeInfoArray[tree].index] = state.treeInfoArray[tree].ipfsindex;
+		indextoindex["" + state.treeInfoArray[tree].indexNo] = state.treeInfoArray[tree].indexHash;
 	}
 	return indextoindex;
 }
 
-async function processAllDataFromJson(hashes, options) {
+async function hashListsToMerkleTrees(hashes, options) {
 	var state = new State(options);
 
 	state.storeHashes(hashes);
 	await processHashsets(state);
-
 	return state.toObject();
 }
 
 
-exports.processAllDataFromJson = processAllDataFromJson
+exports.hashListsToMerkleTrees = hashListsToMerkleTrees
