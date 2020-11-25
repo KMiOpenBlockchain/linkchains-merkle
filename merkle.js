@@ -185,7 +185,7 @@ function createIndex(tree) {
 function createIndexToIndex(state) {
 	var indextoindex = {}
 	for (var tree = 0; tree < state.treeInfoArray.length; tree++) {
-		indextoindex["" + state.treeInfoArray[tree].indexNo] = state.treeInfoArray[tree].indexHash;
+		indextoindex[state.treeInfoArray[tree].indexNo.toString()] = state.treeInfoArray[tree].indexHash;
 	}
 	return indextoindex;
 }
