@@ -138,7 +138,7 @@ async function makeHashIndex(state, quadStringsObj) {
     return index;
 }
 
-async function processAllData(quads, options) {
+async function divideQuadsIntoHashLists(quads, options) {
     var state = new State(options);
     state.addAndParseQuads(quads);
 
@@ -146,4 +146,4 @@ async function processAllData(quads, options) {
     return state.indices;
 }
 
-exports.processAllData = processAllData
+exports.divideQuadsIntoHashLists = divideQuadsIntoHashLists
