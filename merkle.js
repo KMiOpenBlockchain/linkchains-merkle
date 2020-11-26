@@ -32,7 +32,9 @@ class TreeInfo {
 	addLeaves(leaves) {
 		this.tree.leaves = {
 			leafhashalg : this.config.quadHash,
-			"@list": leaves
+			"leaves": {
+				"@list": leaves
+			}
 		};
 	}
 

@@ -42,9 +42,11 @@ describe('generatesIndexes', function() {
                             "@list": [
                                 {
                                     "merkleleaves": {
-                                        "@list": [
-                                            "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88"
-                                        ],
+                                        "leaves": {
+                                            "@list": [
+                                                "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88"
+                                            ]
+                                        },
                                         "leafhashalg": "KECCAK-256"
                                     },
                                     "merkleroot": "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88",
