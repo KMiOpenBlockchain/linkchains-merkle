@@ -147,3 +147,4 @@ async function divideQuadsIntoHashLists(quads, options) {
 }
 
 exports.divideQuadsIntoHashLists = divideQuadsIntoHashLists
+exports.makeQuadString = makeQuadString
