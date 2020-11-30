@@ -43,9 +43,7 @@ class HashGenerator {
         var algorithms = await this.getAlgorithms();
         for (let algorithm of algorithms ){
             var passedAlgorithm = { "type": algorithm}
-            var parsedQuad = parser.parse(quad)[0];
-            var canonicalQuad = preprocess.makeQuadString(parsedQuad);
-            var hashPerAlgorithm = await Hashing.getHash(stringify(canonicalQuad), passedAlgorithm);
+            var hashPerAlgorithm = await Hashing.getHash(stringify(quad), passedAlgorithm);
             result.push(hashPerAlgorithm);
         }
         return result;
@@ -108,12 +106,19 @@ async function generateHashesFunction(quad, url, options) {
     return hashes;
 }
 
+function renderQuadsCanonical(quads) {
+    var parsedQuads = parser.parse(quads);
+    var canonicalQuads = parsedQuads.map( quad => preprocess.makeQuadString(quad));
+    return canonicalQuads;
+}
+
 function retrieveJson(quads, url, options){
     var databaseMediator = new DatabaseProxy(url);
     var resultGenerator = new ResultGenerator();
     var proofRetriever = new ProofRetriever(url);
+    var canonicalQuads = renderQuadsCanonical(quads);
 
-    for (let quad of quads){
+    for (let quad of canonicalQuads){
         var hashes = generateHashesFunction(quad, url, options);
         for (let hash of hashes){
             var queryData  = databaseMediator.getQueryResult(hash);
@@ -132,3 +137,4 @@ function retrieveJson(quads, url, options){
 
 exports.generateHashesFunction = generateHashesFunction;
 exports.retrieveJson = retrieveJson;
+exports.renderQuadsCanonical= renderQuadsCanonical;
