@@ -1,10 +1,46 @@
-
-
+const newEngine = require("@comunica/actor-init-sparql").newEngine;
+const myEngine = newEngine();
+const Hashing = require("./hashing.js")
 
 class HashGenerator {
 
-    generateHashes(quad) {
-        return undefined;
+    metadataSource = ""
+
+    constructor (metadataSource){
+        this.metadataSource = metadataSource;
+    }
+
+    async getAlgorithms() {
+        const result = await myEngine.query(
+            `PREFIX : <https://blockchain.open.ac.uk/vocab/>
+
+        SELECT DISTINCT ?algorithm WHERE { 
+            ?s :treesettings ?o .
+            ?o :quadHash ?algorithm . 
+        }`,
+            {
+                sources: [this.metadataSource],
+            }
+        );
+        const bindings = await result.bindings();
+
+        var algorithms = [];
+        for (var i = 0; i < bindings.length; i++) {
+            algorithms.push(bindings[i].get('?algorithm').value);
+        }
+
+        return algorithms;
+    }
+
+    async generateHashes(quad) {
+        var result = []
+        var algorithms = await this.getAlgorithms();
+        for (let algorithm of algorithms ){
+            var passedAlgorithm = { "type": algorithm}
+            var hashPerAlgorithm = await Hashing.getHash(quad, passedAlgorithm);
+            result.push(hashPerAlgorithm);
+        }
+        return result;
     }
 }
 
@@ -58,14 +94,19 @@ function macthesIndexToTree(merkleProof, indexToTree) {
     return false;
 }
 
+async function generateHashesFunction(quad, url, options) {
+    var hashGenerator = new HashGenerator(url, options);
+    var hashes = await hashGenerator.generateHashes(quad);
+    return hashes;
+}
+
 function retrieveJson(quads, url, options){
     var databaseMediator = new DatabaseProxy(url);
     var resultGenerator = new ResultGenerator();
-    var hashGenerator = new HashGenerator(url, options);
     var proofRetriever = new ProofRetriever(url);
 
     for (let quad of quads){
-        var hashes = hashGenerator.generateHashes(quad);
+        var hashes = generateHashesFunction(quad, url, options);
         for (let hash of hashes){
             var queryData  = databaseMediator.getQueryResult(hash);
             for (let leaf of queryData.getLeaves()){
@@ -81,4 +122,5 @@ function retrieveJson(quads, url, options){
     return resultGenerator.toJsonLd();
 }
 
-exports.retrieveJson = retrieveJson
+exports.generateHashesFunction = generateHashesFunction;
+exports.retrieveJson = retrieveJson;
