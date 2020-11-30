@@ -219,7 +219,7 @@ async function retrieveJson(quads, url, options){
     var canonicalQuads = renderQuadsCanonical(quads);
 
     for (let quad of canonicalQuads){
-        var hashes = generateHashesFunction(quad, url, options);
+        var hashes = await generateHashesFunction(quad, url, options);
         var matchingMetadata = await matchHashes(hashes, url);
 
         for (let hash of hashes){
