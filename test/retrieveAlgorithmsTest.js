@@ -31,7 +31,7 @@ describe('retrieveAlgorithms', function() {
 
             var json = await retrieve.generateHashesFunction("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n",
                 'https://callustian.solid.open.ac.uk/public/linkchain-merkle/OneQuad.ttl',options);
-            var expected = ['d4257ba4fd56ea9a67091dd56ee33b2a8cb4496c90b5e8c83b15d26a207ecbf8' ];
+            var expected = ["15ca6c6fb9dff55b9b6e8358456c7771029dd89c752a3ea083e288dd8026db74"];
             assert.strictEqual(stringify(json, { space : 4 }), stringify(expected, { space: 4 }), "Not equal");
 
         })

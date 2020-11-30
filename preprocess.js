@@ -147,3 +147,4 @@ async function processAllData(quads, options) {
 }
 
 exports.processAllData = processAllData
+exports.makeQuadString = makeQuadString

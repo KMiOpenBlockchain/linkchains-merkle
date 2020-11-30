@@ -1,6 +1,12 @@
+const N3 = require('n3');
+const parser = new N3.Parser();
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
 const Hashing = require("./hashing.js")
+const preprocess = require('./preprocess.js')
+var stringify = require('json-stable-stringify');
+
+
 
 class HashGenerator {
 
@@ -37,7 +43,9 @@ class HashGenerator {
         var algorithms = await this.getAlgorithms();
         for (let algorithm of algorithms ){
             var passedAlgorithm = { "type": algorithm}
-            var hashPerAlgorithm = await Hashing.getHash(quad, passedAlgorithm);
+            var parsedQuad = parser.parse(quad)[0];
+            var canonicalQuad = preprocess.makeQuadString(parsedQuad);
+            var hashPerAlgorithm = await Hashing.getHash(stringify(canonicalQuad), passedAlgorithm);
             result.push(hashPerAlgorithm);
         }
         return result;
