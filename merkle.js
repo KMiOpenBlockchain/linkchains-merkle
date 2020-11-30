@@ -162,30 +162,13 @@ async function makeTree(state, hashset) {
 
 	tree.addMerkleTree(merkleTree);
 
-	var index = createIndex(tree);
-	
-	var indexHash = await utils.indexHash(JSON.stringify(index));
-	tree.indexHash = indexHash;
-
 	return tree;
-}
-
-function createIndex(tree) {
-	var index = {};
-	index.merkleroot = tree.merkleroot;
-	index.merkletreeid = tree.indexNo;
-	var leaveslevel = tree.getMerkleTree().levels.length - 1;
-	index.data = {};
-	for (var x = 0; x < tree.getMerkleTree().leaves.length; x++) {
-		index.data[tree.getMerkleTree().levels[leaveslevel][x]] = x;
-	}
-	return index;
 }
 
 function createIndexToIndex(state) {
 	var indextoindex = {}
 	for (var tree = 0; tree < state.treeInfoArray.length; tree++) {
-		indextoindex["" + state.treeInfoArray[tree].indexNo] = state.treeInfoArray[tree].indexHash;
+		indextoindex[state.treeInfoArray[tree].indexNo.toString()] = state.treeInfoArray[tree].merkleroot;
 	}
 	return indextoindex;
 }
