@@ -202,13 +202,12 @@ async function getIndex(indexHash, metadatasource) {
     );
     const bindings = await result.bindings();
 
-    var results = {};
+    var results = [];
     for (var i = 0; i < bindings.length; i++) {
-        
-        results[bindings[i].get("?merkletreeid").value] = bindings[i].get("?root").value;
+        var entry = {};
+        entry[bindings[i].get("?merkletreeid").value] = bindings[i].get("?root").value;
+        results.push(entry);
     }
-
-
     return results;
 }
 
