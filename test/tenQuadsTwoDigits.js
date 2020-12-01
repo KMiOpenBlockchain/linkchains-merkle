@@ -123,7 +123,7 @@ describe('generatesIndexes', function() {
                         "@vocab": "https://blockchain.open.ac.uk/vocab/"
                     },
                     "merkletrees": {
-                        "indexhash": "31d128e513b67c53c3f193822a97045bedc1142e724620a13223f56e2f9a25ff",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
                         "indexhashalg": "KECCAK-256",
                         "trees": {
                             "@list": [
