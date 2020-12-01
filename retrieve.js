@@ -52,11 +52,7 @@ class HashGenerator {
 
 class DatabaseProxy {
 
-    getLeaves(hash) {
-        return undefined;
-    }
-
-    getIndexToTree(hash){
+    getMetadata(hash){
         return undefined;
     }
 }
@@ -79,8 +75,21 @@ class ResultGenerator {
 
 class QueryData {
 
-    getLeaves(){
-        return undefined;
+    retrieve(item,arrayOfIndices,returnObjectIfNotFound){
+        if (arrayOfIndices.length === 0){
+            return item;
+        } else {
+            var data = arrayOfIndices.shift();
+            if (item[data] === undefined) {
+                return returnObjectIfNotFound;
+            } else {
+                return this.retrieve(item[data],arrayOfIndices, returnObjectIfNotFound);
+            }
+        }
+    }
+
+    getLeaves(metadataItem){
+        return this.retrieve(metadataItem, ['tree', 'merkleleaves', 'leaves', '@list'], []);
     }
 
     getMerkleRoot(){
@@ -211,6 +220,11 @@ async function getIndex(indexHash, metadatasource) {
     return results;
 }
 
+function getLeaves(matchingMetadataItem) {
+    var queryData = new QueryData();
+    return queryData.getLeaves(matchingMetadataItem);
+}
+
 async function retrieveJson(quads, url, options){
     var databaseMediator = new DatabaseProxy(url);
     var resultGenerator = new ResultGenerator();
@@ -219,15 +233,19 @@ async function retrieveJson(quads, url, options){
 
     for (let quad of canonicalQuads){
         var hashes = await generateHashesFunction(quad, url, options);
-        var matchingMetadata = await matchHashes(hashes, url);
 
         for (let hash of hashes){
-            var queryData  = databaseMediator.getQueryResult(hash);
-            for (let leaf of queryData.getLeaves()){
-                var merkleProof = proofRetriever.getProof(leaf);
-                if (matchesRoot(merkleProof, queryData.getMerkleRoot()) &&
-                    macthesIndexToTree(merkleProof, queryData.getIndexToTree())){
-                    resultGenerator.addResult(quad, queryData.getIndexToTree(), queryData.getMerkleRoot(), merkleProof);
+            var matchingMetadata = await matchHashes(hashes, url);
+            if (matchingMetadata.length > 0) {
+                for (let matchingMetadataItem of matchingMetadata) {
+                    var queryData = new QueryData();
+                    for (let leaf of getLeaves(matchingMetadataItem)) {
+                        var merkleProof = proofRetriever.getProof(leaf);
+                        if (matchesRoot(merkleProof, queryData.getMerkleRoot()) &&
+                            macthesIndexToTree(merkleProof, queryData.getIndexToTree())) {
+                            resultGenerator.addResult(quad, queryData.getIndexToTree(), queryData.getMerkleRoot(), merkleProof);
+                        }
+                    }
                 }
             }
         }
@@ -239,3 +257,5 @@ async function retrieveJson(quads, url, options){
 exports.generateHashesFunction = generateHashesFunction;
 exports.retrieveJson = retrieveJson;
 exports.renderQuadsCanonical= renderQuadsCanonical;
+exports.matchHashes = matchHashes;
+exports.getLeaves = getLeaves;
