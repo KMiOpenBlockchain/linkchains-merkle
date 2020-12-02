@@ -65,7 +65,8 @@ class ProofRetriever {
         merkleTools.makeTree();
 
         // this is the single function call I meant. Admittedly yes, setting up the merkleTools instance to enable it is another three lines beforehand. :-)
-        var proofForLeaf = merkleTools.getProof( leaf);
+        var index = leafArray.findIndex( (result) => result === leaf);
+        var proofForLeaf = merkleTools.getProof( index, false);
         return proofForLeaf;
     }
 }
@@ -237,8 +238,8 @@ function getProof(leaf, leafArray, algorithm) {
     return proofRetriever.getProof(leaf, leafArray, algorithm);
 }
 
-function doHash(quad, algorithm) {
-    return undefined;
+async function doHash(quadString, algorithm) {
+    var hashPerAlgorithm = await Hashing.getHash(quadString, passedAlgorithm);
 }
 
 async function retrieveJson(quads, url, options){
@@ -254,7 +255,7 @@ async function retrieveJson(quads, url, options){
             for (let matchingMetadataItem of matchingMetadata) {
                 var queryData = new QueryData();
                 var leafArray =  getLeaves(matchingMetadataItem);
-                var leaf = doHash(quad,matchingMetadataItem["settings"]["quadhash"])
+                var leaf = doHash(quad["quadstring"],matchingMetadataItem["settings"]["quadhash"]);
                 var merkleProof = getProof(leaf, leafArray, matchingMetadataItem["settings"]["treehash"]);
                 if (matchesRoot(merkleProof, queryData.getMerkleRoot()) &&
                     macthesIndexToTree(merkleProof, queryData.getIndexToTree())) {

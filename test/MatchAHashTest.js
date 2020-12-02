@@ -14,21 +14,6 @@ describe('Match Hash', function() {
     context('Matches a hash', function() {
 
         it('should equals', async function() {
-            var options = {
-                "divisor": "0x1",
-                "indexType": "object",
-                "lsd": 64,
-                "indexHash" : "IPFSHash",
-                "jsonldcontext" : {
-                    "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
-                    "index": "merkletreeid_0",
-                    "indexToTrees": "merkletrees_0",
-                    "leaf": "merkleleaf_0",
-                    "leaves": "merkleleaves_0",
-                    "root": "merklecontainerroot_0"
-                }
-            };
-
             var hash = '3551024291e2998a1a452642deb45bc424a9969ec801047263822570045d7781';
 
             var json = await retrieve.matchHashes([hash],
@@ -95,20 +80,6 @@ describe('Match Hash', function() {
     context('Does not matches a hash', function() {
 
         it('should equals', async function() {
-            var options = {
-                "divisor": "0x1",
-                "indexType": "object",
-                "lsd": 64,
-                "indexHash" : "IPFSHash",
-                "jsonldcontext" : {
-                    "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
-                    "index": "merkletreeid_0",
-                    "indexToTrees": "merkletrees_0",
-                    "leaf": "merkleleaf_0",
-                    "leaves": "merkleleaves_0",
-                    "root": "merklecontainerroot_0"
-                }
-            };
 
             var hash = '0';
 
@@ -125,20 +96,6 @@ describe('Match Hash', function() {
     context('Returns leaf array', function() {
 
         it('should equals', async function() {
-            var options = {
-                "divisor": "0x1",
-                "indexType": "object",
-                "lsd": 64,
-                "indexHash" : "IPFSHash",
-                "jsonldcontext" : {
-                    "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
-                    "index": "merkletreeid_0",
-                    "indexToTrees": "merkletrees_0",
-                    "leaf": "merkleleaf_0",
-                    "leaves": "merkleleaves_0",
-                    "root": "merklecontainerroot_0"
-                }
-            };
 
             var hash = '3551024291e2998a1a452642deb45bc424a9969ec801047263822570045d7781';
 
@@ -157,21 +114,6 @@ describe('Match Hash', function() {
     context('Returns proof', function() {
 
         it('should equals', async function() {
-            var options = {
-                "divisor": "0x1",
-                "indexType": "object",
-                "lsd": 64,
-                "indexHash" : "IPFSHash",
-                "jsonldcontext" : {
-                    "@vocab": "https://blockchain.open.ac.uk/vocab_0/",
-                    "index": "merkletreeid_0",
-                    "indexToTrees": "merkletrees_0",
-                    "leaf": "merkleleaf_0",
-                    "leaves": "merkleleaves_0",
-                    "root": "merklecontainerroot_0"
-                }
-            };
-
             var hash = '3551024291e2998a1a452642deb45bc424a9969ec801047263822570045d7781';
 
             var metadataArray = await retrieve.matchHashes([hash],
@@ -179,7 +121,7 @@ describe('Match Hash', function() {
 
             var leafArray = await retrieve.getLeaves(metadataArray[0],
                 'https://thirda.solid.open.ac.uk/public/MerQL/test.ttl');
-            
+
             var json = await retrieve.getProof(leafArray[0], leafArray, "KECCAK-256");
 
             var expected= ['3551024291e2998a1a452642deb45bc424a9969ec801047263822570045d7781'];
