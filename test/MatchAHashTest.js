@@ -114,7 +114,7 @@ describe('Match Hash', function() {
     context('Returns proof', function() {
 
         it('should equals', async function() {
-            var hash = '3551024291e2998a1a452642deb45bc424a9969ec801047263822570045d7781';
+            var hash = '79892d3addd677abcc7451dcb8b098f81a976987c035f9d8b0ea56ae9d558f18';
 
             var metadataArray = await retrieve.matchHashes([hash],
                 'https://thirda.solid.open.ac.uk/public/MerQL/test.ttl');
@@ -124,7 +124,8 @@ describe('Match Hash', function() {
 
             var json = await retrieve.getProof(leafArray[0], leafArray, "KECCAK-256");
 
-            var expected= ['3551024291e2998a1a452642deb45bc424a9969ec801047263822570045d7781'];
+            var expected= [{"right":'318d0d4f4687f612388d2c3397b17b9720bb51d2915efa99eaf97d854aae7dcc'},
+                {'right':'d47ec3b234895b897eee46b388760852599b06d037661de58d561662e25a41f2'}];
 
             assert.strictEqual(stringify(json, { space : 4 }), stringify(expected, { space: 4 }), "Not equal");
         })
