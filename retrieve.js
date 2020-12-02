@@ -2,8 +2,9 @@ const N3 = require('n3');
 const parser = new N3.Parser();
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
-const Hashing = require("./hashing.js")
-const preprocess = require('./preprocess.js')
+const Hashing = require("./hashing.js");
+const preprocess = require('./preprocess.js');
+const MerkleTools = require('merkle-tools');
 var stringify = require('json-stable-stringify');
 
 
@@ -38,12 +39,12 @@ class HashGenerator {
         return algorithms;
     }
 
-    async generateHashes(quad) {
+    async generateHashes(quadString) {
         var result = []
         var algorithms = await this.getAlgorithms();
         for (let algorithm of algorithms ){
             var passedAlgorithm = { "type": algorithm}
-            var hashPerAlgorithm = await Hashing.getHash(stringify(quad), passedAlgorithm);
+            var hashPerAlgorithm = await Hashing.getHash(quadString, passedAlgorithm);
             result.push(hashPerAlgorithm);
         }
         return result;
@@ -58,8 +59,14 @@ class DatabaseProxy {
 }
 
 class ProofRetriever {
-    getProof(leaf){
-        return undefined;
+    getProof(leaf, leafArray, algorithm){
+        var merkleTools = new MerkleTools( { hashType : algorithm } ); // obviously not going to be a hardcoded literal string as the hashType in practice
+        merkleTools.addLeaves(leafArray, false); // hashList taken from whatever output object step 4 gives.
+        merkleTools.makeTree();
+
+        // this is the single function call I meant. Admittedly yes, setting up the merkleTools instance to enable it is another three lines beforehand. :-)
+        var proofForLeaf = merkleTools.getProof( leaf);
+        return proofForLeaf;
     }
 }
 
@@ -109,9 +116,9 @@ function macthesIndexToTree(merkleProof, indexToTree) {
     return false;
 }
 
-async function generateHashesFunction(quad, url, options) {
+async function generateHashesFunction(quadString, url, options) {
     var hashGenerator = new HashGenerator(url, options);
-    var hashes = await hashGenerator.generateHashes(quad);
+    var hashes = await hashGenerator.generateHashes(quadString);
     return hashes;
 }
 
@@ -225,27 +232,33 @@ function getLeaves(matchingMetadataItem) {
     return queryData.getLeaves(matchingMetadataItem);
 }
 
+function getProof(leaf, leafArray, algorithm) {
+    var proofRetriever = new ProofRetriever();
+    return proofRetriever.getProof(leaf, leafArray, algorithm);
+}
+
+function doHash(quad, algorithm) {
+    return undefined;
+}
+
 async function retrieveJson(quads, url, options){
     var databaseMediator = new DatabaseProxy(url);
     var resultGenerator = new ResultGenerator();
-    var proofRetriever = new ProofRetriever(url);
     var canonicalQuads = renderQuadsCanonical(quads);
 
     for (let quad of canonicalQuads){
-        var hashes = await generateHashesFunction(quad, url, options);
+        var hashes = await generateHashesFunction(quad["quadstring"], url, options);
 
-        for (let hash of hashes){
-            var matchingMetadata = await matchHashes(hashes, url);
-            if (matchingMetadata.length > 0) {
-                for (let matchingMetadataItem of matchingMetadata) {
-                    var queryData = new QueryData();
-                    for (let leaf of getLeaves(matchingMetadataItem)) {
-                        var merkleProof = proofRetriever.getProof(leaf);
-                        if (matchesRoot(merkleProof, queryData.getMerkleRoot()) &&
-                            macthesIndexToTree(merkleProof, queryData.getIndexToTree())) {
-                            resultGenerator.addResult(quad, queryData.getIndexToTree(), queryData.getMerkleRoot(), merkleProof);
-                        }
-                    }
+        var matchingMetadata = await matchHashes(hashes, url);
+        if (matchingMetadata.length > 0) {
+            for (let matchingMetadataItem of matchingMetadata) {
+                var queryData = new QueryData();
+                var leafArray =  getLeaves(matchingMetadataItem);
+                var leaf = doHash(quad,matchingMetadataItem["settings"]["quadhash"])
+                var merkleProof = getProof(leaf, leafArray, matchingMetadataItem["settings"]["treehash"]);
+                if (matchesRoot(merkleProof, queryData.getMerkleRoot()) &&
+                    macthesIndexToTree(merkleProof, queryData.getIndexToTree())) {
+                    resultGenerator.addResult(quad, queryData.getIndexToTree(), queryData.getMerkleRoot(), merkleProof);
                 }
             }
         }
@@ -259,3 +272,4 @@ exports.retrieveJson = retrieveJson;
 exports.renderQuadsCanonical= renderQuadsCanonical;
 exports.matchHashes = matchHashes;
 exports.getLeaves = getLeaves;
+exports.getProof = getProof;
