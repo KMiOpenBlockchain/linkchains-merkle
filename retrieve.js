@@ -66,8 +66,8 @@ class ProofRetriever {
 
         // this is the single function call I meant. Admittedly yes, setting up the merkleTools instance to enable it is another three lines beforehand. :-)
         var index = leafArray.findIndex( (result) => result === leaf);
-        var proofForLeaf = merkleTools.getProof( index, false);
-        return proofForLeaf;
+        var proofForLeafSet = merkleTools.getProof( index, false);
+        return {"merkleProof":proofForLeafSet, "merkleTools":merkleTools};
     }
 }
 
@@ -254,12 +254,12 @@ async function retrieveJson(quads, url, options){
         if (matchingMetadata.length > 0) {
             for (let matchingMetadataItem of matchingMetadata) {
                 var queryData = new QueryData();
-                var leafArray =  getLeaves(matchingMetadataItem);
+                var leafArray =  matchingMetadataItem ['tree']['merkleleaves']['leaves']['@list'];
                 var leaf = doHash(quad["quadstring"],matchingMetadataItem["settings"]["quadhash"]);
-                var merkleProof = getProof(leaf, leafArray, matchingMetadataItem["settings"]["treehash"]);
-                if (matchesRoot(merkleProof, queryData.getMerkleRoot()) &&
-                    macthesIndexToTree(merkleProof, queryData.getIndexToTree())) {
-                    resultGenerator.addResult(quad, queryData.getIndexToTree(), queryData.getMerkleRoot(), merkleProof);
+                var proof = getProof(leaf, leafArray, matchingMetadataItem["settings"]["treehash"]);
+                if (matchingMetadataItem.tree.merkleroot === proof.merkleTools.getMerkleRoot() &&
+                    macthesIndexToTree(proof.merkleProof, queryData.getIndexToTree())) {
+                    resultGenerator.addResult(quad, queryData.getIndexToTree(), queryData.getMerkleRoot(), proof.merkleProof);
                 }
             }
         }

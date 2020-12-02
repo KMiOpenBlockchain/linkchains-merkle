@@ -122,12 +122,12 @@ describe('Match Hash', function() {
             var leafArray = await retrieve.getLeaves(metadataArray[0],
                 'https://thirda.solid.open.ac.uk/public/MerQL/test.ttl');
 
-            var json = await retrieve.getProof(leafArray[0], leafArray, "KECCAK-256");
+            var proof = await retrieve.getProof(leafArray[0], leafArray, "KECCAK-256");
 
             var expected= [{"right":'318d0d4f4687f612388d2c3397b17b9720bb51d2915efa99eaf97d854aae7dcc'},
                 {'right':'d47ec3b234895b897eee46b388760852599b06d037661de58d561662e25a41f2'}];
 
-            assert.strictEqual(stringify(json, { space : 4 }), stringify(expected, { space: 4 }), "Not equal");
+            assert.strictEqual(stringify(proof.merkleProof, { space : 4 }), stringify(expected, { space: 4 }), "Not equal");
         })
     })
 
