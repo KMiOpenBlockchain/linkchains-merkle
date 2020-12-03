@@ -55,9 +55,9 @@ describe('generatesIndexes', function () {
             };
 
             var result = await preprocess.generateIndex(quad, quadHashFunction, indexType, lsd, divisorInt);
-            var expected = 0;
+            var expected = '39423203430592103997374671506331876705003930407886206958728470964150059233118';
 
-            assert.strictEqual(result.index, expected, "Not equal");
+            assert.strictEqual(result.index.toString(), expected, "Not equal");
         })
     })
 

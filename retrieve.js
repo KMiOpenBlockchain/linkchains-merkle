@@ -72,8 +72,16 @@ class ProofRetriever {
 }
 
 class ResultGenerator {
-    addResult (indexToTree, merkleRoot, merkleProof) {
+    resultArray = []
 
+    addResult (quad, indexHash, merkleRoot, merkleProof) {
+        var result = {
+            "quad": quad,
+            "indexHash": indexHash,
+            "merkleRoot" : merkleRoot,
+            "proof": merkleProof
+        };
+        this.resultArray.push(result);
     }
 
     toJsonLd() {
@@ -81,40 +89,24 @@ class ResultGenerator {
     }
 }
 
-class QueryData {
+async function generateIndexFrom(settings, quad) {
+    var quadHashFunction = async function(input) {
+        return hashingFunctions.getHash(input, {
+            "type": settings.quadHash ? settings.quadHash : defaultHash
+        });
+    };
 
-    retrieve(item,arrayOfIndices,returnObjectIfNotFound){
-        if (arrayOfIndices.length === 0){
-            return item;
-        } else {
-            var data = arrayOfIndices.shift();
-            if (item[data] === undefined) {
-                return returnObjectIfNotFound;
-            } else {
-                return this.retrieve(item[data],arrayOfIndices, returnObjectIfNotFound);
-            }
-        }
-    }
-
-    getLeaves(metadataItem){
-        return this.retrieve(metadataItem, ['tree', 'merkleleaves', 'leaves', '@list'], []);
-    }
-
-    getMerkleRoot(){
-        return undefined;
-    }
-
-    getIndexToTree(){
-        return undefined;
-    }
+    var divisorInt = BigInt(divisor);
+    var result = await preprocess.generateIndex(quad, quadHashFunction, settings.indexType, settings.lsd, divisorInt);
+    return result;
 }
 
-function matchesRoot(merkleProof, merkleRoot) {
-    return false;
-}
-
-function macthesIndexToTree(merkleProof, indexToTree) {
-    return false;
+async function matchesIndexToTree(quad, merkleRoot, indices, metadataItem) {
+    var index = await generateIndexFrom(metadataItem.settings, quad);
+    if(indices[index.toString()] !== merkleRoot){
+        return false;
+    }
+    return metadataItem.settings.indexHash(index) === metadataItem.indexHash;
 }
 
 async function generateHashesFunction(quadString, url, options) {
@@ -229,8 +221,7 @@ async function getIndex(indexHash, metadatasource) {
 }
 
 function getLeaves(matchingMetadataItem) {
-    var queryData = new QueryData();
-    return queryData.getLeaves(matchingMetadataItem);
+    return matchingMetadataItem.tree.merkleleaves.leaves["@list"];
 }
 
 function getProof(leaf, leafArray, algorithm) {
@@ -240,10 +231,10 @@ function getProof(leaf, leafArray, algorithm) {
 
 async function doHash(quadString, algorithm) {
     var hashPerAlgorithm = await Hashing.getHash(quadString, passedAlgorithm);
+    return hashPerAlgorithm;
 }
 
 async function retrieveJson(quads, url, options){
-    var databaseMediator = new DatabaseProxy(url);
     var resultGenerator = new ResultGenerator();
     var canonicalQuads = renderQuadsCanonical(quads);
 
@@ -253,13 +244,14 @@ async function retrieveJson(quads, url, options){
         var matchingMetadata = await matchHashes(hashes, url);
         if (matchingMetadata.length > 0) {
             for (let matchingMetadataItem of matchingMetadata) {
-                var queryData = new QueryData();
-                var leafArray =  matchingMetadataItem ['tree']['merkleleaves']['leaves']['@list'];
-                var leaf = doHash(quad["quadstring"],matchingMetadataItem["settings"]["quadhash"]);
-                var proof = getProof(leaf, leafArray, matchingMetadataItem["settings"]["treehash"]);
-                if (matchingMetadataItem.tree.merkleroot === proof.merkleTools.getMerkleRoot() &&
-                    macthesIndexToTree(proof.merkleProof, queryData.getIndexToTree())) {
-                    resultGenerator.addResult(quad, queryData.getIndexToTree(), queryData.getMerkleRoot(), proof.merkleProof);
+                var leafArray =  matchingMetadataItem.tree.merkleleaves.leaves['@list'];
+                var leaf = doHash(quad['quadstring'],matchingMetadataItem.settings.quadhash);
+                var proof = getProof(leaf, leafArray, matchingMetadataItem.settings.treeHash);
+                var merkleRoot = matchingMetadataItem.tree.merkleroot;
+                if (merkleRoot === proof.merkleTools.getMerkleRoot() &&
+                    await matchesIndexToTree(quad.quadHash,
+                        matchingMetadataItem.tree.merkleroot, matchingMetadataItem.index, matchingMetadataItem)) {
+                    resultGenerator.addResult(quad, matchingMetadataItem.indexHash, merkleRoot, proof.merkleProof);
                 }
             }
         }

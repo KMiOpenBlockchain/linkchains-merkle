@@ -73,7 +73,7 @@ function makeQuadValue(value) {
     return '"' + value + '"';
 }
 
-function makeQuadString(quad) {
+async function makeQuadString(quad) {
     var subjectTerm = makeQuadTerm(quad.subject.value);
     var predicate = makeQuadTerm(quad.predicate.value);
     var objectTerm;
@@ -107,12 +107,12 @@ async function processQuads(state) {
 }
 
 async function generateIndex(quad, quadHashFunction, indexType, lsd, divisorInt) {
-    var quadStringsObj = makeQuadString(quad);
+    var quadStringsObj = await makeQuadString(quad);
 
     quadStringsObj.quadHash = await quadHashFunction(quadStringsObj.quadString);
 
     var index = await makeHashIndex(indexType, lsd, divisorInt, quadStringsObj);
-    return {quadStringsObj, index};
+    return await {quadStringsObj, index};
 }
 
 async function processQuad(state, quad) {
@@ -128,7 +128,7 @@ async function processQuad(state, quad) {
     }
 }
 
-function generateIndexValue(hash, lsd, divisorInt) {
+async function generateIndexValue(hash, lsd, divisorInt) {
     var lastdigits = hash.substr(hash.length - lsd);
     var decimalInt = BigInt("0x" + lastdigits);
     var index = decimalInt / divisorInt;
@@ -150,7 +150,7 @@ async function makeHashIndex(indexType, lsd, divisorInt, quadStringsObj) {
         hash = await utils.quadHash(quadStringsObj.subjectString +
             " " + quadStringsObj.objectString);
 	}
-    var index = generateIndexValue(hash, lsd, divisorInt);
+    var index = await generateIndexValue(hash, lsd, divisorInt);
     return index;
 }
 
