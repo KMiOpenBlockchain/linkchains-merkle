@@ -85,7 +85,7 @@ class ResultGenerator {
     }
 
     toJsonLd() {
-        return undefined;
+        return this.resultArray;
     }
 }
 
@@ -115,9 +115,14 @@ async function generateHashesFunction(quadString, url, options) {
     return hashes;
 }
 
-function renderQuadsCanonical(quads) {
-    var parsedQuads = parser.parse(quads);
-    var canonicalQuads = parsedQuads.map( quad => preprocess.makeQuadString(quad));
+async function renderQuadsCanonical(quads) {
+    var parsedQuads = await parser.parse(quads);
+
+    const getData = async () => {
+        return Promise.all(parsedQuads.map(quad => preprocess.makeQuadString(quad)))
+    }
+
+    var canonicalQuads = await getData();
     return canonicalQuads;
 }
 
@@ -236,22 +241,22 @@ async function doHash(quadString, algorithm) {
 
 async function retrieveJson(quads, url, options){
     var resultGenerator = new ResultGenerator();
-    var canonicalQuads = renderQuadsCanonical(quads);
+    var canonicalQuads = await renderQuadsCanonical(quads);
 
     for (let quad of canonicalQuads){
-        var hashes = await generateHashesFunction(quad["quadstring"], url, options);
+        var hashes = await generateHashesFunction(quad["quadString"], url, options);
 
         var matchingMetadata = await matchHashes(hashes, url);
         if (matchingMetadata.length > 0) {
             for (let matchingMetadataItem of matchingMetadata) {
                 var leafArray =  matchingMetadataItem.tree.merkleleaves.leaves['@list'];
-                var leaf = doHash(quad['quadstring'],matchingMetadataItem.settings.quadhash);
+                var leaf = doHash(quad['quadString'],matchingMetadataItem.settings.quadhash);
                 var proof = getProof(leaf, leafArray, matchingMetadataItem.settings.treeHash);
                 var merkleRoot = matchingMetadataItem.tree.merkleroot;
                 if (merkleRoot === proof.merkleTools.getMerkleRoot() &&
                     await matchesIndexToTree(quad.quadHash,
                         matchingMetadataItem.tree.merkleroot, matchingMetadataItem.index, matchingMetadataItem)) {
-                    resultGenerator.addResult(quad, matchingMetadataItem.indexHash, merkleRoot, proof.merkleProof);
+                    resultGenerator.addResult(quad, matchingMetadataItem.indexHash, merkleRoot, proof.merkleProof, matchingMetadataItem.index);
                 }
             }
         }
