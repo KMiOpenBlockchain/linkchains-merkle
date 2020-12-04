@@ -243,8 +243,9 @@ function getProof(leaf, leafArray, algorithm) {
     return proofRetriever.getProof(leaf, leafArray, algorithm);
 }
 
-async function doHash(quadString, algorithm) {
-    var hashPerAlgorithm = await Hashing.getHash(quadString, passedAlgorithm);
+async function doHash(quadString, passedAlgorithm) {
+    var algorithm = {"type":passedAlgorithm};
+    var hashPerAlgorithm = await Hashing.getHash(quadString, algorithm);
     return hashPerAlgorithm;
 }
 
@@ -259,7 +260,7 @@ async function retrieveJson(quads, url, options){
         if (matchingMetadata.length > 0) {
             for (let matchingMetadataItem of matchingMetadata) {
                 var leafArray =  matchingMetadataItem.tree.merkleleaves.leaves['@list'];
-                var leaf = doHash(quad['quadString'],matchingMetadataItem.settings.quadhash);
+                var leaf = await doHash(quad['quadString'],matchingMetadataItem.settings.quadHash);
                 var proof = getProof(leaf, leafArray, matchingMetadataItem.settings.treeHash);
                 var merkleRoot = matchingMetadataItem.tree.merkleroot;
                 if (merkleRoot === proof.merkleTools.getMerkleRoot() &&
