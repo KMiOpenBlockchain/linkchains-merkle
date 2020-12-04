@@ -130,7 +130,7 @@ async function matchHashes(hashes, metadatasource) {
     const query = `PREFIX : <https://blockchain.open.ac.uk/vocab/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-        SELECT ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg (GROUP_CONCAT(DISTINCT ?leaf;separator=\", \") AS ?leaves) WHERE { 
+        SELECT ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg ?anchortype ?anchoraddress (GROUP_CONCAT(DISTINCT ?leaf;separator=\", \") AS ?leaves) WHERE { 
             ?tree :merkleleaves ?merkleleaves .
             ?merkleleaves :leafhashalg ?leafhashalg ;
                           :leaves ?leaveslist .
@@ -150,7 +150,12 @@ async function matchHashes(hashes, metadatasource) {
             ?treesettings :divisor ?divisor ;
                           :indexType ?indextype ;
                           :lsd ?lsd .
-        } GROUP BY ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg`;
+            OPTIONAL {
+                ?merkletrees :anchor ?anchor .
+                ?anchor :type ?anchortype ;
+                        :address ?anchoraddress.
+            }
+        } GROUP BY ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg ?anchortype ?anchoraddress`;
 
 
     const result = await myEngine.query(
@@ -166,7 +171,7 @@ async function matchHashes(hashes, metadatasource) {
         var results = {};
         results.indexHash = bindings[i].get("?indexhash").value;
         results.index = await getIndex(results.indexHash, metadatasource);
-        
+
         results.tree = {};
         results.tree.merkleroot = bindings[i].get("?root").value;
         results.tree.merkleleaves = {};
@@ -184,6 +189,9 @@ async function matchHashes(hashes, metadatasource) {
         results.settings.indexType = bindings[i].get("?indextype").value;
         results.settings.lsd = bindings[i].get("?lsd").value;
 
+        results.anchor = {};
+        results.anchor.type = bindings[i].get("?anchortype") ? bindings[i].get("?anchortype").value : "NoAnchor";
+        results.anchor.address = bindings[i].get("?anchoraddress") ? bindings[i].get("?anchoraddress").value : "0x00000000000000000000000000000000";
         records.push(results);
     }
 
