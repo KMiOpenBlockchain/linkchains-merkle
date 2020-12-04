@@ -73,31 +73,33 @@ function makeQuadValue(value) {
     return '"' + value + '"';
 }
 
-async function makeQuadString(quad) {
-    var subjectTerm = makeQuadTerm(quad.subject.value);
-    var predicate = makeQuadTerm(quad.predicate.value);
+function makeQuadString(quad) {
+    var subjectTerm =  makeQuadTerm(quad.subject.value);
+    var predicate =  makeQuadTerm(quad.predicate.value);
     var objectTerm;
     if (quad.object.termType != "Literal") {
-        objectTerm = makeQuadTerm(quad.object.value);
+        objectTerm =  makeQuadTerm(quad.object.value);
     } else {
-        objectTerm = makeQuadValue(quad.object.value);
+        objectTerm =  makeQuadValue(quad.object.value);
         if (quad.object.language) {
             objectTerm += '@' + quad.object.language;
         }
         if (quad.object.datatype) {
-            objectTerm += '^^' + makeQuadTerm(quad.object.datatype.value);
+            objectTerm += '^^' +  makeQuadTerm(quad.object.datatype.value);
         }
     }
-    var graph = (quad.graph.value ? makeQuadTerm(quad.graph.value) : '');
+    var graph = (quad.graph.value ?  makeQuadTerm(quad.graph.value) : '');
 
     var quadString = subjectTerm + ' ' + predicate + ' ' + objectTerm + ' ' + graph + ' .';
-    return {
+
+    var result = {
         'subjectString': subjectTerm,
         'predicateString': predicate,
         'objectString': objectTerm,
         'graphString': graph,
         'quadString': quadString
     };
+    return result;
 }
 
 async function processQuads(state) {
@@ -107,7 +109,7 @@ async function processQuads(state) {
 }
 
 async function generateIndex(quad, quadHashFunction, indexType, lsd, divisorInt) {
-    var quadStringsObj = await makeQuadString(quad);
+    var quadStringsObj = makeQuadString(quad);
 
     quadStringsObj.quadHash = await quadHashFunction(quadStringsObj.quadString);
 

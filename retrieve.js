@@ -115,14 +115,15 @@ async function generateHashesFunction(quadString, url, options) {
     return hashes;
 }
 
-async function renderQuadsCanonical(quads) {
-    var parsedQuads = await parser.parse(quads);
+function renderQuadsCanonical(quads) {
+    var parsedQuads = parser.parse(quads);
 
-    const getData = async () => {
-        return Promise.all(parsedQuads.map(quad => preprocess.makeQuadString(quad)))
+    var canonicalQuads =[];
+    for (let quad of parsedQuads){
+        var quadString = preprocess.makeQuadString(quad);
+        canonicalQuads.push(quadString);
     }
 
-    var canonicalQuads = await getData();
     return canonicalQuads;
 }
 
@@ -249,7 +250,7 @@ async function doHash(quadString, algorithm) {
 
 async function retrieveJson(quads, url, options){
     var resultGenerator = new ResultGenerator();
-    var canonicalQuads = await renderQuadsCanonical(quads);
+    var canonicalQuads = renderQuadsCanonical(quads);
 
     for (let quad of canonicalQuads){
         var hashes = await generateHashesFunction(quad["quadString"], url, options);
