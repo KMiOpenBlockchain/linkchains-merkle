@@ -9,7 +9,7 @@ var assert = require('chai').assert;
 var stringify = require('json-stable-stringify');
 
 describe('retrieveHashes', function() {
-    this.timeout(10000);
+    this.timeout(600000);
 
     context('Data of ten Quads', function() {
 
