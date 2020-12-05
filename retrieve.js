@@ -101,11 +101,22 @@ async function generateIndexFrom(settings, quad) {
     return result;
 }
 
+function containsMerkleRoot(indices, index, merkleRoot) {
+    for( let indexItem of indices){
+        if (indexItem[index] === merkleRoot){
+            return true;
+        }
+    }
+    return false;
+}
+
 async function matchesIndexToTree(quad, merkleRoot, indices, metadataItem) {
     var index = await generateIndexFrom(metadataItem.settings, quad);
-    if(indices[index.toString()] !== merkleRoot){
+
+    if (!containsMerkleRoot(indices, index,merkleRoot)){
         return false;
     }
+
     return metadataItem.settings.indexHash(index) === metadataItem.indexHash;
 }
 
