@@ -55,8 +55,9 @@ describe('Match Hash', function () {
                 }, {
                     "9": "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88"
                 }],
-                "indexHash": "63089e25c1e053619856c641b29925542121487c839688523f25ec6bc0b50d34",
+                "indexHash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
                 "settings": {
+                    "divisor": "0xA",
                     "indexHash": "KECCAK-256",
                     "indexType": "object",
                     "lsd": "2",
