@@ -33,34 +33,6 @@ describe('generatesIndexes', function () {
         })
     })
 
-    context('generates index', function () {
-
-        it('should equals', async function () {
-            var defaultHash = 'KECCAK-256';
-
-            const hashingFunctions = require('../hashing');
-            const N3 = require('n3');
-            const parser = new N3.Parser();
-            var quad = parser.parse("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n")[0];
-            var indexType = "object";
-            var lsd = 64;
-            var divisor = "0x1";
-            var divisorInt = BigInt(divisor);
-            var quadHash = 'KECCAK256';
-
-            var quadHashFunction = async function(input) {
-                return hashingFunctions.getHash(input, {
-                    "type": quadHash ? quadHash : defaultHash
-                });
-            };
-
-            var result = await preprocess.generateIndex(quad, quadHashFunction, indexType, lsd, divisorInt);
-            var expected = '39423203430592103997374671506331876705003930407886206958728470964150059233118';
-
-            assert.strictEqual(result.index.toString(), expected, "Not equal");
-        })
-    })
-
     context('ten quads', function () {
 
         it('should equals', async function () {

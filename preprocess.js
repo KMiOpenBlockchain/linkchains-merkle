@@ -16,35 +16,35 @@ class State {
 
     quadCount;
     quads;
-	indices;
-	
+    indices;
+
     constructor(options) {
         this.indices = new SortedMap();
         this.readOptions(options);
     }
 
     readOptions(options) {
-		var defaultHash = 'KECCAK-256';
-		var quadHashFunction = async function(input) {
-			return hashingFunctions.getHash(input, {
-				"type": options.quadHash ? options.quadHash : defaultHash
-			});
-		};
-		var treeHashFunction = async function(input) {
-			return hashingFunctions.getHash(input, {
-				"type": options.treeHash ? options.treeHash : defaultHash
-			});
-		};
-		var indexHashFunction = async function(input) {
-			return hashingFunctions.getHash(input, {
-				"type": options.indexHash ? options.indexHash : defaultHash
-			});
-		};
-		utils = {
-			quadHash: quadHashFunction,
-			treeHash: treeHashFunction,
-			indexHash: indexHashFunction
-		};
+        var defaultHash = 'KECCAK-256';
+        var quadHashFunction = async function(input) {
+            return hashingFunctions.getHash(input, {
+                "type": options.quadHash ? options.quadHash : defaultHash
+            });
+        };
+        var treeHashFunction = async function(input) {
+            return hashingFunctions.getHash(input, {
+                "type": options.treeHash ? options.treeHash : defaultHash
+            });
+        };
+        var indexHashFunction = async function(input) {
+            return hashingFunctions.getHash(input, {
+                "type": options.indexHash ? options.indexHash : defaultHash
+            });
+        };
+        utils = {
+            quadHash: quadHashFunction,
+            treeHash: treeHashFunction,
+            indexHash: indexHashFunction
+        };
         this.lsd = options.lsd ? options.lsd : 64;
         this.indexType = options.indexType ? options.indexType : 'subject';
         this.divisor = options.divisor ? options.divisor : 0x1;
@@ -74,32 +74,30 @@ function makeQuadValue(value) {
 }
 
 function makeQuadString(quad) {
-    var subjectTerm =  makeQuadTerm(quad.subject.value);
-    var predicate =  makeQuadTerm(quad.predicate.value);
+    var subjectTerm = makeQuadTerm(quad.subject.value);
+    var predicate = makeQuadTerm(quad.predicate.value);
     var objectTerm;
     if (quad.object.termType != "Literal") {
-        objectTerm =  makeQuadTerm(quad.object.value);
+        objectTerm = makeQuadTerm(quad.object.value);
     } else {
-        objectTerm =  makeQuadValue(quad.object.value);
+        objectTerm = makeQuadValue(quad.object.value);
         if (quad.object.language) {
             objectTerm += '@' + quad.object.language;
         }
         if (quad.object.datatype) {
-            objectTerm += '^^' +  makeQuadTerm(quad.object.datatype.value);
+            objectTerm += '^^' + makeQuadTerm(quad.object.datatype.value);
         }
     }
-    var graph = (quad.graph.value ?  makeQuadTerm(quad.graph.value) : '');
+    var graph = (quad.graph.value ? makeQuadTerm(quad.graph.value) : '');
 
     var quadString = subjectTerm + ' ' + predicate + ' ' + objectTerm + ' ' + graph + ' .';
-
-    var result = {
+    return {
         'subjectString': subjectTerm,
         'predicateString': predicate,
         'objectString': objectTerm,
         'graphString': graph,
         'quadString': quadString
     };
-    return result;
 }
 
 async function processQuads(state) {
@@ -108,51 +106,35 @@ async function processQuads(state) {
     }
 }
 
-async function generateIndex(quad, quadHashFunction, indexType, lsd, divisorInt) {
-    var quadStringsObj = makeQuadString(quad);
-
-    quadStringsObj.quadHash = await quadHashFunction(quadStringsObj.quadString);
-
-    var index = await makeHashIndex(indexType, lsd, divisorInt, quadStringsObj);
-    return await {quadStringsObj, index};
-}
-
 async function processQuad(state, quad) {
     if (quad !== undefined) {
-        var indexType = state.indexType;
-        var lsd = state.lsd;
-        var divisorInt = state.divisorInt;
-        var quadHashFunction = utils.quadHash;
+        var quadStringsObj = makeQuadString(quad);
 
-        var {quadStringsObj, index} = await generateIndex(quad, quadHashFunction, indexType, lsd, divisorInt);
+        quadStringsObj.quadHash = await utils.quadHash(quadStringsObj.quadString);
 
+        var index = await makeHashIndex(state, quadStringsObj);
         state.addToIndices(index.toString(), quadStringsObj.quadHash);
     }
 }
 
-async function generateIndexValue(hash, lsd, divisorInt) {
-    var lastdigits = hash.substr(hash.length - lsd);
-    var decimalInt = BigInt("0x" + lastdigits);
-    var index = decimalInt / divisorInt;
-    return index;
-}
-
-async function makeHashIndex(indexType, lsd, divisorInt, quadStringsObj) {
-    if (indexType == "uniform") {
+async function makeHashIndex(state, quadStringsObj) {
+    if (state.indexType == "uniform") {
         hash = quadStringsObj.quadHash;
-    } else if (indexType == "subject") {
+    } else if (state.indexType == "subject") {
         hash = await utils.quadHash(quadStringsObj.subjectString);
-    } else if (indexType == "predicate") {
+    } else if (state.indexType == "predicate") {
         hash = await utils.quadHash(quadStringsObj.predicateString);
-    } else if (indexType == "object") {
+    } else if (state.indexType == "object") {
         hash = await utils.quadHash(quadStringsObj.objectString);
-    } else if (indexType == "graph") {
+    } else if (state.indexType == "graph") {
         hash = await utils.quadHash(quadStringsObj.graphString);
-    } else if (indexType == "subjectobject") {
+    } else if (state.indexType == "subjectobject") {
         hash = await utils.quadHash(quadStringsObj.subjectString +
             " " + quadStringsObj.objectString);
-	}
-    var index = await generateIndexValue(hash, lsd, divisorInt);
+    }
+    var lastdigits = hash.substr(hash.length - state.lsd);
+    var decimalInt = BigInt("0x" + lastdigits);
+    var index = decimalInt / state.divisorInt;
     return index;
 }
 
@@ -166,4 +148,3 @@ async function divideQuadsIntoHashLists(quads, options) {
 
 exports.divideQuadsIntoHashLists = divideQuadsIntoHashLists
 exports.makeQuadString = makeQuadString
-exports.generateIndex = generateIndex;
