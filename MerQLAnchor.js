@@ -259,7 +259,7 @@ async function send(transaction) {
 		gas: (await util.web3.eth.getBlock("latest")).gasLimit
 	};
 	// Key management! It's OK to start with if all blockchain records are sent from a keypair we create
-	const signedTransaction = await web3.eth.accounts.signTransaction(options, YOUR_PRIVATE_KEY);
+	const signedTransaction = await web3.eth.accounts.signTransaction(options, config.privateKey);
 	const transactionReceipt = await web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
 	return transactionReceipt;
 }
