@@ -268,13 +268,13 @@ async function send(transaction, web3) {
 }
 
 async function hashAndStore(merkleOutput, options){
-	var indexHash = merkleOutput.indexhash;
-	var newIndexType = merkleOutput.treesettings.indexType; //following lines take their values from merkleOutput too
-	var lsds = merkleOutput.treesettings.lsd;
-	var div = merkleOutput.treesettings.divisor;
-	var quadHashFunctionIn = merkleOutput.treesettings.quadHash;
-	var treeHashFunctionIn = merkleOutput.treesettings.treeHash;
-	var indexHashFunctionIn = merkleOutput.treesettings.indexHash;
+	var indexHash = merkleOutput.merkletrees.indexhash;
+	var newIndexType = merkleOutput.merkletrees.treesettings.indexType; //following lines take their values from merkleOutput too
+	var lsds = merkleOutput.merkletrees.treesettings.lsd;
+	var div = merkleOutput.merkletrees.treesettings.divisor;
+	var quadHashFunctionIn = merkleOutput.merkletrees.treesettings.quadHash;
+	var treeHashFunctionIn = merkleOutput.merkletrees.treesettings.treeHash;
+	var indexHashFunctionIn = merkleOutput.merkletrees.treesettings.indexHash;
 
 	var contractArguments = [
 		indexHash,
@@ -290,13 +290,13 @@ async function hashAndStore(merkleOutput, options){
 	console.log('Contract mined! address: ' + merqlanchorContract.address +
 		' transactionHash: ' + merqlanchorContract.transactionHash);
 
-	merkleOutput.anchor = {
-		type : "EthMerQL", //hardcoded
-		address : merqlanchorContract.address,
-		transactionHash : merqlanchorContract.transactionHash // Not actually sure this is needed - I guess it can't hurt?
+	merkleOutput.merkletrees.anchor = {
+		type : "ETHMerQL", //hardcoded
+		address : merqlanchorContract._address,
+		transactionhash : merqlanchorContract.transactionHash // Not actually sure this is needed - I guess it can't hurt?
 	};
 
-	return merqlanchorContract
+	return merkleOutput;
 }
 
 exports.hashAndStore = hashAndStore

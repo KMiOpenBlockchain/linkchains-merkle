@@ -5,10 +5,10 @@ var MerQLAnchor = require('../MerQLAnchor');
 var assert = require('chai').assert;
 require('./config.js');
 
-describe('generatesIndexes', function() {
+describe('Yield Contract', function() {
     this.timeout(10000);
 
-    context('one quad', function() {
+    context('The contract of one quad', function() {
 
         it('should equals', async function() {
 
@@ -54,9 +54,10 @@ describe('generatesIndexes', function() {
                 }
             };
 
-            const contract = await MerQLAnchor.hashAndStore(data["merkletrees"], options);
-            const requestedContract = [];
-            assert.strictEqual(contract, requestedContract, "Not equal");
+            const result = await MerQLAnchor.hashAndStore(data, options);
+            assert.strictEqual(result.merkletrees.anchor.type, "ETHMerQL", "Not equal");
+            assert.notEqual(result.merkletrees.anchor.address, undefined, "Address is undefined");
+            assert.notEqual(result.merkletrees.anchor.transactionhash, undefined, "Transaction hash is undefined");
         })
     })
 })
