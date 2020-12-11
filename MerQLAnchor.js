@@ -293,6 +293,7 @@ async function hashAndStore(merkleOutput, options){
 	merkleOutput.merkletrees.anchor = {
 		type : "ETHMerQL", //hardcoded
 		address : merqlanchorContract._address,
+		userAddress : cfg.user.address,
 		transactionhash : merqlanchorContract.transactionHash // Not actually sure this is needed - I guess it can't hurt?
 	};
 
