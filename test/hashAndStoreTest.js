@@ -6,7 +6,7 @@ var assert = require('chai').assert;
 require('./config.js');
 
 describe('Yield Contract', function() {
-    this.timeout(10000);
+    this.timeout(30000);
 
     context('The contract of one quad', function() {
 
