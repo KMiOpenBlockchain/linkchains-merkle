@@ -12,7 +12,10 @@ async function deploy(abi, bytecode, contractArgs) {
 	const handle = await send(transaction, web3);
 	// The args variable was never used in the source.
 	//const args = transaction.encodeABI().slice(options.data.length); 
-	var result = new web3.eth.Contract(abi, handle.contractAddress);
+	var result = {
+		contract : new web3.eth.Contract(abi, handle.contractAddress),
+		receipt : handle
+	};
 	web3.currentProvider.disconnect();
 	return result;
 }
@@ -54,9 +57,9 @@ async function hashAndStore(merkleOutput, options){
 
 	merkleOutput.merkletrees.anchor = {
 		type : "ETHMerQL", //hardcoded
-		address : merqlanchorContract._address,
+		address : merqlanchorContract.contract._address,
 		userAddress : cfg.user.address,
-		transactionhash : merqlanchorContract.transactionHash // Not actually sure this is needed - I guess it can't hurt?
+		transactionhash : merqlanchorContract.receipt.transactionHash // Not actually sure this is needed - I guess it can't hurt?
 	};
 
 	return merkleOutput;
