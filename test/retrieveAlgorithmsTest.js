@@ -29,9 +29,11 @@ describe('retrieveAlgorithms', function() {
                 }
             };
 
-            var json = await retrieve.generateHashesFunction("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n",
+            var canonicalisedQuad = retrieve.renderQuadsCanonical("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n")[0];
+
+            var json = await retrieve.generateHashesFunction([canonicalisedQuad["quadString"]],
                 'https://callustian.solid.open.ac.uk/public/linkchain-merkle/OneQuad.ttl',options);
-            var expected = ["15ca6c6fb9dff55b9b6e8358456c7771029dd89c752a3ea083e288dd8026db74"];
+            var expected = ["bc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a"];
             assert.strictEqual(stringify(json, { space : 4 }), stringify(expected, { space: 4 }), "Not equal");
 
         })

@@ -168,9 +168,11 @@ async function makeTree(state, hashset) {
 }
 
 function createIndexToIndex(state) {
-	var indextoindex = {}
+	var indextoindex = [];
 	for (var tree = 0; tree < state.treeInfoArray.length; tree++) {
-		indextoindex[state.treeInfoArray[tree].indexNo.toString()] = state.treeInfoArray[tree].merkleroot;
+		var entry = {};
+		entry[state.treeInfoArray[tree].indexNo.toString()] = state.treeInfoArray[tree].merkleroot;
+		indextoindex.push(entry);
 	}
 	return indextoindex;
 }

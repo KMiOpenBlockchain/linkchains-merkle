@@ -16,35 +16,35 @@ class State {
 
     quadCount;
     quads;
-	indices;
-	
+    indices;
+
     constructor(options) {
         this.indices = new SortedMap();
         this.readOptions(options);
     }
 
     readOptions(options) {
-		var defaultHash = 'KECCAK-256';
-		var quadHashFunction = async function(input) {
-			return hashingFunctions.getHash(input, {
-				"type": options.quadHash ? options.quadHash : defaultHash
-			});
-		};
-		var treeHashFunction = async function(input) {
-			return hashingFunctions.getHash(input, {
-				"type": options.treeHash ? options.treeHash : defaultHash
-			});
-		};
-		var indexHashFunction = async function(input) {
-			return hashingFunctions.getHash(input, {
-				"type": options.indexHash ? options.indexHash : defaultHash
-			});
-		};
-		utils = {
-			quadHash: quadHashFunction,
-			treeHash: treeHashFunction,
-			indexHash: indexHashFunction
-		};
+        var defaultHash = 'KECCAK-256';
+        var quadHashFunction = async function(input) {
+            return hashingFunctions.getHash(input, {
+                "type": options.quadHash ? options.quadHash : defaultHash
+            });
+        };
+        var treeHashFunction = async function(input) {
+            return hashingFunctions.getHash(input, {
+                "type": options.treeHash ? options.treeHash : defaultHash
+            });
+        };
+        var indexHashFunction = async function(input) {
+            return hashingFunctions.getHash(input, {
+                "type": options.indexHash ? options.indexHash : defaultHash
+            });
+        };
+        utils = {
+            quadHash: quadHashFunction,
+            treeHash: treeHashFunction,
+            indexHash: indexHashFunction
+        };
         this.lsd = options.lsd ? options.lsd : 64;
         this.indexType = options.indexType ? options.indexType : 'subject';
         this.divisor = options.divisor ? options.divisor : 0x1;
@@ -131,7 +131,7 @@ async function makeHashIndex(state, quadStringsObj) {
     } else if (state.indexType == "subjectobject") {
         hash = await utils.quadHash(quadStringsObj.subjectString +
             " " + quadStringsObj.objectString);
-	}
+    }
     var lastdigits = hash.substr(hash.length - state.lsd);
     var decimalInt = BigInt("0x" + lastdigits);
     var index = decimalInt / state.divisorInt;

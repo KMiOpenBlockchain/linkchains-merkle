@@ -12,7 +12,7 @@ describe('generatesIndexes', function () {
     context('one quad', function () {
 
         it('should equals', async function () {
-            
+
             var options = {
                 "quadHash": 'KECCAK256',
                 "divisor": "0x1",
