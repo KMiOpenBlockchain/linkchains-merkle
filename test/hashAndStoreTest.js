@@ -57,7 +57,7 @@ describe('Yield Contract', function() {
             const result = await MerQLAnchor.hashAndStore(data, options);
             assert.strictEqual(result.merkletrees.anchor.type, "ETHMerQL", "Not equal");
             assert.notEqual(result.merkletrees.anchor.address, undefined, "Address is undefined");
-            assert.strictEqual(result.merkletrees.anchor.userAddress, cfg.user.address, "User address is not set properly");
+            assert.strictEqual(result.merkletrees.anchor.account, cfg.user.address, "User address is not set properly");
             assert.notEqual(result.merkletrees.anchor.transactionhash, undefined, "Transaction hash is undefined");
         })
     })
