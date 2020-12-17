@@ -1,9 +1,10 @@
 const N3 = require('n3');
 const parser = new N3.Parser();
-var stringify = require('json-stable-stringify');
-var SortedMap = require("collections/sorted-map");
+const stringify = require('json-stable-stringify');
+const SortedMap = require("collections/sorted-map");
 
 const hashingFunctions = require('./hashing');
+const defaults = require('./defaults').defaults;
 
 var utils;
 
@@ -24,20 +25,19 @@ class State {
     }
 
     readOptions(options) {
-        var defaultHash = 'KECCAK-256';
         var quadHashFunction = async function(input) {
             return hashingFunctions.getHash(input, {
-                "type": options.quadHash ? options.quadHash : defaultHash
+                "type": options.quadHash ? options.quadHash : defaults.DEFAULT_HASH_ALG
             });
         };
         var treeHashFunction = async function(input) {
             return hashingFunctions.getHash(input, {
-                "type": options.treeHash ? options.treeHash : defaultHash
+                "type": options.treeHash ? options.treeHash : defaults.DEFAULT_HASH_ALG
             });
         };
         var indexHashFunction = async function(input) {
             return hashingFunctions.getHash(input, {
-                "type": options.indexHash ? options.indexHash : defaultHash
+                "type": options.indexHash ? options.indexHash : defaults.DEFAULT_HASH_ALG
             });
         };
         utils = {
@@ -45,9 +45,9 @@ class State {
             treeHash: treeHashFunction,
             indexHash: indexHashFunction
         };
-        this.lsd = options.lsd ? options.lsd : 64;
-        this.indexType = options.indexType ? options.indexType : 'subject';
-        this.divisor = options.divisor ? options.divisor : 0x1;
+        this.lsd = options.lsd ? options.lsd : defaults.DEFAULT_LSD;
+        this.indexType = options.indexType ? options.indexType : defaults.DEFAULT_INDEXTYPE;
+        this.divisor = options.divisor ? options.divisor : defaults.DEFAULT_DIVISOR;
         this.divisorInt = BigInt(this.divisor);
     };
 

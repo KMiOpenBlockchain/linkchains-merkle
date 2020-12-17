@@ -2,11 +2,12 @@ const N3 = require('n3');
 const parser = new N3.Parser();
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
+const MerkleTools = require('merkle-tools');
+const stringify = require('json-stable-stringify');
+
 const hashingFunctions = require("./hashing.js");
 const preprocess = require('./preprocess.js');
-const MerkleTools = require('merkle-tools');
-var stringify = require('json-stable-stringify');
-
+const defaults = require('./defaults').defaults;
 
 
 class HashGenerator {
@@ -72,18 +73,65 @@ class ProofRetriever {
 
 class ResultGenerator {
     resultArray = []
+    
+    quadProofs = {
+        "@context" : defaults.DEFAULT_JSONLD_CONTEXT
+    };
 
-    addResult(quad, indexHash, merkleRoot, merkleProof) {
+    addResult(quad, metadata, proof) {
         var result = {
             "quad": quad,
-            "indexhash": indexHash,
-            "merkleroot": merkleRoot,
-            "proof": merkleProof
+            "indexhash": metadata.indexHash,
+            "index" : metadata.index,
+            "merkleroot": metadata.tree.merkleroot,
+            "proof": proof,
+            "anchor" : metadata.anchor,
+            "settings" : metadata.settings
         };
         this.resultArray.push(result);
+        this.addToQuadProofObject(result);
     }
 
-    toJsonLd() {
+    addToQuadProofObject(result) {
+        var base = this.quadProofs;
+        var quad = result.quad;
+        if (quad.graphString !== "") {
+            if (!this.quadProofs[quad.graphString]) {
+                this.quadProofs[quad.graphString] = {};
+            }
+            base = this.quadProofs[quad.graphString];
+        }
+
+        if (!base[quad.subjectString]) {
+            base[quad.subjectString] = {};
+        }
+
+        if (!base[quad.subjectString][quad.predicateString]) {
+            base[quad.subjectString][quad.predicateString] = {};
+        }
+
+        if (!base[quad.subjectString][quad.predicateString][quad.objectString]) {
+            base[quad.subjectString][quad.predicateString][quad.objectString] = {};
+        }
+        base[quad.subjectString][quad.predicateString][quad.objectString].anchor = {
+            type : defaults.DEFAULT_ANCHOR_TYPE,
+            address : result.anchor.address,
+            transactionHash : result.anchor.transactionHash 
+        };
+
+        base[quad.subjectString][quad.predicateString][quad.objectString].indexhash = result.indexhash;
+        base[quad.subjectString][quad.predicateString][quad.objectString].index = result.index;
+        base[quad.subjectString][quad.predicateString][quad.objectString].merkleroot = result.merkleroot;
+        base[quad.subjectString][quad.predicateString][quad.objectString].proof = result.proof;
+        base[quad.subjectString][quad.predicateString][quad.objectString].settings = result.settings;
+
+    }
+
+    getQuadProofs() {
+        return this.quadProofs;
+    }
+
+    toJSON() {
         return this.resultArray;
     }
 }
@@ -289,7 +337,7 @@ async function doHash(message, passedAlgorithm) {
     return hashPerAlgorithm;
 }
 
-async function retrieveJson(quads, url, options) {
+async function retrieveProofs(quads, url, options) {
     var resultGenerator = new ResultGenerator();
     var canonicalQuads = renderQuadsCanonical(quads);
 
@@ -307,13 +355,24 @@ async function retrieveJson(quads, url, options) {
                 if (merkleRoot === proof.merkleroot &&
                     await matchesIndexToTree(quad,
                         merkleRoot, metadata.index, metadata)) {
-                    resultGenerator.addResult(quad, metadata.indexHash, merkleRoot, proof.merkleProof, metadata.index);
+                    resultGenerator.addResult(quad, metadata, proof.merkleProof);
                 }
             }
         }
     }
+    
+    return resultGenerator;
+}
 
-    return resultGenerator.toJsonLd();
+async function retrieveJson(quads, url, options) {
+    var resultGenerator = await retrieveProofs(quads, url, options);
+    console.log(stringify(resultGenerator.getQuadProofs(), { space : 4 }));
+    return resultGenerator.toJSON();
+}
+
+async function getQuadProofs(quads, url, options) {
+    var resultGenerator = await retrieveProofs(quads, url, options);
+    return resultGenerator.getQuadProofs();
 }
 
 exports.generateHashesFunction = generateHashesFunction;
@@ -322,3 +381,4 @@ exports.renderQuadsCanonical = renderQuadsCanonical;
 exports.matchHashes = matchHashes;
 exports.getLeaves = getLeaves;
 exports.getProof = getProof;
+exports.getQuadProofs = getQuadProofs;
