@@ -2,14 +2,7 @@ const MerkleTools = require('merkle-tools/merkletools');
 const stringify = require('json-stable-stringify');
 
 const hashingFunctions = require('./hashing');
-
-const DEFAULT_LSD = 64;
-const DEFAULT_INDEXTYPE = 'subject';
-const DEFAULT_DIVISOR = 0x1;
-const DEFAULT_HASH_ALG = 'KECCAK-256';
-const DEFAULT_JSONLD_CONTEXT = {
-	"@vocab": "https://blockchain.open.ac.uk/vocab/"
-};
+const defaults = require('./defaults').defaults;
 
 var utils;
 
@@ -61,9 +54,9 @@ class State {
 	}
 
 	readOptions(options) {
-		this.config.quadHash = options.quadHash ? options.quadHash : DEFAULT_HASH_ALG;
-		this.config.treeHash = options.treeHash ? options.treeHash : DEFAULT_HASH_ALG;
-		this.config.indexHash = options.indexHash ? options.indexHash : DEFAULT_HASH_ALG;
+		this.config.quadHash = options.quadHash ? options.quadHash : defaults.DEFAULT_HASH_ALG;
+		this.config.treeHash = options.treeHash ? options.treeHash : defaults.DEFAULT_HASH_ALG;
+		this.config.indexHash = options.indexHash ? options.indexHash : defaults.DEFAULT_HASH_ALG;
 		var quadHashFunction = async function (input) {
 			return hashingFunctions.getHash(input, {
 				"type": this.config.quadHash
@@ -76,7 +69,7 @@ class State {
 		};
 		var indexHashFunction = async function (input) {
 			return hashingFunctions.getHash(input, {
-				"type": options.indexHash ? options.indexHash : DEFAULT_HASH_ALG
+				"type": options.indexHash ? options.indexHash : defaults.DEFAULT_HASH_ALG
 			});
 		};
 		utils = {
@@ -84,10 +77,10 @@ class State {
 			treeHash: treeHashFunction,
 			indexHash: indexHashFunction
 		}
-		this.config.lsd = options.lsd ? options.lsd : DEFAULT_LSD;
-		this.config.indexType = options.indexType ? options.indexType : DEFAULT_INDEXTYPE;
-		this.config.divisor = options.divisor ? options.divisor : DEFAULT_DIVISOR;
-		this.config.jsonldcontext = options.jsonldcontext ? options.jsonldcontext : DEFAULT_JSONLD_CONTEXT;
+		this.config.lsd = options.lsd ? options.lsd : defaults.DEFAULT_LSD;
+		this.config.indexType = options.indexType ? options.indexType : defaults.DEFAULT_INDEXTYPE;
+		this.config.divisor = options.divisor ? options.divisor : defaults.DEFAULT_DIVISOR;
+		this.config.jsonldcontext = options.jsonldcontext ? options.jsonldcontext : defaults.DEFAULT_JSONLD_CONTEXT;
 	}
 
 	storeHashes(data) {
@@ -179,7 +172,6 @@ function createIndexToIndex(state) {
 
 async function hashListsToMerkleTrees(hashes, options) {
 	var state = new State(options);
-
 	state.storeHashes(hashes);
 	await processHashsets(state);
 	return state.toObject();
