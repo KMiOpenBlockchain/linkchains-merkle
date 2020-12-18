@@ -21,7 +21,9 @@ describe('Match Hash', function () {
 
             var expected = [{
                 "anchor": {
+                    "account": "0x00000000000000000000000000000000",
                     "address": "0x00000000000000000000000000000000",
+                    "transactionHash": "0x00000000000000000000000000000000",
                     "type": "NoAnchor"
                 },
                 "index": [{

@@ -116,6 +116,7 @@ class ResultGenerator {
         base[quad.subjectString][quad.predicateString][quad.objectString].anchor = {
             type : defaults.DEFAULT_ANCHOR_TYPE,
             address : result.anchor.address,
+            account: result.anchor.account,
             transactionHash : result.anchor.transactionHash 
         };
 
@@ -241,9 +242,11 @@ async function matchHashes(hashes, metadatasource) {
             OPTIONAL {
                 ?merkletrees :anchor ?anchor .
                 ?anchor :type ?anchortype ;
-                        :address ?anchoraddress.
+                        :address ?anchoraddress;
+                        :account ?anchoraccount;
+                        :transactionHash ?anchortransactionhash.
             }
-        } GROUP BY ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg ?anchortype ?anchoraddress`;
+        } GROUP BY ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg ?anchortype ?anchoraddress ?anchoraccount ?anchortransactionhash`;
 
 
     const result = await myEngine.query(
@@ -281,6 +284,8 @@ async function matchHashes(hashes, metadatasource) {
         results.anchor = {};
         results.anchor.type = bindings[i].get("?anchortype") ? bindings[i].get("?anchortype").value : "NoAnchor";
         results.anchor.address = bindings[i].get("?anchoraddress") ? bindings[i].get("?anchoraddress").value : "0x00000000000000000000000000000000";
+        results.anchor.account = bindings[i].get("?anchoraccount") ? bindings[i].get("?anchoraccount").value : "0x00000000000000000000000000000000";
+        results.anchor.transactionHash = bindings[i].get("?anchortransactionhash") ? bindings[i].get("?anchortransactionhash").value : "0x00000000000000000000000000000000";
         records.push(results);
     }
 
@@ -366,7 +371,6 @@ async function retrieveProofs(quads, url, options) {
 
 async function retrieveJson(quads, url, options) {
     var resultGenerator = await retrieveProofs(quads, url, options);
-    console.log(stringify(resultGenerator.getQuadProofs(), { space : 4 }));
     return resultGenerator.toJSON();
 }
 

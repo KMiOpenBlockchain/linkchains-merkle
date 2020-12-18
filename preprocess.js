@@ -143,7 +143,7 @@ async function divideQuadsIntoHashLists(quads, options) {
     state.addAndParseQuads(quads);
 
     await processQuads(state);
-    return state.indices;
+    return state.indices.toJSON();
 }
 
 exports.divideQuadsIntoHashLists = divideQuadsIntoHashLists
