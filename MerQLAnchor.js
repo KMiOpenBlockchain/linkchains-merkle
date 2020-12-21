@@ -1,7 +1,8 @@
+const Web3 = require('web3');
+
 // adapted from https://ethereum.stackexchange.com/a/71089
-async function deploy(abi, bytecode, contractArgs) {
-	var Web3 = require('web3');
-	var url = 'ws://' + cfg.web3Socket.domain + ':' + cfg.web3Socket.port;
+async function deploy(abi, bytecode, contractArgs, options) {
+	var url = 'ws://' + options.web3Socket.domain + ':' + options.web3Socket.port;
 	var web3 = new Web3(new Web3.providers.WebsocketProvider(url));
 	const contract = new web3.eth.Contract(abi);
 	const options = {
@@ -9,7 +10,7 @@ async function deploy(abi, bytecode, contractArgs) {
 		arguments: contractArgs
 	};
 	const transaction = contract.deploy(options);
-	const handle = await send(transaction, web3);
+	const handle = await send(transaction, web3, options);
 	// The args variable was never used in the source.
 	//const args = transaction.encodeABI().slice(options.data.length); 
 	var result = {
@@ -20,19 +21,19 @@ async function deploy(abi, bytecode, contractArgs) {
 	return result;
 }
 
-async function send(transaction, web3) {
+async function send(transaction, web3, sendOptions) {
 	const options = {
 		to: transaction._parent._address,
 		data: transaction.encodeABI(),
 		gas: (await web3.eth.getBlock("latest")).gasLimit
 	};
 	// Key management! It's OK to start with if all blockchain records are sent from a keypair we create
-	const signedTransaction = await web3.eth.accounts.signTransaction(options, cfg.user.privateKey);
+	const signedTransaction = await web3.eth.accounts.signTransaction(options, sendOptions.user.privateKey);
 	const transactionReceipt = await web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
 	return transactionReceipt;
 }
 
-async function hashAndStore(merkleOutput, options){
+async function anchor(merkleOutput, options){
 	var indexHash = merkleOutput.merkletrees.indexhash;
 	var newIndexType = merkleOutput.merkletrees.treesettings.indexType; //following lines take their values from merkleOutput too
 	var lsds = merkleOutput.merkletrees.treesettings.lsd;
@@ -51,7 +52,10 @@ async function hashAndStore(merkleOutput, options){
 		indexHashFunctionIn,
 	];
 
-	var merqlanchorContract = await deploy(cfg.abi, cfg.bytecode, contractArguments);
+	var merqlanchorContract = await deploy(cfg.abi, cfg.bytecode, contractArguments, {
+		web3Socket : cfg.web3Socket,
+		user: cfg.user
+	});
 	console.log('Contract mined! address: ' + merqlanchorContract.address +
 		' transactionHash: ' + merqlanchorContract.transactionHash);
 
@@ -65,4 +69,6 @@ async function hashAndStore(merkleOutput, options){
 	return merkleOutput;
 }
 
-exports.hashAndStore = hashAndStore
+
+
+exports.anchor = anchor
