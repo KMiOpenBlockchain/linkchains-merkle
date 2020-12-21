@@ -1,6 +1,6 @@
 const N3 = require('n3');
 const parser = new N3.Parser();
-const writer = new N3.Writer({ format: 'N-Quads'});
+const writer = new N3.Writer({ format: 'N-Quads' });
 const MerkleTools = require('merkle-tools');
 const stringify = require('json-stable-stringify');
 const Web3 = require('web3');
@@ -21,8 +21,8 @@ async function verify(quads, metadata, options) {
         var anchorDetails = await retrieveAnchor(metadata.anchor, options);
         if (metadata.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
             !matchAnchorDetails(metadata.indexhash, metadata.settings, anchorDetails) ||
-            anchorDetails.transactionAccount.toLowerCase() !== metadata.anchor.account.toLowerCase() ||
-            anchorDetails.transactionContractAddress.toLowerCase() !== metadata.anchor.address.toLowerCase()) {
+            parseInt(anchorDetails.transactionAccount, 16) !== parseInt(metadata.anchor.account, 16) ||
+            parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(metadata.anchor.address, 16)) {
             results.unverified = quads;
             return results;
         }
@@ -47,7 +47,7 @@ async function verify(quads, metadata, options) {
         }
         results.verified = writer.quadsToString(verified);
         results.unverified = writer.quadsToString(unverified);
-            
+
     }
     return results;
 }
@@ -81,13 +81,13 @@ async function verifyQuad(quad, metadata, options) {
                 var anchorDetails = await retrieveAnchor(verify.anchor, options);
                 if (verify.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
                     !matchAnchorDetails(verify.indexhash, verify.settings, anchorDetails) ||
-                    anchorDetails.transactionAccount.toLowerCase() !== verify.anchor.account.toLowerCase() ||
-                    anchorDetails.transactionContractAddress.toLowerCase() !== verify.anchor.address.toLowerCase()) {
+                    parseInt(anchorDetails.transactionAccount, 16) !== parseInt(verify.anchor.account, 16) ||
+                    parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(verify.anchor.address, 16)) {
                     results.unverified.push(quad);
                     return results;
                 } else {
                     // recreate the index key and check it points to merkleroot in index - else fail verification
-                    var indexMatches = await matchesIndexToTree(current, verify.merkleroot, verify.index, verify.indexhash, verify.settings); 
+                    var indexMatches = await matchesIndexToTree(current, verify.merkleroot, verify.index, verify.indexhash, verify.settings);
                     if (
                         !indexMatches) {
                         results.unverified.push(quad);
@@ -98,7 +98,7 @@ async function verifyQuad(quad, metadata, options) {
                     var quadHash = await hashingFunctions.getHash(current.quadString, {
                         type: verify.settings.quadHash
                     });
-                    var merkleTools = new MerkleTools({ hashtype: verify.settings.treeHash });
+                    var merkleTools = new MerkleTools({ hashType: verify.settings.treeHash });
                     var validated = merkleTools.validateProof(verify.proof, quadHash, verify.merkleroot, false);
                     if (!validated) {
                         results.unverified.push(quad);
@@ -153,8 +153,8 @@ async function matchesIndexToTree(quad, merkleRoot, indices, indexhash, settings
 
     var hashAlgorithm = settings.indexHash ? settings.indexHash : defaults.DEFAULT_HASH_ALG;
 
-    var calculatedIndexHash = await hashingFunctions.getHash(JSON.stringify(indices), { type : hashAlgorithm });
-    
+    var calculatedIndexHash = await hashingFunctions.getHash(JSON.stringify(indices), { type: hashAlgorithm });
+
     return calculatedIndexHash === indexhash;
 }
 
@@ -208,8 +208,8 @@ function containsMerkleRoot(indices, index, merkleRoot) {
 function matchAnchorDetails(targetHash, settings, anchorDetails) {
     return (anchorDetails.thetargetHash === targetHash &&
         anchorDetails.theIndexType === settings.indexType &&
-        anchorDetails.leastSignificants === settings.lsd.toString() &&
-        anchorDetails.theDivisor === settings.divisor &&
+        parseInt(anchorDetails.leastSignificants) === parseInt(settings.lsd) &&
+        parseInt(anchorDetails.theDivisor, 16) === parseInt(settings.divisor, 16) &&
         anchorDetails.theQuadHashFunction === settings.quadHash &&
         anchorDetails.theTreeHashFunction === settings.treeHash &&
         anchorDetails.theIndexHashFunction === settings.indexHash);
