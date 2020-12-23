@@ -5,12 +5,12 @@ async function deploy(abi, bytecode, contractArgs, options) {
 	var url = 'ws://' + options.web3Socket.domain + ':' + options.web3Socket.port;
 	var web3 = new Web3(new Web3.providers.WebsocketProvider(url));
 	const contract = new web3.eth.Contract(abi);
-	const options = {
+	const transactionOptions = {
 		data: bytecode,
 		arguments: contractArgs
 	};
-	const transaction = contract.deploy(options);
-	const handle = await send(transaction, web3, options);
+	const transaction = contract.deploy(transactionOptions);
+	const handle = await send(transaction, web3, transactionOptions);
 	// The args variable was never used in the source.
 	//const args = transaction.encodeABI().slice(options.data.length); 
 	var result = {

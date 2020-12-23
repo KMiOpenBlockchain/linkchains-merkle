@@ -123,18 +123,21 @@ async function merqlify(quads, metadata) {
     return merkleTrees;
 }
 
-async function retrieveAnchorReal(anchor, options) {
-    const url = 'ws://' + options.blockchain.web3.domain + ':' + options.blockchain.web3.port;
+async function retrieveAnchor(anchor, options) {
+    const url = options.blockchain.web3.protocol + '://' + options.blockchain.web3.domain 
+        + (options.blockchain.web3.port === '' ? '' : ':' + options.blockchain.web3.port)
+        + (options.blockchain.web3.path === '' ? '' : options.blockchain.web3.path);
     const web3 = new Web3(new Web3.providers.WebsocketProvider(url));
     const contract = new web3.eth.Contract(options.blockchain.abi, anchor.address);
     var anchorDetails = await contract.methods.getData().call();
-    var transaction = await web3.eth.getTransactionReceipt(anchor.transactionHash);
+    var transaction = await web3.eth.getTransactionReceipt(anchor.transactionhash);
     anchorDetails.transactionAccount = transaction.from;
     anchorDetails.transactionContractAddress = transaction.contractAddress;
+    web3.currentProvider.disconnect();
     return anchorDetails;
 }
 
-async function retrieveAnchor(anchor, options) {
+async function retrieveAnchorProxy(anchor, options) {
     var response = {};
     try {
         response = await axios.post('https://' + options.blockchain.web3.domain + '/anchoring/retrieveAnchor', anchor);
