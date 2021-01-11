@@ -33,7 +33,7 @@ async function send(transaction, web3, sendOptions) {
 	return transactionReceipt;
 }
 
-async function anchor(merkleOutput, options){
+async function anchor(merkleOutput, cfg){
 	var indexHash = merkleOutput.merkletrees.indexhash;
 	var newIndexType = merkleOutput.merkletrees.treesettings.indexType; //following lines take their values from merkleOutput too
 	var lsds = merkleOutput.merkletrees.treesettings.lsd;
