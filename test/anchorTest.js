@@ -16,7 +16,11 @@ describe('Yield Contract', function() {
                 "divisor": "0x1",
                 "indexType": "object",
                 "lsd": 64,
-                "indexHash" : "KECCAK-256"
+                "indexHash" : "KECCAK-256",
+                "web3Socket": {
+                    "domain": "localhost",
+                    "port": "56000"
+                }
             };
 
             var data = {
