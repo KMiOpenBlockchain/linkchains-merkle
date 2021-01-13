@@ -7,7 +7,8 @@ async function deploy(abi, bytecode, contractArgs, options) {
 	const contract = new web3.eth.Contract(abi);
 	const transactionOptions = {
 		data: bytecode,
-		arguments: contractArgs
+		arguments: contractArgs,
+		user: options.user
 	};
 	const transaction = contract.deploy(transactionOptions);
 	const handle = await send(transaction, web3, transactionOptions);
