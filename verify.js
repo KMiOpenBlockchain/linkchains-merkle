@@ -16,7 +16,8 @@ async function verify(quads, metadata, options) {
         verified: "",
         unverified: ""
     };
-    if (metadata.anchor !== undefined && metadata.anchor.type === defaults.DEFAULT_ANCHOR_TYPE) {
+    if (metadata.anchor
+        && metadata.anchor.type === defaults.DEFAULT_ANCHOR_TYPE) {
         // do the whole set at once
         var anchorDetails = await retrieveAnchor(metadata.anchor, options);
         if (metadata.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
@@ -109,7 +110,13 @@ async function verifyQuad(quad, metadata, options) {
                         return results;
                     }
                 }
+            } else {
+                results.unverified.push(quad);
+                return results;
             }
+        } else {
+            results.unverified.push(quad);
+            return results;
         }
     } else {
         results.unverified.push(quad);
@@ -124,7 +131,7 @@ async function merqlify(quads, metadata) {
 }
 
 async function retrieveAnchor(anchor, options) {
-    const url = options.blockchain.web3.protocol + '://' + options.blockchain.web3.domain 
+    const url = options.blockchain.web3.protocol + '://' + options.blockchain.web3.domain
         + (options.blockchain.web3.port === '' ? '' : ':' + options.blockchain.web3.port)
         + (options.blockchain.web3.path === '' ? '' : options.blockchain.web3.path);
     const web3 = new Web3(new Web3.providers.WebsocketProvider(url));
