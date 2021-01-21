@@ -62,6 +62,8 @@ describe('Yield Contract', function() {
             assert.strictEqual(result.merkletrees.anchor.type, "ETHMerQL", "Not equal");
             assert.notEqual(result.merkletrees.anchor.address, undefined, "Address is undefined");
             assert.strictEqual(result.merkletrees.anchor.account, cfg.user.address, "User address is not set properly");
+            assert.notEqual(result.merkletrees.anchor.indexhash, undefined, "Index hash is undefined");
+            assert.strictEqual(result.merkletrees.anchor.settings, data.merkletrees.treesettings, "Settings is not set properly.");
             assert.notEqual(result.merkletrees.anchor.transactionhash, undefined, "Transaction hash is undefined");
         })
     })

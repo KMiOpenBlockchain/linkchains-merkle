@@ -64,6 +64,8 @@ async function anchor(merkleOutput, cfg){
 		type : "ETHMerQL", //hardcoded
 		address : merqlanchorContract.contract._address,
 		account : cfg.user.address,
+		indexhash : indexHash,
+		settings : merkleOutput.merkletrees.treesettings,
 		transactionhash : merqlanchorContract.receipt.transactionHash // Not actually sure this is needed - I guess it can't hurt?
 	};
 
