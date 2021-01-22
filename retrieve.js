@@ -1,5 +1,5 @@
 const N3 = require('n3');
-const parser = new N3.Parser();
+const parser = new N3.Parser({ blankNodePrefix: '' });
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
 const MerkleTools = require('merkle-tools');

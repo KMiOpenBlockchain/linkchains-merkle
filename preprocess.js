@@ -1,5 +1,6 @@
 const N3 = require('n3');
-const parser = new N3.Parser();
+const parser = new N3.Parser({ blankNodePrefix: '' });
+const jsonld = require('jsonld');
 const stringify = require('json-stable-stringify');
 const SortedMap = require("collections/sorted-map");
 
@@ -51,8 +52,13 @@ class State {
         this.divisorInt = BigInt(this.divisor);
     };
 
-    addAndParseQuads(data) {
-        this.quads = parser.parse(data);
+    async addAndParseQuads(data) {
+        var canonical = await jsonld.canonize(data, {
+            algorithm: 'URDNA2015',
+            inputFormat: 'application/n-quads',
+            format: 'application/n-quads'
+        });
+        this.quads = parser.parse(canonical);
         this.quadCount = this.quads.length;
     }
 
@@ -140,7 +146,7 @@ async function makeHashIndex(state, quadStringsObj) {
 
 async function divideQuadsIntoHashLists(quads, options) {
     var state = new State(options);
-    state.addAndParseQuads(quads);
+    await state.addAndParseQuads(quads);
 
     await processQuads(state);
     return state.indices.toJSON();
