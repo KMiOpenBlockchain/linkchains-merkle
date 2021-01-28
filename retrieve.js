@@ -1,5 +1,6 @@
 const N3 = require('n3');
 const parser = new N3.Parser({ blankNodePrefix: '' });
+const jsonld = require('jsonld');
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
 const MerkleTools = require('merkle-tools');
@@ -14,8 +15,8 @@ class HashGenerator {
 
     metadataSource = ""
 
-    constructor(metadataSource) {
-        this.metadataSource = metadataSource;
+    constructor(builtMetadataSource) {
+        this.metadataSource = builtMetadataSource;
     }
 
     async getAlgorithms() {
@@ -26,9 +27,7 @@ class HashGenerator {
             ?s :treesettings ?o .
             ?o :quadHash ?algorithm . 
         }`,
-            {
-                sources: [this.metadataSource],
-            }
+            this.metadataSource
         );
         const bindings = await result.bindings();
 
@@ -61,8 +60,8 @@ class DatabaseProxy {
 
 class ProofRetriever {
     getProof(leaf, leafArray, algorithm) {
-        var merkleTools = new MerkleTools({ hashType: algorithm }); 
-        merkleTools.addLeaves(leafArray, false); 
+        var merkleTools = new MerkleTools({ hashType: algorithm });
+        merkleTools.addLeaves(leafArray, false);
         merkleTools.makeTree();
 
         var index = leafArray.findIndex((result) => result === leaf);
@@ -73,20 +72,20 @@ class ProofRetriever {
 
 class ResultGenerator {
     resultArray = []
-    
+
     quadProofs = {
-        "@context" : defaults.DEFAULT_JSONLD_CONTEXT
+        "@context": defaults.DEFAULT_JSONLD_CONTEXT
     };
 
     addResult(quad, metadata, proof) {
         var result = {
             "quad": quad,
             "indexhash": metadata.indexHash,
-            "index" : metadata.index,
+            "index": metadata.index,
             "merkleroot": metadata.tree.merkleroot,
             "proof": proof,
-            "anchor" : metadata.anchor,
-            "settings" : metadata.settings
+            "anchor": metadata.anchor,
+            "settings": metadata.settings
         };
         this.resultArray.push(result);
         this.addToQuadProofObject(result);
@@ -114,10 +113,10 @@ class ResultGenerator {
             base[quad.subjectString][quad.predicateString][quad.objectString] = {};
         }
         base[quad.subjectString][quad.predicateString][quad.objectString].anchor = {
-            type : defaults.DEFAULT_ANCHOR_TYPE,
-            address : result.anchor.address,
+            type: defaults.DEFAULT_ANCHOR_TYPE,
+            address: result.anchor.address,
             account: result.anchor.account,
-            transactionHash : result.anchor.transactionHash 
+            transactionHash: result.anchor.transactionHash
         };
 
         base[quad.subjectString][quad.predicateString][quad.objectString].indexhash = result.indexhash;
@@ -193,12 +192,13 @@ async function matchesIndexToTree(quad, merkleRoot, indices, metadata) {
     var hashAlgorithm = metadata.settings.indexHash ? metadata.settings.indexHash : defaultHash;
 
     var calculatedIndexHash = await doHash(JSON.stringify(indices), hashAlgorithm);
-    
+
     return calculatedIndexHash === metadata.indexHash;
 }
 
-async function generateHashesFunction(quadString, url, options) {
-    var hashGenerator = new HashGenerator(url, options);
+async function generateHashesFunction(quadString, source, options) {
+    var builtSource = await buildMetadataSource(source);
+    var hashGenerator = new HashGenerator(builtSource, options);
     var hashes = await hashGenerator.generateHashes(quadString);
     return hashes;
 }
@@ -215,7 +215,43 @@ function renderQuadsCanonical(quads) {
     return canonicalQuads;
 }
 
+async function buildMetadataSource(metadataSource) {
+    var source = '';
+    if (typeof (metadataSource) === 'string') {
+        try {
+            source = JSON.parse(metadataSource);
+        } catch {
+            return {
+                'sources': [metadataSource]
+            };
+        }
+    } else if (typeof (metadataSource) === Array) {
+        return {
+            'sources': metadataSource
+        }
+    } else {
+        source = metadataSource;
+    }
+    if ('@context' in source) {
+        var metadataQuads = await jsonld.toRDF(source, { format: 'application/n-quads' });
+        var metadataParsed = await parser.parse(metadataQuads);
+        var store = new N3.Store();
+        store.addQuads(metadataParsed);
+        return {
+            sources: [
+                {
+                    type: 'rdfjsSource',
+                    value: store
+                }
+            ]
+        };
+    } else {
+        throw new Error({ "InvalidParameters": "Data source cannot be parsed." });
+    }
+}
+
 async function matchHashes(hashes, metadatasource) {
+    var source = await buildMetadataSource(metadatasource);
     const query = `PREFIX : <https://blockchain.open.ac.uk/vocab/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
@@ -251,9 +287,7 @@ async function matchHashes(hashes, metadatasource) {
 
     const result = await myEngine.query(
         query,
-        {
-            sources: [metadatasource],
-        }
+        source
     );
     const bindings = await result.bindings();
 
@@ -295,6 +329,7 @@ async function matchHashes(hashes, metadatasource) {
 }
 
 async function getIndex(indexHash, metadatasource) {
+    var source = await buildMetadataSource(metadatasource);
     const query = `PREFIX : <https://blockchain.open.ac.uk/vocab/>
     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
@@ -312,9 +347,7 @@ async function getIndex(indexHash, metadatasource) {
 
     const result = await myEngine.query(
         query,
-        {
-            sources: [metadatasource],
-        }
+        source
     );
     const bindings = await result.bindings();
 
@@ -342,14 +375,14 @@ async function doHash(message, passedAlgorithm) {
     return hashPerAlgorithm;
 }
 
-async function retrieveProofs(quads, url, options) {
+async function retrieveProofs(quads, source, options) {
     var resultGenerator = new ResultGenerator();
     var canonicalQuads = renderQuadsCanonical(quads);
 
     for (let quad of canonicalQuads) {
-        var hashes = await generateHashesFunction(quad["quadString"], url, options);
+        var hashes = await generateHashesFunction(quad["quadString"], source, options);
 
-        var matchingMetadata = await matchHashes(hashes, url);
+        var matchingMetadata = await matchHashes(hashes, source);
         if (matchingMetadata.length > 0) {
             for (let metadata of matchingMetadata) {
                 var leafArray = metadata.tree.merkleleaves.leaves['@list'];
@@ -365,17 +398,17 @@ async function retrieveProofs(quads, url, options) {
             }
         }
     }
-    
+
     return resultGenerator;
 }
 
-async function retrieveJson(quads, url, options) {
-    var resultGenerator = await retrieveProofs(quads, url, options);
+async function retrieveJson(quads, source, options) {
+    var resultGenerator = await retrieveProofs(quads, source, options);
     return resultGenerator.toJSON();
 }
 
-async function getQuadProofs(quads, url, options) {
-    var resultGenerator = await retrieveProofs(quads, url, options);
+async function getQuadProofs(quads, source, options) {
+    var resultGenerator = await retrieveProofs(quads, source, options);
     return resultGenerator.getQuadProofs();
 }
 
