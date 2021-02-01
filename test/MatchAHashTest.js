@@ -23,7 +23,16 @@ describe('Match Hash', function () {
                 "anchor": {
                     "account": "0x00000000000000000000000000000000",
                     "address": "0x00000000000000000000000000000000",
-                    "transactionHash": "0x00000000000000000000000000000000",
+                    "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                    "settings": {
+                        "divisor": "0xA",
+                        "indexHash": "KECCAK-256",
+                        "indexType": "object",
+                        "lsd": "2",
+                        "quadHash": "KECCAK-256",
+                        "treeHash": "KECCAK-256"
+                    },
+                    "transactionhash": "0x00000000000000000000000000000000",
                     "type": "NoAnchor"
                 },
                 "index": [{
@@ -57,7 +66,7 @@ describe('Match Hash', function () {
                 }, {
                     "9": "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88"
                 }],
-                "indexHash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
                 "settings": {
                     "divisor": "0xA",
                     "indexHash": "KECCAK-256",

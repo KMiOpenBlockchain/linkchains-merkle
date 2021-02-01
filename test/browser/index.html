@@ -8,18 +8,36 @@
   <body>
     <div class="container">
       <h2>Generate verification metadata</h2>
-
+      <div id="tokenbox">
+      <form action="">
+        <label for="token">Auth token:</label>
+        <input type="text" id="token" name="token"><br><br>
+        </form>
+      </div>
       <div class="intro">
-        <p>For the following RDF quads</p>
+        <p>For the following RDF quad(s)</p>
         <div id="inputQuads">
 
+        </div>
+        <p>and corresponding edited versions</p>
+        <div id="editedQuads">
         </div>
             <p>and the following MerQL options</p>
             <div id="inputOptions">
         </div>
         <p>the verification metadata is</p>
-        <div id="response">
+        <div id="metadata">
         </div>
+        <p>and the granular verification metadata is</p>
+        <div id="granularMetadataOutput"></div>
+        <p>Verifying the original quad(s) with the full metadata gives</p>
+        <div id="verificationOutput"></div>
+        <p>and verifying with the granular metadata gives</p>
+        <div id="granularVerificationOutput"></div>
+        <p>Whereas verifying edited quad(s) with the full metadata gives</p>
+        <div id="WrongVerificationOutput"></div>
+        <p>and verifying with the granular metadata gives</p>
+        <div id="WrongGranularVerificationOutput"></div>
       </div>
     </div>
     <script type="text/javascript" src="linkchains-bundle.js"></script>

@@ -16,25 +16,36 @@ async function verify(quads, metadata, options) {
         verified: "",
         unverified: ""
     };
-    if (metadata.anchor
-        && metadata.anchor.type === defaults.DEFAULT_ANCHOR_TYPE) {
-        // do the whole set at once
-        var anchorDetails = await retrieveAnchor(metadata.anchor, options);
-        if (metadata.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
-            !matchAnchorDetails(metadata.indexhash, metadata.settings, anchorDetails) ||
-            parseInt(anchorDetails.transactionAccount, 16) !== parseInt(metadata.anchor.account, 16) ||
-            parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(metadata.anchor.address, 16)) {
-            results.unverified = quads;
-            return results;
+    if (metadata.anchor || (metadata.merkletrees && metadata.merkletrees.anchor)) {
+        if (!metadata.anchor) {
+            metadata.anchor = metadata.merkletrees.anchor;
         }
+        if (!metadata.settings && metadata.anchor.settings) {
+            metadata.settings = metadata.anchor.settings;
+        }
+        if (!metadata.indexhash && metadata.anchor.indexhash) {
+            metadata.indexhash = metadata.anchor.indexhash;
+        }
+        if (metadata.anchor.type === defaults.DEFAULT_ANCHOR_TYPE) {
+            // do the whole set at once
+            var anchorDetails = await retrieveAnchor(metadata.anchor, options);
+            console.log('DETAILSDETAILSDETAILS' + stringify(anchorDetails, { space : 4 }));
+            if (metadata.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
+                !matchAnchorDetails(metadata.indexhash, metadata.settings, anchorDetails) ||
+                parseInt(anchorDetails.transactionAccount, 16) !== parseInt(metadata.anchor.account, 16) ||
+                parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(metadata.anchor.address, 16)) {
+                results.unverified = quads;
+                return results;
+            }
 
-        var processed = await merqlify(quads, metadata);
-        if (processed.merkletrees.indexhash !== metadata.indexhash) {
-            results.unverified = quads;
-            return results;
-        } else {
-            results.verified = quads;
-            return results;
+            var processed = await merqlify(quads, metadata);
+            if (processed.merkletrees.indexhash !== metadata.indexhash) {
+                results.unverified = quads;
+                return results;
+            } else {
+                results.verified = quads;
+                return results;
+            }
         }
     } else {
         // per quad verification 
@@ -80,6 +91,7 @@ async function verifyQuad(quad, metadata, options) {
 
                 // fetch and check basic matching from anchor on blockchain - if no matches, fail verification
                 var anchorDetails = await retrieveAnchor(verify.anchor, options);
+                console.log('DETAILSDETAILSDETAILS' + stringify(anchorDetails, { space : 4 }));
                 if (verify.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
                     !matchAnchorDetails(verify.indexhash, verify.settings, anchorDetails) ||
                     parseInt(anchorDetails.transactionAccount, 16) !== parseInt(verify.anchor.account, 16) ||

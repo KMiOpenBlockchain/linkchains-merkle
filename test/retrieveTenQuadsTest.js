@@ -25,22 +25,31 @@ describe('retrieveHashes', function () {
             var url = 'https://thirda.solid.open.ac.uk/public/MerQL/test.ttl';
 
             var inputQuads = "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/creator> <https://github.com/bio2rdf/bio2rdf-scripts/blob/master/affymetrix/affymetrix.php>  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/publisher> <http://bio2rdf.org>  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"use-share-modify\"  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"attribution\"  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"restricted-by-source-license\"  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/ATH1-121501.na32.annot.nt.gz>  .\n" +
-            "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz>  .\n";
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/creator> <https://github.com/bio2rdf/bio2rdf-scripts/blob/master/affymetrix/affymetrix.php>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/publisher> <http://bio2rdf.org>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"use-share-modify\"  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"attribution\"  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"restricted-by-source-license\"  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/ATH1-121501.na32.annot.nt.gz>  .\n" +
+                "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz>  .\n";
 
             var treesToGenerate = [
                 {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -114,7 +123,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -188,7 +206,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -268,7 +295,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -342,7 +378,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -416,7 +461,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -490,7 +544,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -564,7 +627,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -638,7 +710,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -715,7 +796,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -794,7 +884,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -869,7 +968,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -938,7 +1046,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -1007,7 +1124,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -1074,7 +1200,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -1141,7 +1276,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -1210,7 +1354,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -1280,7 +1433,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -1349,7 +1511,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -1418,7 +1589,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                },
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -1492,7 +1672,7 @@ describe('retrieveHashes', function () {
             assert.strictEqual(stringify(merkleTrees, { space: 4 }), stringify(treesToGenerate, { space: 4 }), "Not equal");
 
             const quadProofs = await retrieve.getQuadProofs(inputQuads, url, options);
-            assert.strictEqual(stringify(quadProofs, { space : 4 }), stringify(proofsToGenerate, { space : 4 }), "Not equal");
+            assert.strictEqual(stringify(quadProofs, { space: 4 }), stringify(proofsToGenerate, { space: 4 }), "Not equal");
         })
     })
 })

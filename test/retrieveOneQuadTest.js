@@ -31,7 +31,16 @@ describe('retrieveHashes', function () {
                     "anchor": {
                         "account": "0x00000000000000000000000000000000",
                         "address": "0x00000000000000000000000000000000",
-                        "transactionHash": "0x00000000000000000000000000000000",
+                        "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                        "settings": {
+                            "divisor": "0xA",
+                            "indexHash": "KECCAK-256",
+                            "indexType": "object",
+                            "lsd": "2",
+                            "quadHash": "KECCAK-256",
+                            "treeHash": "KECCAK-256"
+                        },
+                        "transactionhash": "0x00000000000000000000000000000000",
                         "type": "NoAnchor"
                     },
                     "index": [
@@ -110,7 +119,16 @@ describe('retrieveHashes', function () {
                             "anchor": {
                                 "account": "0x00000000000000000000000000000000",
                                 "address": "0x00000000000000000000000000000000",
-                                "transactionHash": "0x00000000000000000000000000000000",
+                                "indexhash": "9cdb857481755589d5a954d45b8ab2ae956271748dd9b642e6aed0706d055f13",
+                                "settings": {
+                                    "divisor": "0xA",
+                                    "indexHash": "KECCAK-256",
+                                    "indexType": "object",
+                                    "lsd": "2",
+                                    "quadHash": "KECCAK-256",
+                                    "treeHash": "KECCAK-256"
+                                }, 
+                                "transactionhash": "0x00000000000000000000000000000000",
                                 "type": "ETHMerQL"
                             },
                             "index": [
@@ -184,7 +202,7 @@ describe('retrieveHashes', function () {
             assert.strictEqual(stringify(merkleTrees, { space: 4 }), stringify(treesToGenerate, { space: 4 }), "Not equal");
 
             const quadProofs = await retrieve.getQuadProofs(inputQuad, url, options);
-            assert.strictEqual(stringify(quadProofs, { space : 4 }), stringify(proofsToGenerate, { space : 4 }), "Not equal");
+            assert.strictEqual(stringify(quadProofs, { space: 4 }), stringify(proofsToGenerate, { space: 4 }), "Not equal");
         })
     })
 })
