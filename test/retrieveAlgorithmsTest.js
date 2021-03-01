@@ -29,7 +29,9 @@ describe('retrieveAlgorithms', function() {
                 }
             };
 
-            var canonicalisedQuad = retrieve.renderQuadsCanonical("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n")[0];
+            var canonicalisedQuads = await retrieve.renderQuadsCanonical("<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n");
+
+            var canonicalisedQuad = canonicalisedQuads[0];
 
             var json = await retrieve.generateHashesFunction([canonicalisedQuad["quadString"]],
                 'https://callustian.solid.open.ac.uk/public/linkchain-merkle/OneQuad.ttl',options);
