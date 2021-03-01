@@ -1,5 +1,6 @@
 const N3 = require('n3');
 const parser = new N3.Parser({ blankNodePrefix: '' });
+const jsonld = require('jsonld');
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
 const MerkleTools = require('merkle-tools');
@@ -203,8 +204,13 @@ async function generateHashesFunction(quadString, url, options) {
     return hashes;
 }
 
-function renderQuadsCanonical(quads) {
-    var parsedQuads = parser.parse(quads);
+async function renderQuadsCanonical(quads) {
+    var canonical = await jsonld.canonize(quads, {
+        algorithm: 'URDNA2015',
+        inputFormat: 'application/n-quads',
+        format: 'application/n-quads'
+    });
+    var parsedQuads = parser.parse(canonical);
 
     var canonicalQuads = [];
     for (let quad of parsedQuads) {
@@ -344,7 +350,7 @@ async function doHash(message, passedAlgorithm) {
 
 async function retrieveProofs(quads, url, options) {
     var resultGenerator = new ResultGenerator();
-    var canonicalQuads = renderQuadsCanonical(quads);
+    var canonicalQuads = await renderQuadsCanonical(quads);
 
     for (let quad of canonicalQuads) {
         var hashes = await generateHashesFunction(quad["quadString"], url, options);
