@@ -3,9 +3,10 @@
 <html>
   <head>
     <title>Linkchains MerQL client-side</title>
-    
   </head>
   <body>
+  <script src="../../linkchains-bundle.js"></script>
+  <script src="libraries/jquery-3.6.0.min.js"></script>
     <div class="container">
       <h2>Generate verification metadata</h2>
       <div id="tokenbox">
@@ -17,16 +18,29 @@
       <div class="intro">
         <p>For the following RDF quad(s)</p>
         <div id="inputQuads">
-
+          <input type="quadsData" id="quadsData" name="quadsData"><br><br>
         </div>
         <p>and corresponding edited versions</p>
         <div id="editedQuads">
+          <input type="editedQuadsData" id="editedQuadsData" name="editedQuadsData"><br><br>
         </div>
             <p>and the following MerQL options</p>
             <div id="inputOptions">
+              <input type="optionsData" id="optionsData" name="optionsData"><br><br>
+            </div>
         </div>
         <p>the verification metadata is</p>
         <div id="metadata">
+          <div id="metadataToVerify">
+            <input type="metadataToVerifyData" id="metadataToVerifyData" name="metadataToVerifyData"><br><br>
+          </div>
+        </div>
+        <div>
+          <textarea id="verifyArea" name="verifyArea" rows="4" cols="50">
+          </textarea>
+        </div>
+        <div>
+          <button type="verify" onclick="linkchains().verify($($.find('#quadsData')).val(),$($.find('#metadataToVerifyData')).val(),$($.find('#optionsData')).val()).then(value => {$($.find('#verifyArea')).val(JSON.stringify(value));})">Verify</button>
         </div>
         <p>and the granular verification metadata is</p>
         <div id="granularMetadataOutput"></div>
@@ -40,7 +54,5 @@
         <div id="WrongGranularVerificationOutput"></div>
       </div>
     </div>
-    <script type="text/javascript" src="linkchains-bundle.js"></script>
-    <script type="text/javascript" src="main.js"></script>
   </body>
 </html>
