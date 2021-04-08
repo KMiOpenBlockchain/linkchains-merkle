@@ -1,5 +1,3 @@
-const N3 = require('n3');
-const parser = new N3.Parser({ blankNodePrefix: '' });
 const jsonld = require('jsonld');
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
@@ -9,7 +7,7 @@ const stringify = require('json-stable-stringify');
 const hashingFunctions = require("./hashing.js");
 const preprocess = require('./preprocess.js');
 const defaults = require('./defaults').defaults;
-
+const utils = require('./utils.js');
 
 class HashGenerator {
 
@@ -69,13 +67,122 @@ class ProofRetriever {
         return { "merkleProof": proofForLeafSet, "merkleroot": merkleTools.getMerkleRoot().toString('hex') };
     }
 }
+/*
+class ResultGeneratorStar {
+    resultArray = []
 
+    quadProofs = {
+        "@context": defaults.DEFAULT_JSONLD_CONTEXT
+    };
+
+    metadatas = [];
+    triples = "";
+    addResult(quad, metadata, proof) {
+        var result = {
+            "quad": quad,
+            "indexhash": metadata.indexhash,
+            "index": metadata.index,
+            "merkleroot": metadata.tree.merkleroot,
+            "proof": proof,
+            "anchor": metadata.anchor,
+            "settings": metadata.settings,
+            "blanks": metadata.blanks
+        };
+        this.resultArray.push(result);
+        var metadata = this.addMetadata(result);
+        this.addToQuadProofObject(result, metadata);
+    }
+
+    addMetadata(result) {
+        var metadata = {};
+        metadata["@id"] = ":" + result.indexhash;
+        metadata.indexhash = result.indexhash;
+        metadata.index = result.index;
+        metadata.merkleroot = result.merkleroot;
+        metadata.anchor = {
+            type: defaults.DEFAULT_ANCHOR_TYPE,
+            address: result.anchor.address,
+            account: result.anchor.account,
+            indexhash: result.anchor.indexhash,
+            settings: result.anchor.settings,
+            transactionhash: result.anchor.transactionhash
+        };
+        metadata.blanks = result.blanks;
+        this.metadatas.push(metadata);
+        return metadata;
+    }
+
+    addTripleStar(result, metadata) {
+        var quad = this.fixBlankURLs(result.quad, metadata);
+        var prefix = defaults.DEFAULT_JSONLD_CONTEXT["@vocab"];
+        var subjectStar = "<< " + quad.subjectString + " " + quad.predicateString + " " + quad.objectString + " >>";
+        var metadataTripleStar = subjectStar
+            + " <" + prefix + "metadata" + "> " + metadata["@id"] + " " + quad.graphString + ".";
+        var proofTripleStar = subjectStar
+            + " <" + prefix + "proof" + "> " + result.proof.join() + " " + quad.graphString + ".";
+        this.triples += metadataTripleStar + "\n";
+        this.triples += proofTripleStar + "\n";
+    }
+
+    proofToTriples(prefix, proof) {
+        var proofObject = {
+            "@context": defaults.DEFAULT_JSONLD_CONTEXT,
+            proof: {
+                "@list": proof
+            }
+        }
+        var flat = jsonld.flatten(proofObject);
+        var graph = flat["@graph"];
+        var proofURL = '';
+        for (var i = 0; i < graph.length; graph++) {
+            var current = graph[i];
+            if (typeof current === 'object' && Object.keys(current).includes(prefix + 'proof')) {
+                proofURL = current["id"];
+            }
+        }
+    }
+
+    fixBlankURLs(quad, metadata) {
+        var fixedQuad = {
+            subjectString: this.fixBlankURL(quad.subjectString, metadata),
+            predicateString: this.fixBlankURL(quad.predicateString, metadata),
+            objectString: this.fixBlankURL(quad.ojectString, metadata),
+            graphString: this.fixBlankURL(quad.graphString, metadata),
+        };
+        fixedQuad.quadString = quad.quadString.replace(quad.subjectString, fixedQuad.subjectString)
+            .replace(quad.predicateString, fixedQuad.predicateString)
+            .replace(quad.objectString, fixedQuad.objectString)
+            .replace(quad.graphString, fixedQuad.graphString);
+        return fixedQuad;
+    }
+    fixBlankURL(url, metadata) {
+        url = url.replace("<", "").replace(">", "");
+        if (url.includes('_:') || !metadata.blanks.includes(url)) {
+            return url;
+        } else {
+            return "_:" + url;
+        }
+    }
+
+    getQuadProofs() {
+        return this.quadProofs;
+    }
+
+    toJSON() {
+        var quadsStar = parser.parse(triples);
+        return this.resultArray;
+    }
+}
+*/
 class ResultGenerator {
     resultArray = []
 
     quadProofs = {
         "@context": defaults.DEFAULT_JSONLD_CONTEXT
     };
+
+    metadatas = [];
+    quads = [];
 
     addResult(quad, metadata, proof) {
         var result = {
@@ -85,47 +192,78 @@ class ResultGenerator {
             "merkleroot": metadata.tree.merkleroot,
             "proof": proof,
             "anchor": metadata.anchor,
-            "settings": metadata.settings
+            "settings": metadata.settings,
+            "blanks": metadata.blanks
         };
         this.resultArray.push(result);
-        this.addToQuadProofObject(result);
+        var metadata = this.addMetadata(result);
+        this.addToQuadProofObject(result, metadata);
     }
 
-    addToQuadProofObject(result) {
-        var base = this.quadProofs;
-        var quad = result.quad;
-        if (quad.graphString !== "") {
-            if (!this.quadProofs[quad.graphString]) {
-                this.quadProofs[quad.graphString] = {};
-            }
-            base = this.quadProofs[quad.graphString];
-        }
-
-        if (!base[quad.subjectString]) {
-            base[quad.subjectString] = {};
-        }
-
-        if (!base[quad.subjectString][quad.predicateString]) {
-            base[quad.subjectString][quad.predicateString] = {};
-        }
-
-        if (!base[quad.subjectString][quad.predicateString][quad.objectString]) {
-            base[quad.subjectString][quad.predicateString][quad.objectString] = {};
-        }
-        base[quad.subjectString][quad.predicateString][quad.objectString].anchor = {
+    addMetadata(result) {
+        var metadata = {};
+        metadata["@id"] = ":" + result.indexhash;
+        metadata.indexhash = result.indexhash;
+        metadata.index = result.index;
+        metadata.merkleroot = result.merkleroot;
+        metadata.anchor = {
             type: defaults.DEFAULT_ANCHOR_TYPE,
             address: result.anchor.address,
             account: result.anchor.account,
-            indexhash : result.anchor.indexhash,
-            settings : result.anchor.settings,
+            indexhash: result.anchor.indexhash,
+            settings: result.anchor.settings,
             transactionhash: result.anchor.transactionhash
         };
+        metadata.blanks = result.blanks;
+        this.metadatas.push(metadata);
+        return metadata;
+    }
 
-        base[quad.subjectString][quad.predicateString][quad.objectString].indexhash = result.indexhash;
-        base[quad.subjectString][quad.predicateString][quad.objectString].index = result.index;
-        base[quad.subjectString][quad.predicateString][quad.objectString].merkleroot = result.merkleroot;
-        base[quad.subjectString][quad.predicateString][quad.objectString].proof = result.proof;
-        base[quad.subjectString][quad.predicateString][quad.objectString].settings = result.settings;
+    addToQuadProofObject(result, metadata) {
+        console.log(stringify(result.quad, { space : 4 }));
+        var quad = fixBlankURLs(result.quad, metadata);
+        console.log(stringify(quad, { space: 4 }));
+        if (!this.quadProofs["@context"].graphs) {
+            this.quadProofs["@context"].graphs = {
+                "@id": ":" + result.indexhash + "/graphs",
+                "@container": ["@graph", "@id"]
+            };
+        }
+        if (!this.quadProofs.graphs) {
+            this.quadProofs.graphs = {};
+        }
+        var graphName = "@none";
+        if (quad.graphString && quad.graphString !== "") {
+            graphName = quad.graphString;
+
+        }
+
+        var graph = getObjectWithId(this.quadProofs, graphName);
+        if (!graph) {
+            this.quadProofs.graphs[graphName] = [];
+            graph = this.quadProofs.graphs[graphName];
+        }
+
+        var subject = getObjectWithId(graph, quad.subjectString);
+        if (!subject) {
+            subject = {
+                "@id": quad.subjectString
+            };
+            graph.push(subject);
+        }
+
+        if (!subject[quad.predicateString]) {
+            subject[quad.predicateString] = {};
+        }
+
+        if (!subject[quad.predicateString][quad.objectString]) {
+            subject[quad.predicateString][quad.objectString] = {};
+        }
+
+        subject[quad.predicateString][quad.objectString].metadata = metadata["@id"];
+        subject[quad.predicateString][quad.objectString].proof = {
+            "@list": result.proof
+        };
 
     }
 
@@ -135,6 +273,43 @@ class ResultGenerator {
 
     toJSON() {
         return this.resultArray;
+    }
+}
+
+function fixBlankURLs(quad, metadata) {
+    var fixedQuad = {
+        subjectString: fixBlankURL(quad.subjectString, metadata),
+        predicateString: fixBlankURL(quad.predicateString, metadata),
+        objectString: fixBlankURL(quad.objectString, metadata),
+        graphString: fixBlankURL(quad.graphString, metadata),
+    };
+    fixedQuad.quadString = quad.quadString;
+    return fixedQuad;
+}
+
+function fixBlankURL(url, metadata) {
+    if (url) {
+        if (url.charAt(0) === "<" && url.charAt(url.length - 1) === ">") {
+            url = url.substring(1, url.length - 1);
+        }
+        if (!url.includes('_:') && metadata.blanks.includes(url)) {
+            return "_:" + url;
+        } else {
+            return url;
+        }
+    }
+}
+
+function getObjectWithId(object, id) {
+    if (!object || !id || typeof object !== 'object') {
+        return undefined;
+    }
+    if (object["@id"] && object["@id"] === id) {
+        return object;
+    } else {
+        Object.keys(object).some((key) => {
+            return getObjectWithId(object[key], id);
+        });
     }
 }
 
@@ -205,17 +380,6 @@ async function generateHashesFunction(quadString, source, options) {
     return hashes;
 }
 
-function renderQuadsCanonical(quads) {
-    var parsedQuads = parser.parse(quads);
-
-    var canonicalQuads = [];
-    for (let quad of parsedQuads) {
-        var quadString = preprocess.makeQuadString(quad);
-        canonicalQuads.push(quadString);
-    }
-
-    return canonicalQuads;
-}
 
 async function buildMetadataSource(metadataSource) {
     var source = '';
@@ -236,7 +400,7 @@ async function buildMetadataSource(metadataSource) {
     }
     if ('@context' in source) {
         var metadataQuads = await jsonld.toRDF(source, { format: 'application/n-quads' });
-        var metadataParsed = await parser.parse(metadataQuads);
+        var metadataParsed = await utils.parse(metadataQuads);
         var store = new N3.Store();
         store.addQuads(metadataParsed);
         return {
@@ -257,7 +421,7 @@ async function matchHashes(hashes, metadatasource) {
     const query = `PREFIX : <https://blockchain.open.ac.uk/vocab/>
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 
-        SELECT ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg ?anchortype ?anchoraddress ?anchoraccount ?anchortransactionhash (GROUP_CONCAT(DISTINCT ?leaf;separator=\", \") AS ?leaves) WHERE { 
+        SELECT ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg ?anchortype ?anchoraddress ?anchoraccount ?anchortransactionhash ?blanks (GROUP_CONCAT(DISTINCT ?leaf;separator=\", \") AS ?leaves) WHERE { 
             ?tree :merkleleaves ?merkleleaves .
             ?merkleleaves :leafhashalg ?leafhashalg ;
                           :leaves ?leaveslist .
@@ -281,9 +445,9 @@ async function matchHashes(hashes, metadatasource) {
             ?anchor :type ?anchortype ;
                     :address ?anchoraddress;
                     :account ?anchoraccount;
-                    :transactionhash ?anchortransactionhash.}
-            
-        } GROUP BY ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg ?anchortype ?anchoraddress ?anchoraccount ?anchortransactionhash`;
+                    :transactionhash ?anchortransactionhash.
+            ?merkletrees :blanks ?blanks .}
+        } GROUP BY ?indexhash ?indexhashalg ?divisor ?indextype ?lsd ?merkletreeid ?root ?treehashalg ?leafhashalg ?anchortype ?anchoraddress ?anchoraccount ?anchortransactionhash ?blanks`;
 
     const result = await myEngine.query(
         query,
@@ -296,6 +460,7 @@ async function matchHashes(hashes, metadatasource) {
         var results = {};
         results.indexhash = bindings[i].get("?indexhash").value;
         results.index = await getIndex(results.indexhash, metadatasource);
+        results.blanks = bindings[i].get("?blanks") ? bindings[i].get("?blanks").value.split(",") : [];
 
         results.tree = {};
         results.tree.merkleroot = bindings[i].get("?root").value;
@@ -379,7 +544,7 @@ async function doHash(message, passedAlgorithm) {
 
 async function retrieveProofs(quads, source, options) {
     var resultGenerator = new ResultGenerator();
-    var canonicalQuads = renderQuadsCanonical(quads);
+    var canonicalQuads = await utils.parseToTerms(quads);
 
     for (let quad of canonicalQuads) {
         var hashes = await generateHashesFunction(quad["quadString"], source, options);
@@ -387,21 +552,36 @@ async function retrieveProofs(quads, source, options) {
         var matchingMetadata = await matchHashes(hashes, source);
         if (matchingMetadata.length > 0) {
             for (let metadata of matchingMetadata) {
-                var leafArray = metadata.tree.merkleleaves.leaves['@list'];
-                var leaf = await doHash(quad['quadString'], metadata.settings.quadHash);
-                var proof = getProof(leaf, leafArray, metadata.settings.treeHash);
-                var merkleRoot = metadata.tree.merkleroot;
-
-                if (merkleRoot === proof.merkleroot &&
-                    await matchesIndexToTree(quad,
-                        merkleRoot, metadata.index, metadata)) {
-                    resultGenerator.addResult(quad, metadata, proof.merkleProof);
-                }
+                resultGenerator = retrieveProofFromMetadata(quad, metadata, resultGenerator);
             }
         }
     }
 
     return resultGenerator;
+}
+
+async function retrieveProofFromMetadata(quad, metadata, resultGenerator) {
+    var leafArray = metadata.tree.merkleleaves.leaves['@list'];
+    var leaf = await doHash(quad['quadString'], metadata.settings.quadHash);
+    var proof = getProof(leaf, leafArray, metadata.settings.treeHash);
+    var merkleRoot = metadata.tree.merkleroot;
+
+    if (merkleRoot === proof.merkleroot //&&
+        //await matchesIndexToTree(quad,
+        //  merkleRoot, metadata.index, metadata)) {
+    ) {
+        resultGenerator.addResult(quad, metadata, proof.merkleProof);
+    }
+    return resultGenerator;
+}
+
+async function getQuadProofsFromMetadata(quads, metadata) {
+    var resultGenerator = new ResultGenerator();
+    var canonicalQuads = await utils.parseToTerms(quads);
+    for (let quad of canonicalQuads) {
+        resultGenerator = await retrieveProofFromMetadata(quad, metadata, resultGenerator);
+    }
+    return resultsGenerator.toJSON();
 }
 
 async function retrieveJson(quads, source, options) {
@@ -416,8 +596,33 @@ async function getQuadProofs(quads, source, options) {
 
 exports.generateHashesFunction = generateHashesFunction;
 exports.retrieveJson = retrieveJson;
-exports.renderQuadsCanonical = renderQuadsCanonical;
 exports.matchHashes = matchHashes;
 exports.getLeaves = getLeaves;
 exports.getProof = getProof;
 exports.getQuadProofs = getQuadProofs;
+exports.getQuadProofsFromMetadata = getQuadProofsFromMetadata;
+
+var options = {
+    "divisor": "0x1",
+    "indexType": "object",
+    "lsd": 64,
+    "indexHash": "KECCAK-256"
+};
+
+var url = 'https://thirda.solid.open.ac.uk/public/MerQL/test.ttl';
+
+var inputQuads = "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> \"affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]\"  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdfs.org/ns/void#Dataset>  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/created> \"2012-10-04\"^^<http://www.w3.org/2001/XMLSchema#date>  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/creator> <https://github.com/bio2rdf/bio2rdf-scripts/blob/master/affymetrix/affymetrix.php>  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/publisher> <http://bio2rdf.org>  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"use-share-modify\"  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"attribution\"  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://purl.org/dc/terms/rights> \"restricted-by-source-license\"  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/ATH1-121501.na32.annot.nt.gz>  .\n" +
+    "<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://rdfs.org/ns/void#dataDump> <http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz>  .\n";
+
+getQuadProofs(inputQuads, url, options).then((quadProofs) => {
+    //assert.strictEqual(stringify(quadProofs, { space: 4 }), stringify(proofsToGenerate, { space: 4 }), "Not equal");
+    console.log(stringify(quadProofs, { space: 4 }));
+});

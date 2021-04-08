@@ -1,6 +1,8 @@
 const N3 = require('n3');
-const parser = new N3.Parser();
+const parser = new N3.Parser({ blankNodePrefix: '' });
 const writer = new N3.Writer({ format: 'N-Quads' });
+const jsonld = require('jsonld');
+const isomorphic = require('rdf-isomorphic');
 const MerkleTools = require('merkle-tools');
 const stringify = require('json-stable-stringify');
 const Web3 = require('web3');
@@ -10,6 +12,7 @@ const hashingFunctions = require("./hashing.js");
 const preprocess = require('./preprocess.js');
 const merkle = require('./merkle.js');
 const defaults = require('./defaults.js').defaults;
+const utils = require('./utils.js');
 
 async function verify(quads, metadata, options) {
     var results = {
@@ -29,7 +32,6 @@ async function verify(quads, metadata, options) {
         if (metadata.anchor.type === defaults.DEFAULT_ANCHOR_TYPE) {
             // do the whole set at once
             var anchorDetails = await retrieveAnchor(metadata.anchor, options);
-            console.log('DETAILSDETAILSDETAILS' + stringify(anchorDetails, { space : 4 }));
             if (metadata.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
                 !matchAnchorDetails(metadata.indexhash, metadata.settings, anchorDetails) ||
                 parseInt(anchorDetails.transactionAccount, 16) !== parseInt(metadata.anchor.account, 16) ||
@@ -49,17 +51,43 @@ async function verify(quads, metadata, options) {
         }
     } else {
         // per quad verification 
-        var quadObjects = parser.parse(quads);
-        verified = [];
-        unverified = [];
-        for (var currentQuad = 0; currentQuad < quadObjects.length; currentQuad++) {
-            var quadResults = await verifyQuad(quadObjects[currentQuad], metadata, options);
-            verified = verified.concat(quadResults.verified);
-            unverified = unverified.concat(quadResults.unverified);
-        }
-        results.verified = writer.quadsToString(verified);
-        results.unverified = writer.quadsToString(unverified);
 
+        var quadObjects = await utils.parseCanonical(quads);
+        var verified = [];
+        var unverified = [];
+
+        //await utils.isomorphicToSubgraph(metadata, quads);
+        var metadataQuads = await utils.metadataToRDF(metadata);
+        for (var currentQuad of metadataQuads) {
+            var quadResults = await verifyQuad(currentQuad, metadata, options);
+            //verified.push(utils.makeQuadString(quadResults.verified).quadString);
+            //unverified.push(utils.makeQuadString(quadResults.unverified).quadString);
+            for (var verifiedQuad of quadResults.verified) {
+                verified.push(verifiedQuad);
+            }
+            for (var unverifiedQuad of quadResults.unverified) {
+                unverified.push(unverifiedQuad);
+            }
+
+        }
+
+        const matches = utils.matchQuadsIgnoreBlanks(isomorphic, verified, quadObjects);
+
+        var bijection = isomorphic.getBijection(matches.matchesA, matches.matchesB);
+        if (bijection) {
+            for (var verifiedQuad of matches.matchesB) {
+                results.verified += utils.makeQuadString(verifiedQuad).quadString + '\n';
+            }
+            for (var unverifiedQuad of quadObjects) {
+                if (!matches.matchesB.has(unverifiedQuad)) {
+                    results.unverified += utils.makeQuadString(unverifiedQuad).quadString + '\n';
+                }
+            }
+        } else {
+            for (var unverifiedQuad of quadObjects) {
+                results.unverified += utils.makeQuadString(unverifiedQuad).quadString + '\n';
+            }
+        }
     }
     return results;
 }
@@ -70,14 +98,16 @@ async function verifyQuad(quad, metadata, options) {
         unverified: []
     };
 
-    var current = preprocess.makeQuadString(quad);
-    var base = metadata;
+    var current = utils.makeQuadString(quad);
+    current = utils.makeBareTermStrings(current);
+    var base = metadata['@defaultgraph'];
 
     // graph might not exist, but if it does and it isn't in the metadata, fail verification.
     if (current.graphString !== "") {
         if (metadata[current.graphString]) {
             base = metadata[current.graphString];
         } else {
+            console.log('1');
             results.unverified.push(quad);
             return results;
         }
@@ -89,31 +119,37 @@ async function verifyQuad(quad, metadata, options) {
             if (base[current.subjectString][current.predicateString][current.objectString]) {
                 var verify = base[current.subjectString][current.predicateString][current.objectString];
 
+                var verifyMetadata = getLinkedVerificationMetadata(verify, metadata);
+                if (!verifyMetadata) {
+                    results.unverified.push(quad);
+                    return results;
+                }
                 // fetch and check basic matching from anchor on blockchain - if no matches, fail verification
-                var anchorDetails = await retrieveAnchor(verify.anchor, options);
-                console.log('DETAILSDETAILSDETAILS' + stringify(anchorDetails, { space : 4 }));
-                if (verify.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
-                    !matchAnchorDetails(verify.indexhash, verify.settings, anchorDetails) ||
-                    parseInt(anchorDetails.transactionAccount, 16) !== parseInt(verify.anchor.account, 16) ||
-                    parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(verify.anchor.address, 16)) {
+                var anchorDetails = await retrieveAnchor(verifyMetadata.anchor, options);
+                if (verifyMetadata.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
+                    !matchAnchorDetails(verifyMetadata.indexhash, verifyMetadata.anchor.settings, anchorDetails) ||
+                    parseInt(anchorDetails.transactionAccount, 16) !== parseInt(verifyMetadata.anchor.account, 16) ||
+                    parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(verifyMetadata.anchor.address, 16)) {
+                    console.log('2');
                     results.unverified.push(quad);
                     return results;
                 } else {
                     // recreate the index key and check it points to merkleroot in index - else fail verification
-                    var indexMatches = await matchesIndexToTree(current, verify.merkleroot, verify.index, verify.indexhash, verify.settings);
-                    if (
-                        !indexMatches) {
+                    var indexMatches = await matchesIndexToTree(current, verify.merkleroot, verifyMetadata.index, verifyMetadata.indexhash, verifyMetadata.anchor.settings);
+                    if (!indexMatches) {
+                        console.log('3');
                         results.unverified.push(quad);
                         return results;
                     }
 
                     // recreate the quad hash. If Merkle proof validation fails, fail verification
                     var quadHash = await hashingFunctions.getHash(current.quadString, {
-                        type: verify.settings.quadHash
+                        type: verifyMetadata.anchor.settings.quadHash
                     });
-                    var merkleTools = new MerkleTools({ hashType: verify.settings.treeHash });
-                    var validated = merkleTools.validateProof(verify.proof, quadHash, verify.merkleroot, false);
+                    var merkleTools = new MerkleTools({ hashType: verifyMetadata.anchor.settings.treeHash });
+                    var validated = merkleTools.validateProof(verify.proof['@list'], quadHash, verify.merkleroot, false);
                     if (!validated) {
+                        console.log('4');
                         results.unverified.push(quad);
                         return results;
                     } else {
@@ -123,17 +159,33 @@ async function verifyQuad(quad, metadata, options) {
                     }
                 }
             } else {
+                console.log('5');
+                console.log(current.quadString);
                 results.unverified.push(quad);
                 return results;
             }
         } else {
+            console.log('6');
             results.unverified.push(quad);
             return results;
         }
     } else {
+        console.log('7');
+        console.log(current.quadString);
         results.unverified.push(quad);
         return results;
     }
+}
+
+function getLinkedVerificationMetadata(toBeVerified, allMetadata) {
+    if (typeof toBeVerified.metadata === 'object') {
+        return toBeVerified.metadata;
+    }
+    if (typeof allMetadata.metadata === 'object' &&
+        allMetadata.metadata['@id'] === toBeVerified.metadata) {
+        return allMetadata.metadata;
+    }
+    return undefined;
 }
 
 async function merqlify(quads, metadata) {

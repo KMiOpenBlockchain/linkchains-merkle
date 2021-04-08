@@ -46,6 +46,7 @@ class State {
 	loadedHashes = {};
 	treeInfoArray = [];
 	indexToIndex = {};
+	blanks = [];
 	indexToIndexHash = 0;
 	onComplete = function () { };
 
@@ -99,6 +100,10 @@ class State {
 		this.indexToIndexHash = hash;
 	}
 
+	addBlanks(blanks) {
+		this.blanks = blanks;
+	}
+
 	toObject() {
 		var results = {
 			"@context" : this.config.jsonldcontext
@@ -106,7 +111,9 @@ class State {
 		results.merkletrees = {};
 		results.merkletrees.indexhash = this.indexToIndexHash;
 		results.merkletrees.indexhashalg = this.config.indexHash;
+		results.merkletrees.index = this.indexToIndex;
 		results.merkletrees.treesettings = this.config;
+		results.merkletrees.blanks = this.blanks.join();
 		delete results.merkletrees.treesettings.jsonldcontext;
 		var treeList = [];
 		for (var i = 0; i < this.treeInfoArray.length; i++) {
@@ -172,7 +179,8 @@ function createIndexToIndex(state) {
 
 async function hashListsToMerkleTrees(hashes, options) {
 	var state = new State(options);
-	state.storeHashes(hashes);
+	state.storeHashes(hashes.indices);
+	state.addBlanks(hashes.blanks);
 	await processHashsets(state);
 	return state.toObject();
 }

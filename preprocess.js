@@ -1,13 +1,11 @@
-const N3 = require('n3');
-const parser = new N3.Parser({ blankNodePrefix: '' });
-const jsonld = require('jsonld');
 const stringify = require('json-stable-stringify');
 const SortedMap = require("collections/sorted-map");
 
 const hashingFunctions = require('./hashing');
 const defaults = require('./defaults').defaults;
+const utils = require('./utils.js');
 
-var utils;
+var hashUtils;
 
 class State {
     indexType;
@@ -19,29 +17,31 @@ class State {
     quadCount;
     quads;
     indices;
+    blanks;
 
     constructor(options) {
         this.indices = new SortedMap();
+        this.blanks = [];
         this.readOptions(options);
     }
 
     readOptions(options) {
-        var quadHashFunction = async function(input) {
+        var quadHashFunction = async function (input) {
             return hashingFunctions.getHash(input, {
                 "type": options.quadHash ? options.quadHash : defaults.DEFAULT_HASH_ALG
             });
         };
-        var treeHashFunction = async function(input) {
+        var treeHashFunction = async function (input) {
             return hashingFunctions.getHash(input, {
                 "type": options.treeHash ? options.treeHash : defaults.DEFAULT_HASH_ALG
             });
         };
-        var indexHashFunction = async function(input) {
+        var indexHashFunction = async function (input) {
             return hashingFunctions.getHash(input, {
                 "type": options.indexHash ? options.indexHash : defaults.DEFAULT_HASH_ALG
             });
         };
-        utils = {
+        hashUtils = {
             quadHash: quadHashFunction,
             treeHash: treeHashFunction,
             indexHash: indexHashFunction
@@ -53,12 +53,7 @@ class State {
     };
 
     async addAndParseQuads(data) {
-        var canonical = await jsonld.canonize(data, {
-            algorithm: 'URDNA2015',
-            inputFormat: 'application/n-quads',
-            format: 'application/n-quads'
-        });
-        this.quads = parser.parse(canonical);
+        this.quads = await utils.parseCanonical(data);
         this.quadCount = this.quads.length;
     }
 
@@ -68,42 +63,12 @@ class State {
         }
         this.indices.get(key).push(value);
     }
-}
 
-
-function makeQuadTerm(value) {
-    return '<' + value + '>';
-}
-
-function makeQuadValue(value) {
-    return '"' + value + '"';
-}
-
-function makeQuadString(quad) {
-    var subjectTerm = makeQuadTerm(quad.subject.value);
-    var predicate = makeQuadTerm(quad.predicate.value);
-    var objectTerm;
-    if (quad.object.termType != "Literal") {
-        objectTerm = makeQuadTerm(quad.object.value);
-    } else {
-        objectTerm = makeQuadValue(quad.object.value);
-        if (quad.object.language) {
-            objectTerm += '@' + quad.object.language;
-        }
-        if (quad.object.datatype) {
-            objectTerm += '^^' + makeQuadTerm(quad.object.datatype.value);
+    addToBlanks(blank) {
+        if (!this.blanks.includes(blank)) {
+            this.blanks.push(blank);
         }
     }
-    var graph = (quad.graph.value ? makeQuadTerm(quad.graph.value) : '');
-
-    var quadString = subjectTerm + ' ' + predicate + ' ' + objectTerm + ' ' + graph + ' .';
-    return {
-        'subjectString': subjectTerm,
-        'predicateString': predicate,
-        'objectString': objectTerm,
-        'graphString': graph,
-        'quadString': quadString
-    };
 }
 
 async function processQuads(state) {
@@ -114,12 +79,15 @@ async function processQuads(state) {
 
 async function processQuad(state, quad) {
     if (quad !== undefined) {
-        var quadStringsObj = makeQuadString(quad);
+        var quadStringsObj = utils.makeQuadString(quad);
 
-        quadStringsObj.quadHash = await utils.quadHash(quadStringsObj.quadString);
+        quadStringsObj.quadHash = await hashUtils.quadHash(quadStringsObj.quadString);
 
         var index = await makeHashIndex(state, quadStringsObj);
         state.addToIndices(index.toString(), quadStringsObj.quadHash);
+        for (var i = 0; i < quadStringsObj.blanks.length; i++) {
+            state.addToBlanks(quadStringsObj.blanks[i]);
+        }
     }
 }
 
@@ -127,15 +95,15 @@ async function makeHashIndex(state, quadStringsObj) {
     if (state.indexType == "uniform") {
         hash = quadStringsObj.quadHash;
     } else if (state.indexType == "subject") {
-        hash = await utils.quadHash(quadStringsObj.subjectString);
+        hash = await hashUtils.quadHash(quadStringsObj.subjectString);
     } else if (state.indexType == "predicate") {
-        hash = await utils.quadHash(quadStringsObj.predicateString);
+        hash = await hashUtils.quadHash(quadStringsObj.predicateString);
     } else if (state.indexType == "object") {
-        hash = await utils.quadHash(quadStringsObj.objectString);
+        hash = await hashUtils.quadHash(quadStringsObj.objectString);
     } else if (state.indexType == "graph") {
-        hash = await utils.quadHash(quadStringsObj.graphString);
+        hash = await hashUtils.quadHash(quadStringsObj.graphString);
     } else if (state.indexType == "subjectobject") {
-        hash = await utils.quadHash(quadStringsObj.subjectString +
+        hash = await hashUtils.quadHash(quadStringsObj.subjectString +
             " " + quadStringsObj.objectString);
     }
     var lastdigits = hash.substr(hash.length - state.lsd);
@@ -149,8 +117,10 @@ async function divideQuadsIntoHashLists(quads, options) {
     await state.addAndParseQuads(quads);
 
     await processQuads(state);
-    return state.indices.toJSON();
+    return {
+        indices: state.indices.toJSON(),
+        blanks: state.blanks
+    };
 }
 
 exports.divideQuadsIntoHashLists = divideQuadsIntoHashLists
-exports.makeQuadString = makeQuadString

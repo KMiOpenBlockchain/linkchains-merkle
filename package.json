@@ -28,7 +28,10 @@
     "shelljs": "^0.8.4",
     "util": "^0.12.3",
     "web3": "^1.2.1",
-    "web3_ipc": "^1.4.0"
+    "web3_ipc": "^1.4.0",
+    "rdf-isomorphic": "^1.2.0",
+    "rdf-string": "^1.5.0",
+    "rdflib": "2.2.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
