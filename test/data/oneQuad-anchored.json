@@ -1,0 +1,54 @@
+{
+    "@context": {
+        "@vocab": "https://blockchain.open.ac.uk/vocab/"
+    },
+    "merkletrees": {
+        "index": [
+            {
+                "39423203430592103997374671506331876705003930407886206958728470964150059233118": "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88"
+            }
+        ],
+        "indexhash": "8953e3d2b916ea7cba8ece415760d9d99758ebc016daddeb1d9e554871f0d6c1",
+        "indexhashalg": "KECCAK-256",
+        "trees": {
+            "@list": [
+                {
+                    "merkleleaves": {
+                        "leafhashalg": "KECCAK-256",
+                        "leaves": {
+                            "@list": [
+                                "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88"
+                            ]
+                        }
+                    },
+                    "merkleroot": "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88",
+                    "merkletreeid": "39423203430592103997374671506331876705003930407886206958728470964150059233118",
+                    "treehashalg": "KECCAK-256"
+                }
+            ]
+        },
+        "treesettings": {
+            "divisor": "0x1",
+            "indexHash": "KECCAK-256",
+            "indexType": "object",
+            "lsd": 64,
+            "quadHash": "KECCAK-256",
+            "treeHash": "KECCAK-256"
+        },
+        "anchor": {
+            "type": "ETHMerQL",
+            "address": "0x153c68D0eEbB65C3610F36e84dD2871cAc3193E7",
+            "account": "0x1cf67BCCD5377aF1a69BadA19D699BCBa805E3f6",
+            "indexhash": "8953e3d2b916ea7cba8ece415760d9d99758ebc016daddeb1d9e554871f0d6c1",
+            "settings": {
+                "divisor": "0x1",
+                "indexHash": "KECCAK-256",
+                "indexType": "object",
+                "lsd": 64,
+                "quadHash": "KECCAK-256",
+                "treeHash": "KECCAK-256"
+            },
+            "transactionhash": "0x474d1c6d4ac6f75d49e654555e014f470f3c3497558e132493e31a7e15aa3428"
+        }
+    }
+}

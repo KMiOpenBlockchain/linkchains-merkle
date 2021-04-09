@@ -1,0 +1,1 @@
+<http://bio2rdf.org/bio2rdf_dataset:bio2rdf-affymetrix-20121004> <http://www.w3.org/2000/01/rdf-schema#label> "My dog has no nose."  .

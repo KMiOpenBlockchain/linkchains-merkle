@@ -1,73 +1,28 @@
 /* test/sum.js */
 
 
-var rewire = require('rewire');
-var merkle = rewire('../merkle.js');
+const rewire = require('rewire');
+const merkle = rewire('../merkle.js');
+const fs = require('fs');
+const assert = require('chai').assert;
 
-var assert = require('chai').assert;
+const stringify = require('json-stable-stringify');
 
-var stringify = require('json-stable-stringify');
-
-describe('generatesIndexes', function() {
+describe('generatesIndexes', function () {
     this.timeout(10000);
 
-    context('one quad', function() {
 
-        it('should equals', async function() {
+    const options = JSON.parse(fs.readFileSync('./test/data/object-KECCAK-256-0x1-64.json'));
 
-            var options = {
-                "divisor": "0x1",
-                "indexType": "object",
-                "lsd": 64,
-                "indexHash" : "KECCAK-256"
-            };
-            
-            var inputHashes = [
-                [
-                   "39423203430592103997374671506331876705003930407886206958728470964150059233118",
-                   [
-                      "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88"
-                   ]
-                ]
-             ];
+    const inputHashes = JSON.parse(fs.readFileSync('./test/data/oneQuadTest-inputHashes.json'));
 
-                var treesToGenerate = {
-                    "@context": {
-                        "@vocab": "https://blockchain.open.ac.uk/vocab/"
-                    },
-                    "merkletrees": {
-                        "indexhash": "8953e3d2b916ea7cba8ece415760d9d99758ebc016daddeb1d9e554871f0d6c1",
-                        "indexhashalg": "KECCAK-256",
-                        "trees": {
-                            "@list": [
-                                {
-                                    "merkleleaves": {
-                                        "leaves": {
-                                            "@list": [
-                                                "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88"
-                                            ]
-                                        },
-                                        "leafhashalg": "KECCAK-256"
-                                    },
-                                    "merkleroot": "b114241a13cac2a4417935b18e0d822d4b2596fe0df914618a5af1bbcd213d88",
-                                    "merkletreeid": "39423203430592103997374671506331876705003930407886206958728470964150059233118",
-                                    "treehashalg": "KECCAK-256"
-                                }
-                            ]
-                        },
-                        "treesettings": {
-                            "divisor": "0x1",
-                            "indexHash": "KECCAK-256",
-                            "indexType": "object",
-                            "lsd": 64,
-                            "quadHash": "KECCAK-256",
-                            "treeHash": "KECCAK-256"
-                        }
-                    }
-                };
+    const treesToGenerate = JSON.parse(fs.readFileSync('./test/data/oneQuadTest-treesToGenerate.json'));
 
+    context('one quad', function () {
+
+        it('should equals', async function () {
             const merkleTrees = await merkle.hashListsToMerkleTrees(inputHashes, options);
-            assert.strictEqual(stringify(merkleTrees, { space : 4 }), stringify(treesToGenerate, { space : 4 }), "Not equal");
+            assert.strictEqual(stringify(merkleTrees, { space: 4 }), stringify(treesToGenerate, { space: 4 }), "Not equal");
         })
     })
 })

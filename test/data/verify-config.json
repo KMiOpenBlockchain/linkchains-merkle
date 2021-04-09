@@ -1,0 +1,254 @@
+{
+    "blockchain": {
+        "abi": [
+            {
+                "inputs": [
+                    {
+                        "internalType": "string",
+                        "name": "hashIn",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "newIndexType",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "lsds",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "div",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "quadHashFunctionIn",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "treeHashFunctionIn",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "indexHashFunctionIn",
+                        "type": "string"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "creationTime",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "divisor",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "getData",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "theCreationTime",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "theOwner",
+                        "type": "address"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "thetargetHash",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "theIndexType",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "leastSignificants",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "theDivisor",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "theQuadHashFunction",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "theTreeHashFunction",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "theIndexHashFunction",
+                        "type": "string"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "indexHashFunction",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "indexType",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "leastSignificantDigits",
+                "outputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "",
+                        "type": "uint256"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "owner",
+                "outputs": [
+                    {
+                        "internalType": "address",
+                        "name": "",
+                        "type": "address"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "quadHashFunction",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "targetHash",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "constant": true,
+                "inputs": [
+                ],
+                "name": "treeHashFunction",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ],
+        "web3": {
+            "protocol": "ws",
+            "domain": "blockchain20.kmi.open.ac.uk",
+            "port": "",
+            "path": "/web3/"
+        }
+    }
+}

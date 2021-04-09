@@ -57,9 +57,7 @@ async function anchor(merkleOutput, cfg){
 		web3Socket : cfg.web3Socket,
 		user: cfg.user
 	});
-	console.log('Contract mined! address: ' + merqlanchorContract.address +
-		' transactionHash: ' + merqlanchorContract.transactionHash);
-
+	
 	merkleOutput.merkletrees.anchor = {
 		type : "ETHMerQL", //hardcoded
 		address : merqlanchorContract.contract._address,

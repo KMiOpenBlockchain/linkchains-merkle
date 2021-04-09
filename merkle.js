@@ -106,6 +106,7 @@ class State {
 		results.merkletrees = {};
 		results.merkletrees.indexhash = this.indexToIndexHash;
 		results.merkletrees.indexhashalg = this.config.indexHash;
+		results.merkletrees.index = this.indexToIndex;
 		results.merkletrees.treesettings = this.config;
 		delete results.merkletrees.treesettings.jsonldcontext;
 		var treeList = [];
