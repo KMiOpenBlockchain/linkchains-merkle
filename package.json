@@ -5,7 +5,7 @@
   "scripts": {
     "build": "browserify browser.js --standalone linkchains -o linkchains-bundle.js",
     "build-debug": "browserify browser.js --standalone linkchains --debug | exorcist linkchains-bundle.map.js > linkchains-bundle.js; cp linkchains-bundle.js linkchains-bundle.map.js test/browser",
-    "test": "mocha"
+    "test": "mocha test/*.js"
   },
   "private": true,
   "dependencies": {
@@ -30,6 +30,9 @@
   },
   "directories": {
     "test": "test"
+  },
+  "mocha" : {
+    "exclude" : "test/config.js"
   },
   "repository": {
     "type": "git",

@@ -70,7 +70,23 @@ function makeBareTermStrings(quadStringObject) {
 }
 
 async function canonicalise(data) {
-    var canonical = await jsonld.canonize(data, {
+    var quads = data;
+    try {
+        var json;
+        if (!quads['@context']) {
+            json = JSON.parse(quads);
+        } else {
+            json = quads;
+        }
+        quads = await jsonld.canonize(json, {
+            algorithm: 'URDNA2015',
+            format: 'application/n-quads'
+        });
+    } catch (error) {
+        quads = data;
+    }
+
+    var canonical = await jsonld.canonize(quads, {
         algorithm: 'URDNA2015',
         inputFormat: 'application/n-quads',
         format: 'application/n-quads'
@@ -169,12 +185,12 @@ function matchQuadsIgnoreBlanks(quadsA, quadsB) {
 
 function getRDFTerm(term) {
     var id = null;
-        try {
-            var url = new URL(term);
-            id = '<' + term + '>';
-        } catch (e) {
-            id = term;
-        }
+    try {
+        var url = new URL(term);
+        id = '<' + term + '>';
+    } catch (e) {
+        id = term;
+    }
     return id;
 }
 

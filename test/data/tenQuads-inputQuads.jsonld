@@ -1,0 +1,36 @@
+{
+    "@context": {
+        "@vocab": "https://blockchain.open.ac.uk/vocab/",
+        "bio2rdf": "http://bio2rdf.org/bio2rdf_dataset:",
+        "dc": "http://purl.org/dc/terms/",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "void": "http://rdfs.org/ns/void#"
+    },
+    "@id": "bio2rdf:bio2rdf-affymetrix-20121004",
+    "@type": "void:Dataset",
+    "dc:created": {
+        "@type": "http://www.w3.org/2001/XMLSchema#date",
+        "@value": "2012-10-04"
+    },
+    "dc:creator": {
+        "@id": "https://github.com/bio2rdf/bio2rdf-scripts/blob/master/affymetrix/affymetrix.php"
+    },
+    "dc:publisher": {
+        "@id": "http://bio2rdf.org"
+    },
+    "dc:rights": [
+        "use-share-modify",
+        "attribution",
+        "restricted-by-source-license"
+    ],
+    "rdfs:label": "affymetrix dataset by Bio2RDF on 2012-10-04 [bio2rdf_dataset:bio2rdf-affymetrix-20121004]",
+    "void:dataDump": [
+        {
+            "@id": "http://download.bio2rdf.org/rdf/affymetrix/ATH1-121501.na32.annot.nt.gz"
+        },
+        {
+            "@id": "http://download.bio2rdf.org/rdf/affymetrix/Bovine.na32.annot.nt.gz"
+        }
+    ]
+}

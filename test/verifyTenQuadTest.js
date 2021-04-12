@@ -5,16 +5,17 @@ const rewire = require('rewire');
 const verify = rewire('../verify.js');
 const fs = require('fs');
 const assert = require('chai').assert;
+const utils = require('../utils.js');
 
 const stringify = require('json-stable-stringify');
 
 require('./config.js');
-describe('verifyHashes', function () {
+describe('verifyHashes', async function () {
     this.timeout(600000);
 
     const verifyConfig = JSON.parse(fs.readFileSync('./test/data/verify-config.json'));
 
-    const inputQuads = fs.readFileSync('./test/data/tenQuads-inputQuads.ttl').toString();
+    const inputQuads = await utils.canonicalise(fs.readFileSync('./test/data/tenQuads-inputQuads.ttl').toString());
     const inputQuadsWrong = fs.readFileSync('./test/data/tenQuads-inputQuadsWrong.ttl').toString();
 
     const metadataWholeThing = JSON.parse(fs.readFileSync('./test/data/tenQuads-anchored.json'));

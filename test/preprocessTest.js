@@ -6,14 +6,15 @@ const preprocess = rewire('../preprocess.js');
 const assert = require('chai').assert;
 const fs = require('fs');
 const stringify = require('json-stable-stringify');
+const utils = require('../utils.js');
 
-describe('generatesIndexes', function () {
+describe('generatesIndexes', async function () {
 
     const options64 = JSON.parse(fs.readFileSync('./test/data/object-KECCAK-256-0x1-64.json'));
     const options2 = JSON.parse(fs.readFileSync('./test/data/object-KECCAK-256-0xA-2.json'));
-    const inputQuad = fs.readFileSync('./test/data/oneQuad-inputQuad.ttl').toString();
-    const inputQuads = fs.readFileSync('./test/data/tenQuads-inputQuads.ttl').toString();
-    const inputQuads19 = fs.readFileSync('./test/data/nineteenQuads-inputQuads.ttl').toString();
+    const inputQuad = await utils.canonicalise(fs.readFileSync('./test/data/oneQuad-inputQuad.ttl').toString());
+    const inputQuads = await utils.canonicalise(fs.readFileSync('./test/data/tenQuads-inputQuads.ttl').toString());
+    const inputQuads19 = await utils.canonicalise(fs.readFileSync('./test/data/nineteenQuads-inputQuads.ttl').toString());
 
     context('one quad', function () {
 

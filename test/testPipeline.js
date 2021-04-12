@@ -11,7 +11,7 @@ require('../config.js');
 require('../config-readonly.js');
 
 
-const location = './test/';
+const location = './test/data/';
 const inputPrefix = 'test';
 const extensions = {
     input: '.ttl',

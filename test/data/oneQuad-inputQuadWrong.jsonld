@@ -1,0 +1,12 @@
+{
+    "@context": {
+        "@vocab": "https://blockchain.open.ac.uk/vocab/",
+        "bio2rdf": "http://bio2rdf.org/bio2rdf_dataset:",
+        "dc": "http://purl.org/dc/terms/",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "void": "http://rdfs.org/ns/void#"
+    },
+    "@id": "bio2rdf:bio2rdf-affymetrix-20121004",
+    "rdfs:label": "My dog has no nose."
+}

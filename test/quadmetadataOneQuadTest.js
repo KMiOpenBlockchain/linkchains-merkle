@@ -5,13 +5,14 @@ const rewire = require('rewire');
 const quadmetadata = rewire('../quadmetadata.js');
 const fs = require('fs');
 const assert = require('chai').assert;
+const utils = require('../utils.js');
 
 const stringify = require('json-stable-stringify');
 
-describe('quadMetadata', function () {
+describe('quadMetadata', async function () {
     this.timeout(10000);
 
-    const inputQuad = fs.readFileSync('./test/data/oneQuad-inputQuad.ttl').toString();
+    const inputQuad = await utils.canonicalise(fs.readFileSync('./test/data/oneQuad-inputQuad.ttl').toString());
     const metadata = JSON.parse(fs.readFileSync('./test/data/oneQuad-anchored.json'));
     const proofsToGenerate = JSON.parse(fs.readFileSync('./test/data/oneQuad-metadataPerQuad.json'));
     
