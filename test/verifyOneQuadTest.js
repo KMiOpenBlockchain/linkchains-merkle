@@ -12,7 +12,7 @@ const stringify = require('json-stable-stringify');
 require('./config.js');
 
 describe('verifyHashes', async function () {
-    this.timeout(10000);
+    this.timeout(600000);
     const verifyConfig = JSON.parse(fs.readFileSync('./test/data/verify-config.json'));
 
     const inputQuad = await utils.canonicalise(fs.readFileSync('./test/data/oneQuad-inputQuad.ttl').toString());

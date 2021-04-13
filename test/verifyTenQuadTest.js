@@ -37,6 +37,7 @@ describe('verifyHashes', async function () {
 
         it('should equals', async function () {
 
+            this.timeout(600000);
             const outputPerQuad = JSON.parse(fs.readFileSync('./test/data/verifyTenQuadTest-2-output.json'));
 
             const verifiedQuads = await verify.verify(inputQuads, metadataPerQuad, verifyConfig);
@@ -59,6 +60,7 @@ describe('verifyHashes', async function () {
 
         it('should equals', async function () {
 
+            this.timeout(600000);
             const outputPerQuadWrong = JSON.parse(fs.readFileSync('./test/data/verifyTenQuadTest-4-output.json'));
             
             const verifiedQuadsWrong = await verify.verify(inputQuadsWrong, metadataPerQuad, verifyConfig);
