@@ -12,7 +12,7 @@ async function retrieve(anchor, abi, options) {
 	return anchorDetails;
 }
 
-async function retrieveAnchor(anchor, options) {
+async function retrieveAnchor(anchor, cfg) {
 	var anchorDetails = retrieve(anchor, cfg.abi, {
 		web3Socket : cfg.web3Socket
 	});
