@@ -204,16 +204,6 @@ async function retrieveAnchor(anchor, options) {
     return anchorDetails;
 }
 
-async function retrieveAnchorProxy(anchor, options) {
-    var response = {};
-    try {
-        response = await axios.post('https://' + options.blockchain.web3.domain + '/anchoring/retrieveAnchor', anchor);
-    } catch (error) {
-        console.log(error);
-    }
-    return response.data;
-}
-
 async function matchesIndexToTree(quad, merkleRoot, indices, indexhash, settings) {
     var index = await generateIndexFrom(settings, quad);
 
