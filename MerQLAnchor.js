@@ -34,7 +34,7 @@ async function send(transaction, web3, sendOptions) {
 	return transactionReceipt;
 }
 
-async function anchor(merkleOutput, cfg){
+async function anchor(merkleOutput, options){
 	var indexHash = merkleOutput.merkletrees.indexhash;
 	var newIndexType = merkleOutput.merkletrees.treesettings.indexType; //following lines take their values from merkleOutput too
 	var lsds = merkleOutput.merkletrees.treesettings.lsd;
@@ -53,15 +53,15 @@ async function anchor(merkleOutput, cfg){
 		indexHashFunctionIn,
 	];
 
-	var merqlanchorContract = await deploy(cfg.abi, cfg.bytecode, contractArguments, {
-		web3Socket : cfg.web3Socket,
-		user: cfg.user
+	var merqlanchorContract = await deploy(options.abi, options.bytecode, contractArguments, {
+		web3Socket : options.web3Socket,
+		user: options.user
 	});
 	
 	merkleOutput.merkletrees.anchor = {
 		type : "ETHMerQL", //hardcoded
 		address : merqlanchorContract.contract._address,
-		account : cfg.user.address,
+		account : options.user.address,
 		indexhash : indexHash,
 		settings : merkleOutput.merkletrees.treesettings,
 		transactionhash : merqlanchorContract.receipt.transactionHash // Not actually sure this is needed - I guess it can't hurt?

@@ -9,7 +9,7 @@ const utils = require('../utils.js');
 
 const stringify = require('json-stable-stringify');
 
-require('./config.js');
+require('../config.js');
 describe('verifyHashes', async function () {
     this.timeout(600000);
 

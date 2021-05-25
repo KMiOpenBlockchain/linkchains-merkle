@@ -8,7 +8,6 @@ const quadmetadata = require('../quadmetadata.js');
 const verify = require('../verify.js');
 const defaults = require('../defaults.js').defaultOptions;
 require('../config.js');
-require('../config-readonly.js');
 
 
 const location = './test/data/';
