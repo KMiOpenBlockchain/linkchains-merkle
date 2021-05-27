@@ -1,6 +1,7 @@
 const preprocess = require('./preprocess.js');
 const merkle = require('./merkle.js');
 const quadmetadata = require('./quadmetadata.js');
+const anchor = require('./MerQLAnchor.js');
 const verify = require('./verify.js');
 const utils = require('./utils.js');
 
@@ -22,6 +23,14 @@ module.exports = {
             return quadProofs;
         } catch (error) {
             throw new Error("Error getting granular verification metadata: " + error.toString());
+        }
+    },
+    anchorMetadata: async function(metadata, options) {
+        try {
+            var anchoredMetadata = await anchor.anchor(metadata, options);
+            return anchoredMetadata;
+        } catch (error) {
+            throw new Error("Error anchoring metadata to ledger: " + error.toString());
         }
     },
     verify: async function (quads, metadata, options) {
