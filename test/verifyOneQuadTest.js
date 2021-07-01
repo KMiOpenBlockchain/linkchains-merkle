@@ -24,7 +24,7 @@ describe('verifyHashes', async function () {
     context('Data of one Quad - whole', function () {
 
         it('should equals', async function () {
-
+            this.timeout(600000);
             const output = JSON.parse(fs.readFileSync('./test/data/verifyOneQuadTest-1-output.json'));
 
             const verifiedWhole = await verify.verify(inputQuad, metadataWholeThing, verifyConfig);
