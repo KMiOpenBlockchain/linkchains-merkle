@@ -69,7 +69,7 @@ function makeBareTermStrings(quadStringObject) {
     return result;
 }
 
-async function canonicalise(data) {
+async function canonicalise(data, customLoader) {
     var quads = data;
     try {
         var json;
@@ -80,7 +80,8 @@ async function canonicalise(data) {
         }
         quads = await jsonld.canonize(json, {
             algorithm: 'URDNA2015',
-            format: 'application/n-quads'
+            format: 'application/n-quads',
+            documentloader: customLoader
         });
     } catch (error) {
         quads = data;
@@ -89,7 +90,8 @@ async function canonicalise(data) {
     var canonical = await jsonld.canonize(quads, {
         algorithm: 'URDNA2015',
         inputFormat: 'application/n-quads',
-        format: 'application/n-quads'
+        format: 'application/n-quads',
+        documentloader: customLoader
     });
     return canonical;
 }
