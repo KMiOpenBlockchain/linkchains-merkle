@@ -34,14 +34,14 @@ async function send(transaction, web3, sendOptions) {
 	return transactionReceipt;
 }
 
-async function anchor(merkleOutput, options){
-	var indexHash = merkleOutput.merkletrees.indexhash;
-	var newIndexType = merkleOutput.merkletrees.treesettings.indexType; //following lines take their values from merkleOutput too
-	var lsds = merkleOutput.merkletrees.treesettings.lsd;
-	var div = merkleOutput.merkletrees.treesettings.divisor;
-	var quadHashFunctionIn = merkleOutput.merkletrees.treesettings.quadHash;
-	var treeHashFunctionIn = merkleOutput.merkletrees.treesettings.treeHash;
-	var indexHashFunctionIn = merkleOutput.merkletrees.treesettings.indexHash;
+async function anchor(metadata, options){
+	var indexHash = metadata.merkletrees.indexhash;
+	var newIndexType = metadata.merkletrees.treesettings.indexType; //following lines take their values from merkleOutput too
+	var lsds = metadata.merkletrees.treesettings.lsd;
+	var div = metadata.merkletrees.treesettings.divisor;
+	var quadHashFunctionIn = metadata.merkletrees.treesettings.quadHash;
+	var treeHashFunctionIn = metadata.merkletrees.treesettings.treeHash;
+	var indexHashFunctionIn = metadata.merkletrees.treesettings.indexHash;
 
 	var contractArguments = [
 		indexHash,
@@ -58,16 +58,16 @@ async function anchor(merkleOutput, options){
 		user: options.user
 	});
 	
-	merkleOutput.merkletrees.anchor = {
+	metadata.merkletrees.anchor = {
 		type : "ETHMerQL", //hardcoded
 		address : merqlanchorContract.contract._address,
 		account : options.user.address,
 		indexhash : indexHash,
-		settings : merkleOutput.merkletrees.treesettings,
+		settings : metadata.merkletrees.treesettings,
 		transactionhash : merqlanchorContract.receipt.transactionHash // Not actually sure this is needed - I guess it can't hurt?
 	};
 
-	return merkleOutput;
+	return metadata;
 }
 
 
