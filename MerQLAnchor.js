@@ -15,9 +15,9 @@ async function deployInternal(abi, bytecode, contractArgs, options) {
 	// The args variable was never used in the source.
 	//const args = transaction.encodeABI().slice(options.data.length); 
 	var result = {
-		address : (await new web3.eth.Contract(abi, handle.contractAddress))._address,
-		userAddress : options.user.address,
-		transactionHash : handle.transactionHash
+		address: (await new web3.eth.Contract(abi, handle.contractAddress))._address,
+		userAddress: options.user.address,
+		transactionHash: handle.transactionHash
 	};
 	web3.currentProvider.disconnect();
 	return result;
@@ -35,7 +35,7 @@ async function send(transaction, web3, sendOptions) {
 	return transactionReceipt;
 }
 
-async function anchor(metadata, options, anchorFunction){
+async function anchor(metadata, options, anchorFunction) {
 	var indexHash = metadata.merkletrees.indexhash;
 	var newIndexType = metadata.merkletrees.treesettings.indexType; //following lines take their values from merkleOutput too
 	var lsds = metadata.merkletrees.treesettings.lsd;
@@ -55,26 +55,29 @@ async function anchor(metadata, options, anchorFunction){
 	];
 
 	var deployed = await anchorFunction(options, contractArguments);
-	
+
 	metadata.merkletrees.anchor = {
-		type : "ETHMerQL", //hardcoded
-		address : deployed.address,
-		account : deployed.userAddress,
-		indexhash : indexHash,
-		settings : metadata.merkletrees.treesettings,
-		transactionhash : deployed.transactionHash // Not actually sure this is needed - I guess it can't hurt?
+		type: "ETHMerQL", //hardcoded
+		address: deployed.address,
+		account: deployed.userAddress,
+		indexhash: indexHash,
+		settings: metadata.merkletrees.treesettings,
+		transactionhash: deployed.transactionHash // Not actually sure this is needed - I guess it can't hurt?
 	};
 
 	return metadata;
 }
 
 async function anchorInternal(metadata, options) {
-	return await anchor(metadata, options, (options, contractArguments) => {
-		return await deployInternal(options.abi, options.bytecode, contractArguments, {
-			web3Socket : options.web3Socket,
+	const anchorResults = await anchor(metadata, options, (options, contractArguments) => {
+		const deployOpts = {
+			web3Socket: options.web3Socket,
 			user: options.user
-		});
+		};
+		const deployResults = deployInternal( options.abi, options.bytecode, contractArguments, deployOpts);
+		return deployResults;
 	});
+	return anchorResults;
 }
 
 exports.anchor = anchor

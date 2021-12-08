@@ -49,57 +49,57 @@ const CONTEXTS = {
             "TypeValidation": "obi:TypeValidation",
             "VerificationObject": "obi:VerificationObject",
 
-            "author": {"@id": "schema:author", "@type": "@id"},
-            "caption": {"@id": "schema:caption"},
-            "claim": {"@id": "cred:claim", "@type": "@id"},
-            "created": {"@id": "dc:created", "@type": "xsd:dateTime"},
-            "creator": {"@id": "dc:creator", "@type": "@id"},
-            "description": {"@id": "schema:description"},
-            "email": {"@id": "schema:email"},
-            "endorsement": {"@id": "cred:credential", "@type": "@id"},
-            "expires": {"@id": "sec:expiration", "@type": "xsd:dateTime"},
-            "genre": {"@id": "schema:genre"},
-            "image": {"@id": "schema:image", "@type": "@id"},
-            "name": {"@id": "schema:name"},
-            "owner": {"@id": "sec:owner", "@type": "@id"},
-            "publicKey": {"@id": "sec:publicKey", "@type": "@id"},
-            "publicKeyPem": {"@id": "sec:publicKeyPem"},
-            "related": {"@id": "dc:relation", "@type": "@id"},
-            "startsWith": {"@id": "http://purl.org/dqm-vocabulary/v1/dqm#startsWith"},
-            "tags": {"@id": "schema:keywords"},
-            "targetDescription": {"@id": "schema:targetDescription"},
-            "targetFramework": {"@id": "schema:targetFramework"},
-            "targetName": {"@id": "schema:targetName"},
-            "targetUrl": {"@id": "schema:targetUrl"},
-            "telephone": {"@id": "schema:telephone"},
-            "url": {"@id": "schema:url", "@type": "@id"},
-            "version": {"@id": "schema:version"},
+            "author": { "@id": "schema:author", "@type": "@id" },
+            "caption": { "@id": "schema:caption" },
+            "claim": { "@id": "cred:claim", "@type": "@id" },
+            "created": { "@id": "dc:created", "@type": "xsd:dateTime" },
+            "creator": { "@id": "dc:creator", "@type": "@id" },
+            "description": { "@id": "schema:description" },
+            "email": { "@id": "schema:email" },
+            "endorsement": { "@id": "cred:credential", "@type": "@id" },
+            "expires": { "@id": "sec:expiration", "@type": "xsd:dateTime" },
+            "genre": { "@id": "schema:genre" },
+            "image": { "@id": "schema:image", "@type": "@id" },
+            "name": { "@id": "schema:name" },
+            "owner": { "@id": "sec:owner", "@type": "@id" },
+            "publicKey": { "@id": "sec:publicKey", "@type": "@id" },
+            "publicKeyPem": { "@id": "sec:publicKeyPem" },
+            "related": { "@id": "dc:relation", "@type": "@id" },
+            "startsWith": { "@id": "http://purl.org/dqm-vocabulary/v1/dqm#startsWith" },
+            "tags": { "@id": "schema:keywords" },
+            "targetDescription": { "@id": "schema:targetDescription" },
+            "targetFramework": { "@id": "schema:targetFramework" },
+            "targetName": { "@id": "schema:targetName" },
+            "targetUrl": { "@id": "schema:targetUrl" },
+            "telephone": { "@id": "schema:telephone" },
+            "url": { "@id": "schema:url", "@type": "@id" },
+            "version": { "@id": "schema:version" },
 
-            "alignment": {"@id": "obi:alignment", "@type": "@id"},
-            "allowedOrigins": {"@id": "obi:allowedOrigins"},
-            "audience": {"@id": "obi:audience"},
-            "badge": {"@id": "obi:badge", "@type": "@id"},
-            "criteria": {"@id": "obi:criteria", "@type": "@id"},
-            "endorsementComment": {"@id": "obi:endorsementComment"},
-            "evidence": {"@id": "obi:evidence", "@type": "@id"},
-            "hashed": {"@id": "obi:hashed", "@type": "xsd:boolean"},
-            "identity": {"@id": "obi:identityHash"},
-            "issuedOn": {"@id": "obi:issueDate", "@type": "xsd:dateTime"},
-            "issuer": {"@id": "obi:issuer", "@type": "@id"},
-            "narrative": {"@id": "obi:narrative"},
-            "recipient": {"@id": "obi:recipient", "@type": "@id"},
-            "revocationList": {"@id": "obi:revocationList", "@type": "@id"},
-            "revocationReason": {"@id": "obi:revocationReason"},
-            "revoked": {"@id": "obi:revoked", "@type": "xsd:boolean"},
-            "revokedAssertions": {"@id": "obi:revoked"},
-            "salt": {"@id": "obi:salt"},
-            "targetCode": {"@id": "obi:targetCode"},
-            "uid": {"@id": "obi:uid"},
+            "alignment": { "@id": "obi:alignment", "@type": "@id" },
+            "allowedOrigins": { "@id": "obi:allowedOrigins" },
+            "audience": { "@id": "obi:audience" },
+            "badge": { "@id": "obi:badge", "@type": "@id" },
+            "criteria": { "@id": "obi:criteria", "@type": "@id" },
+            "endorsementComment": { "@id": "obi:endorsementComment" },
+            "evidence": { "@id": "obi:evidence", "@type": "@id" },
+            "hashed": { "@id": "obi:hashed", "@type": "xsd:boolean" },
+            "identity": { "@id": "obi:identityHash" },
+            "issuedOn": { "@id": "obi:issueDate", "@type": "xsd:dateTime" },
+            "issuer": { "@id": "obi:issuer", "@type": "@id" },
+            "narrative": { "@id": "obi:narrative" },
+            "recipient": { "@id": "obi:recipient", "@type": "@id" },
+            "revocationList": { "@id": "obi:revocationList", "@type": "@id" },
+            "revocationReason": { "@id": "obi:revocationReason" },
+            "revoked": { "@id": "obi:revoked", "@type": "xsd:boolean" },
+            "revokedAssertions": { "@id": "obi:revoked" },
+            "salt": { "@id": "obi:salt" },
+            "targetCode": { "@id": "obi:targetCode" },
+            "uid": { "@id": "obi:uid" },
             "validatesType": "obi:validatesType",
             "validationFrame": "obi:validationFrame",
             "validationSchema": "obi:validationSchema",
-            "verification": {"@id": "obi:verify", "@type": "@id"},
-            "verificationProperty": {"@id": "obi:verificationProperty"},
+            "verification": { "@id": "obi:verify", "@type": "@id" },
+            "verificationProperty": { "@id": "obi:verificationProperty" },
             "verify": "verification"
         }
     }
@@ -147,10 +147,15 @@ module.exports = {
             throw new Error("Error getting granular verification metadata: " + error.toString());
         }
     },
-    anchorMetadata: async function(metadata, options) {
+    anchorMetadata: async function (metadata, options, anchorFunction) {
         try {
-            var anchoredMetadata = await anchor.anchor(metadata, options);
-            return anchoredMetadata;
+            if (anchorFunction) {
+                var anchoredMetadata = await anchor.anchor(metadata, options, anchorFunction);
+                return anchoredMetadata;
+            } else {
+                var anchoredMetadata = await anchor.defaultAnchor(metadata, options);
+                return anchoredMetadata;
+            }
         } catch (error) {
             throw new Error("Error anchoring metadata to ledger: " + error.toString());
         }
