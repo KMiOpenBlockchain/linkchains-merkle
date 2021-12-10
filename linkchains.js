@@ -160,10 +160,10 @@ module.exports = {
             throw new Error("Error anchoring metadata to ledger: " + error.toString());
         }
     },
-    verify: async function (quads, metadata, options) {
+    verify: async function (quads, metadata, options, retrieveAnchor) {
         try {
             var canonical = await utils.canonicalise(quads, customLoader);
-            var verification = await verify.verify(canonical, metadata, options);
+            var verification = await verify.verify(canonical, metadata, options, retrieveAnchor);
             return verification;
         } catch (error) {
             throw new Error("Error getting performing verification: " + error.toString());

@@ -13,7 +13,7 @@ const merkle = require('./merkle.js');
 const defaults = require('./defaults.js').defaults;
 const utils = require('./utils.js');
 
-async function verify(quads, metadata, options) {
+async function verify(quads, metadata, options, retrieveAnchor=retrieveAnchorInternal ) {
     var results = {
         verified: "",
         unverified: ""
@@ -190,7 +190,7 @@ async function merqlify(quads, metadata) {
     return merkleTrees;
 }
 
-async function retrieveAnchor(anchor, options) {
+async function retrieveAnchorInternal(anchor, options) {
     const url = options.blockchain.web3.protocol + '://' + options.blockchain.web3.domain
         + (options.blockchain.web3.port === '' ? '' : ':' + options.blockchain.web3.port)
         + (options.blockchain.web3.path === '' ? '' : options.blockchain.web3.path);
