@@ -13,7 +13,7 @@ const merkle = require('./merkle.js');
 const defaults = require('./defaults.js').defaults;
 const utils = require('./utils.js');
 
-async function verify(quads, metadata, options) {
+async function verify(quads, metadata, options, retrieveAnchor=retrieveAnchorInternal ) {
     var results = {
         verified: "",
         unverified: ""
@@ -60,7 +60,7 @@ async function verify(quads, metadata, options) {
         //await utils.isomorphicToSubgraph(metadata, quads);
         var metadataQuads = await utils.metadataToRDF(metadata);
         for (var currentQuad of metadataQuads) {
-            var quadResults = await verifyQuad(currentQuad, metadata, options);
+            var quadResults = await verifyQuad(currentQuad, metadata, options, retrieveAnchor);
             //verified.push(utils.makeQuadString(quadResults.verified).quadString);
             //unverified.push(utils.makeQuadString(quadResults.unverified).quadString);
             for (var verifiedQuad of quadResults.verified) {
@@ -93,7 +93,7 @@ async function verify(quads, metadata, options) {
     return results;
 }
 
-async function verifyQuad(quad, metadata, options) {
+async function verifyQuad(quad, metadata, options, retrieveAnchor) {
     var results = {
         verified: [],
         unverified: []
@@ -190,7 +190,7 @@ async function merqlify(quads, metadata) {
     return merkleTrees;
 }
 
-async function retrieveAnchor(anchor, options) {
+async function retrieveAnchorInternal(anchor, options) {
     const url = options.blockchain.web3.protocol + '://' + options.blockchain.web3.domain
         + (options.blockchain.web3.port === '' ? '' : ':' + options.blockchain.web3.port)
         + (options.blockchain.web3.path === '' ? '' : options.blockchain.web3.path);
