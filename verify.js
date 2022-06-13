@@ -99,8 +99,8 @@ async function verifyQuad(quad, metadata, options, retrieveAnchor) {
         unverified: []
     };
 
-    var current = utils.makeQuadString(quad);
-    current = utils.makeBareTermStrings(current);
+    var currentFull = utils.makeQuadString(quad);
+    current = utils.makeBareTermStrings(currentFull);
     var base = metadata['@defaultgraph'];
 
     // graph might not exist, but if it does and it isn't in the metadata, fail verification.
@@ -138,14 +138,14 @@ async function verifyQuad(quad, metadata, options, retrieveAnchor) {
                     return results;
                 } else {
                     // recreate the index key and check it points to merkleroot in index - else fail verification
-                    var indexMatches = await matchesIndexToTree(current, verify.merkleroot, verifyMetadata.index, verifyMetadata.indexhash, verifyMetadata.anchor.settings);
+                    var indexMatches = await matchesIndexToTree(currentFull, verify.merkleroot, verifyMetadata.index, verifyMetadata.indexhash, verifyMetadata.anchor.settings);
                     if (!indexMatches) {
                         results.unverified.push(quad);
                         return results;
                     }
 
                     // recreate the quad hash. If Merkle proof validation fails, fail verification
-                    var quadHash = await hashingFunctions.getHash(current.quadString, {
+                    var quadHash = await hashingFunctions.getHash(currentFull.quadString, {
                         type: verifyMetadata.anchor.settings.quadHash
                     });
                     var merkleTools = new MerkleTools({ hashType: verifyMetadata.anchor.settings.treeHash });
