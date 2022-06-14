@@ -1,10 +1,12 @@
 const N3 = require('n3');
 const parser = new N3.Parser({ blankNodePrefix: '' });
+const writer = new N3.Writer({ format: 'N-Quads' });
 const jsonld = require('jsonld');
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
 const isomorphic = require('rdf-isomorphic');
 const stringify = require('json-stable-stringify');
+const { defaults } = require('./defaults.js');
 
 function makeQuadTerm(term) {
     if (term.termType === "BlankNode") {
@@ -83,7 +85,8 @@ async function canonicalise(data) {
             format: 'application/n-quads'
         });
     } catch (error) {
-        quads = data;
+        const parsed = parse(data);
+        quads = writer.quadsToString(parsed);
     }
 
     var canonical = await jsonld.canonize(quads, {
@@ -92,6 +95,30 @@ async function canonicalise(data) {
         format: 'application/n-quads'
     });
     return canonical;
+}
+
+async function normaliseMetadata(metadata) {
+    var quads = metadata;
+    try {
+        var json;
+        if (!quads['@context']) {
+            json = JSON.parse(quads);
+            if (!json['@context']) {
+                json['@context'] = defaults.DEFAULT_JSONLD_CONTEXT;
+            }
+        } else {
+            json = quads;
+        }
+        quads = await jsonld.compact(json, json['@context']);
+    } catch (error) {
+        const parsed = parse(data);
+        const nquads = writer.quadsToString(parsed);
+        const json = await jsonld.fromRDF(nquads);
+        json['@context'] = defaults.DEFAULT_JSONLD_CONTEXT;
+        quads = await jsonld.compact(json, json['@context']);
+    }
+
+    return quads;
 }
 
 function parse(quads) {
@@ -198,6 +225,7 @@ exports.makeQuadString = makeQuadString;
 exports.makeQuadTerm = makeQuadTerm;
 exports.makeQuadValue = makeQuadValue;
 exports.canonicalise = canonicalise;
+exports.normaliseMetadata = normaliseMetadata;
 exports.parse = parse;
 exports.parseCanonical = parseCanonical;
 exports.parseToTerms = parseToTerms;

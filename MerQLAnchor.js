@@ -1,4 +1,5 @@
 const Web3 = require('web3');
+const { defaults }  = require('./defaults.js');
 
 // adapted from https://ethereum.stackexchange.com/a/71089
 async function deployInternal(abi, bytecode, contractArgs, options) {
@@ -57,7 +58,7 @@ async function anchor(metadata, options, anchorFunction) {
 	var deployed = await anchorFunction(options, contractArguments);
 
 	metadata.merkletrees.anchor = {
-		type: "ETHMerQL", //hardcoded
+		type: options.anchorType ? options.anchorType : defaults.DEFAULT_ANCHOR_TYPE,
 		address: deployed.address,
 		account: deployed.userAddress,
 		indexhash: indexHash,
