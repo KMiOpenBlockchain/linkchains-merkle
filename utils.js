@@ -111,7 +111,7 @@ async function normaliseMetadata(metadata) {
         }
         quads = await jsonld.compact(json, json['@context']);
     } catch (error) {
-        const parsed = parse(data);
+        const parsed = parse(metadata);
         const nquads = writer.quadsToString(parsed);
         const json = await jsonld.fromRDF(nquads);
         json['@context'] = defaults.DEFAULT_JSONLD_CONTEXT;
