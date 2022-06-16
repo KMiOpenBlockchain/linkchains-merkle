@@ -7,6 +7,8 @@ const myEngine = newEngine();
 const isomorphic = require('rdf-isomorphic');
 const stringify = require('json-stable-stringify');
 const { defaults } = require('./defaults.js');
+require('./frames/metadata-frame.js');
+require('./frames/anchored-metadata-frame');
 
 function makeQuadTerm(term) {
     if (term.termType === "BlankNode") {
@@ -105,20 +107,37 @@ async function normaliseMetadata(metadata) {
             json = JSON.parse(quads);
             if (!json['@context']) {
                 json['@context'] = defaults.DEFAULT_JSONLD_CONTEXT;
+                json['@context']['@version'] = 1.1;
             }
         } else {
             json = quads;
         }
-        quads = await jsonld.compact(json, json['@context']);
+        quads = json;
     } catch (error) {
         const parsed = parse(metadata);
         const nquads = writer.quadsToString(parsed);
-        const json = await jsonld.fromRDF(nquads);
+        var json = await jsonld.fromRDF(nquads);
         json['@context'] = defaults.DEFAULT_JSONLD_CONTEXT;
-        quads = await jsonld.compact(json, json['@context']);
+        json['@context']['@version'] = 1.1;
+        quads = json;
     }
 
-    return quads;
+
+
+    var frame = metadataFrame;
+    if (quads.anchor) {
+        frame - anchoredMetadataFrame;
+    }
+    const framed = await jsonld.frame(quads, frame);
+    var compacted = await jsonld.compact(framed, framed['@context']);
+    if (compacted['@context'] && compacted['@context']) {
+        delete compacted['@context']['@version'];
+    }
+
+    if (!compacted.merkletrees) {
+        return metadata;
+    }
+    return compacted;
 }
 
 function parse(quads) {
@@ -232,3 +251,4 @@ exports.parseToTerms = parseToTerms;
 exports.metadataToRDF = metadataToRDF;
 exports.makeBareTermStrings = makeBareTermStrings;
 exports.matchQuadsIgnoreBlanks = matchQuadsIgnoreBlanks;
+exports.test = test;
