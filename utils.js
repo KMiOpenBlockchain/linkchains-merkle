@@ -9,6 +9,7 @@ const stringify = require('json-stable-stringify');
 const { defaults } = require('./defaults.js');
 require('./frames/metadata-frame.js');
 require('./frames/anchored-metadata-frame');
+require('./frames/quadmetadata-frame');
 
 function makeQuadTerm(term) {
     if (term.termType === "BlankNode") {
@@ -123,20 +124,19 @@ async function normaliseMetadata(metadata) {
     }
 
 
-
+    quads = await jsonld.compact(quads, quads['@context']);
     var frame = metadataFrame;
     if (quads.anchor) {
         frame - anchoredMetadataFrame;
+    } else if (quads.graphs) {
+        frame = quadMetadataFrame;
     }
     const framed = await jsonld.frame(quads, frame);
     var compacted = await jsonld.compact(framed, framed['@context']);
-    if (compacted['@context'] && compacted['@context']) {
+    if (compacted['@context'] && compacted['@context']['@version']) {
         delete compacted['@context']['@version'];
     }
 
-    if (!compacted.merkletrees) {
-        return metadata;
-    }
     return compacted;
 }
 
@@ -229,6 +229,21 @@ function matchQuadsIgnoreBlanks(quadsA, quadsB) {
     };
 }
 
+async function restructureGranularMetadata( metadata) {
+    if (!metadata.graphs || !Array.isArray(metadata.graphs) ) {
+        return metadata;
+    }
+    var restructured = {
+        '@context': defaults.DEFAULT_JSONLD_CONTEXT
+    }
+    for (const graph of metadata.graphs) {
+        const name = graph.graphname === "defaultgraph" ? "@defaultgraph" : graph.graphname;
+        restructured[name] = graph.proofs['@value'];
+    }
+    restructured.metadata = metadata.metadata;
+    return restructured;
+}
+
 function getRDFTerm(term) {
     var id = null;
     try {
@@ -245,10 +260,10 @@ exports.makeQuadTerm = makeQuadTerm;
 exports.makeQuadValue = makeQuadValue;
 exports.canonicalise = canonicalise;
 exports.normaliseMetadata = normaliseMetadata;
+exports.restructureGranularMetadata = restructureGranularMetadata;
 exports.parse = parse;
 exports.parseCanonical = parseCanonical;
 exports.parseToTerms = parseToTerms;
 exports.metadataToRDF = metadataToRDF;
 exports.makeBareTermStrings = makeBareTermStrings;
 exports.matchQuadsIgnoreBlanks = matchQuadsIgnoreBlanks;
-exports.test = test;
