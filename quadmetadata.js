@@ -24,7 +24,7 @@ function transformMetadata(youtadata) {
     metadata.indexhash = youtadata.merkletrees.indexhash;
     metadata.index = youtadata.merkletrees.index;
     metadata.anchor = {
-        type: defaults.DEFAULT_ANCHOR_TYPE,
+        type: youtadata.merkletrees.anchor.type,
         address: youtadata.merkletrees.anchor.address,
         account: youtadata.merkletrees.anchor.account,
         indexhash: youtadata.merkletrees.anchor.indexhash,

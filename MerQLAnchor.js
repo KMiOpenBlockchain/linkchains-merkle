@@ -17,7 +17,7 @@ async function deployInternal(abi, bytecode, contractArgs, options) {
 	//const args = transaction.encodeABI().slice(options.data.length); 
 	var result = {
 		address: (await new web3.eth.Contract(abi, handle.contractAddress))._address,
-		userAddress: options.user.address,
+		account: options.user.address,
 		transactionHash: handle.transactionHash
 	};
 	web3.currentProvider.disconnect();
@@ -57,14 +57,16 @@ async function anchor(metadata, options, anchorFunction) {
 
 	var deployed = await anchorFunction(options, contractArguments);
 
-	metadata.merkletrees.anchor = {
+	var anchor = {
 		type: options.anchorType ? options.anchorType : defaults.DEFAULT_ANCHOR_TYPE,
 		address: deployed.address,
-		account: deployed.userAddress,
+		account: deployed.account,
 		indexhash: indexHash,
 		settings: metadata.merkletrees.treesettings,
 		transactionhash: deployed.transactionHash // Not actually sure this is needed - I guess it can't hurt?
 	};
+	
+	metadata.merkletrees.anchor = Object.assign(anchor, deployed);
 
 	return metadata;
 }
