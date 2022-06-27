@@ -23,14 +23,14 @@ function transformMetadata(youtadata) {
     metadata["@id"] = ":" + youtadata.merkletrees.indexhash;
     metadata.indexhash = youtadata.merkletrees.indexhash;
     metadata.index = youtadata.merkletrees.index;
-    metadata.anchor = {
+    metadata.anchor = youtadata.merkletrees.anchor;/*  {
         type: youtadata.merkletrees.anchor.type,
         address: youtadata.merkletrees.anchor.address,
         account: youtadata.merkletrees.anchor.account,
         indexhash: youtadata.merkletrees.anchor.indexhash,
         settings: youtadata.merkletrees.anchor.settings,
         transactionhash: youtadata.merkletrees.anchor.transactionhash
-    };
+    } */;
     metadata.blanks = youtadata.merkletrees.blanks;
     return metadata;
 }
