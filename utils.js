@@ -149,6 +149,30 @@ async function normaliseMetadata(metadata) {
         }
         delete compacted['@graph'];
     }
+    if (compacted.metadata && compacted.metadata.anchor && compacted.metadata.anchor.settings) {
+        if (compacted.metadata.anchor.settings.divisor && compacted.metadata.anchor.settings.divisor['@value']) {
+            compacted.metadata.anchor.settings.divisor = compacted.metadata.anchor.settings.divisor['@value'];
+        }
+        if (compacted.metadata.anchor.settings.lsd && compacted.metadata.anchor.settings.lsd['@value']) {
+            compacted.metadata.anchor.settings.lsd = compacted.metadata.anchor.settings.lsd['@value'];
+        }
+    }
+    if (compacted.merkletrees && compacted.merkletrees.anchor && compacted.merkletrees.anchor.settings) {
+        if (compacted.merkletrees.anchor.settings.divisor && compacted.merkletrees.anchor.settings.divisor['@value']) {
+            compacted.merkletrees.anchor.settings.divisor = compacted.merkletrees.anchor.settings.divisor['@value'];
+        }
+        if (compacted.merkletrees.anchor.settings.lsd && compacted.merkletrees.anchor.settings.lsd['@value']) {
+            compacted.merkletrees.anchor.settings.lsd = compacted.merkletrees.anchor.settings.lsd['@value'];
+        }
+    }
+    if (compacted.merkletrees && compacted.merkletrees.treesettings) {
+        if (compacted.merkletrees.treesettings.divisor && compacted.merkletrees.treesettings.divisor['@value']) {
+            compacted.merkletrees.treesettings.divisor = compacted.merkletrees.treesettings.divisor['@value'];
+        }
+        if (compacted.merkletrees.treesettings.lsd && compacted.merkletrees.treesettings.lsd['@value']) {
+            compacted.merkletrees.treesettings.lsd = compacted.merkletrees.treesettings.lsd['@value'];
+        }
+    }
 
     return compacted;
 }
