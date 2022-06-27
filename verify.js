@@ -57,10 +57,10 @@ async function verify(quads, metadata, options, retrieveAnchor = retrieveAnchorI
         var unverified = [];
 
         //await utils.isomorphicToSubgraph(metadata, quads);
-        var metadataQuads = await utils.restructureGranularMetadata(metadata);
-        metadataQuads = await utils.metadataToRDF(metadata);
+        var restructured = await utils.restructureGranularMetadata(metadata);
+        metadataQuads = await utils.metadataToRDF(restructured);
         for (var currentQuad of metadataQuads) {
-            var quadResults = await verifyQuad(currentQuad, metadata, options, retrieveAnchor);
+            var quadResults = await verifyQuad(currentQuad, restructured, options, retrieveAnchor);
             //verified.push(utils.makeQuadString(quadResults.verified).quadString);
             //unverified.push(utils.makeQuadString(quadResults.unverified).quadString);
             for (var verifiedQuad of quadResults.verified) {
