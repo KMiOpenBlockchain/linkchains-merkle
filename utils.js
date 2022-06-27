@@ -124,17 +124,30 @@ async function normaliseMetadata(metadata) {
     }
 
 
-    quads = await jsonld.compact(quads, quads['@context']);
+    quads = await jsonld.compact(quads, quads['@context'], options = { omitGraph: true });
     var frame = metadataFrame;
-    if (quads.anchor) {
+    if (quads.anchor || (quads['@graph'] && quads['@graph'][0] && quads['@graph'][0].anchor)) {
         frame - anchoredMetadataFrame;
-    } else if (quads.graphs) {
+    } else if (quads.graphs || (quads['@graph'] && quads['@graph'][0] && quads['@graph'][0].graphs)) {
         frame = quadMetadataFrame;
     }
-    const framed = await jsonld.frame(quads, frame);
-    var compacted = await jsonld.compact(framed, framed['@context']);
+    const framed = await jsonld.frame(quads, frame, options = { omitGraph: true});
+
+    var compacted = await jsonld.compact(framed, framed['@context'], options = { omitGraph: true});
     if (compacted['@context'] && compacted['@context']['@version']) {
         delete compacted['@context']['@version'];
+    }
+    if (compacted['@graph'] && compacted['@graph'][0]) {
+        if (compacted['@graph'][0].graphs) {
+            compacted.graphs = compacted['@graph'][0].graphs;
+        }
+        if (compacted['@graph'][0].metadata) {
+            compacted.metadata = compacted['@graph'][0].metadata;
+        }
+        if (compacted['@graph'][0].merkletrees) {
+            compacted.merkletrees = compacted['@graph'][0].merkletrees;
+        }
+        delete compacted['@graph'];
     }
 
     return compacted;
@@ -230,13 +243,14 @@ function matchQuadsIgnoreBlanks(quadsA, quadsB) {
 }
 
 async function restructureGranularMetadata( metadata) {
-    if (!metadata.graphs || !Array.isArray(metadata.graphs) ) {
+    if (!metadata.graphs) {
         return metadata;
     }
     var restructured = {
         '@context': defaults.DEFAULT_JSONLD_CONTEXT
     }
-    for (const graph of metadata.graphs) {
+    var graphs = Array.isArray(metadata.graphs) ? metadata.graphs : [metadata.graphs];
+    for (const graph of graphs) {
         const name = graph.graphname === "defaultgraph" ? "@defaultgraph" : graph.graphname;
         restructured[name] = graph.proofs['@value'];
     }

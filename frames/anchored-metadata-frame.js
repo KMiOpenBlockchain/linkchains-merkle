@@ -4,6 +4,7 @@ anchoredMetadataFrame = {
         "@version": 1.1
     },
     "@processingMode": "json-ld-1.1",
+    "@omitGraph": true,
     "merkletrees": {
         "index": {},
         "indexhash": {},
