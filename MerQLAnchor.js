@@ -1,4 +1,5 @@
 const Web3 = require('web3');
+const { defaults }  = require('./defaults.js');
 
 // adapted from https://ethereum.stackexchange.com/a/71089
 async function deployInternal(abi, bytecode, contractArgs, options) {
@@ -16,7 +17,7 @@ async function deployInternal(abi, bytecode, contractArgs, options) {
 	//const args = transaction.encodeABI().slice(options.data.length); 
 	var result = {
 		address: (await new web3.eth.Contract(abi, handle.contractAddress))._address,
-		userAddress: options.user.address,
+		account: options.user.address,
 		transactionHash: handle.transactionHash
 	};
 	web3.currentProvider.disconnect();
@@ -36,46 +37,42 @@ async function send(transaction, web3, sendOptions) {
 }
 
 async function anchor(metadata, options, anchorFunction) {
-	var indexHash = metadata.merkletrees.indexhash;
-	var newIndexType = metadata.merkletrees.treesettings.indexType; //following lines take their values from merkleOutput too
-	var lsds = metadata.merkletrees.treesettings.lsd;
-	var div = metadata.merkletrees.treesettings.divisor;
-	var quadHashFunctionIn = metadata.merkletrees.treesettings.quadHash;
-	var treeHashFunctionIn = metadata.merkletrees.treesettings.treeHash;
-	var indexHashFunctionIn = metadata.merkletrees.treesettings.indexHash;
-
-	var contractArguments = [
-		indexHash,
-		newIndexType,
-		lsds,
-		div,
-		quadHashFunctionIn,
-		treeHashFunctionIn,
-		indexHashFunctionIn,
-	];
-
-	var deployed = await anchorFunction(options, contractArguments);
-
-	metadata.merkletrees.anchor = {
-		type: "ETHMerQL", //hardcoded
-		address: deployed.address,
-		account: deployed.userAddress,
-		indexhash: indexHash,
-		settings: metadata.merkletrees.treesettings,
-		transactionhash: deployed.transactionHash // Not actually sure this is needed - I guess it can't hurt?
+	var anchor = {
+		type: options.anchorType ? options.anchorType : defaults.DEFAULT_ANCHOR_TYPE,
+		indexhash: metadata.merkletrees.indexhash,
+		settings: metadata.merkletrees.treesettings
 	};
 
+	metadata.merkletrees.anchor = await anchorFunction(anchor, options);
 	return metadata;
 }
 
 async function anchorInternal(metadata, options) {
-	const anchorResults = await anchor(metadata, options, (options, contractArguments) => {
+	const anchorResults = await anchor(metadata, options, (anchor, options) => {
+		var indexHash = anchor.indexhash;
+		var newIndexType = anchor.settings.indexType; //following lines take their values from merkleOutput too
+		var lsds = anchor.settings.lsd;
+		var div = anchor.settings.divisor;
+		var quadHashFunctionIn = anchor.settings.quadHash;
+		var treeHashFunctionIn = anchor.settings.treeHash;
+		var indexHashFunctionIn = anchor.settings.indexHash;
+	
+		var contractArguments = [
+			indexHash,
+			newIndexType,
+			lsds,
+			div,
+			quadHashFunctionIn,
+			treeHashFunctionIn,
+			indexHashFunctionIn,
+		];
 		const deployOpts = {
 			web3Socket: options.web3Socket,
 			user: options.user
 		};
 		const deployResults = deployInternal( options.abi, options.bytecode, contractArguments, deployOpts);
-		return deployResults;
+		anchor = Object.assign(anchor, deployResults);
+		return anchor;
 	});
 	return anchorResults;
 }

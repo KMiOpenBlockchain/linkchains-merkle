@@ -13,7 +13,7 @@ const merkle = require('./merkle.js');
 const defaults = require('./defaults.js').defaults;
 const utils = require('./utils.js');
 
-async function verify(quads, metadata, options, retrieveAnchor=retrieveAnchorInternal ) {
+async function verify(quads, metadata, options, retrieveAnchor = retrieveAnchorInternal) {
     var results = {
         verified: "",
         unverified: ""
@@ -28,29 +28,28 @@ async function verify(quads, metadata, options, retrieveAnchor=retrieveAnchorInt
         if (!metadata.indexhash && metadata.anchor.indexhash) {
             metadata.indexhash = metadata.anchor.indexhash;
         }
-        if (metadata.anchor.type === defaults.DEFAULT_ANCHOR_TYPE) {
-            // do the whole set at once
-            var anchorDetails = await retrieveAnchor(metadata.anchor, options);
-            if (anchorDetails.theDivisor === '') {
-                anchorDetails.theDivisor = 1;
-            }
-            if (metadata.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
-                !matchAnchorDetails(metadata.indexhash, metadata.settings, anchorDetails) ||
-                parseInt(anchorDetails.transactionAccount, 16) !== parseInt(metadata.anchor.account, 16) ||
-                parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(metadata.anchor.address, 16)) {
-                results.unverified = quads;
-                return results;
-            }
 
-            var processed = await merqlify(quads, metadata);
-            if (processed.merkletrees.indexhash !== metadata.indexhash) {
-                results.unverified = quads;
-                return results;
-            } else {
-                results.verified = quads;
-                return results;
-            }
+        // do the whole set at once
+        var anchorDetails = await retrieveAnchor(metadata.anchor, options);
+        if (anchorDetails.theDivisor === '') {
+            anchorDetails.theDivisor = 1;
         }
+        if (!matchAnchorDetails(metadata.indexhash, metadata.settings, anchorDetails) ||
+            parseInt(anchorDetails.transactionAccount, 16) !== parseInt(metadata.anchor.account, 16) ||
+            parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(metadata.anchor.address, 16)) {
+            results.unverified = quads;
+            return results;
+        }
+
+        var processed = await merqlify(quads, metadata);
+        if (processed.merkletrees.indexhash !== metadata.indexhash) {
+            results.unverified = quads;
+            return results;
+        } else {
+            results.verified = quads;
+            return results;
+        }
+
     } else {
         // per quad verification 
         var quadObjects = await utils.parseCanonical(quads);
@@ -58,9 +57,10 @@ async function verify(quads, metadata, options, retrieveAnchor=retrieveAnchorInt
         var unverified = [];
 
         //await utils.isomorphicToSubgraph(metadata, quads);
-        var metadataQuads = await utils.metadataToRDF(metadata);
+        var restructured = await utils.restructureGranularMetadata(metadata);
+        metadataQuads = await utils.metadataToRDF(restructured);
         for (var currentQuad of metadataQuads) {
-            var quadResults = await verifyQuad(currentQuad, metadata, options, retrieveAnchor);
+            var quadResults = await verifyQuad(currentQuad, restructured, options, retrieveAnchor);
             //verified.push(utils.makeQuadString(quadResults.verified).quadString);
             //unverified.push(utils.makeQuadString(quadResults.unverified).quadString);
             for (var verifiedQuad of quadResults.verified) {
@@ -126,12 +126,11 @@ async function verifyQuad(quad, metadata, options, retrieveAnchor) {
                 }
 
                 // fetch and check basic matching from anchor on blockchain - if no matches, fail verification
-                              var anchorDetails = await retrieveAnchor(verifyMetadata.anchor, options);
-                              if (anchorDetails.theDivisor === '') {
-                                anchorDetails.theDivisor = 1;
-                            }
-                if (verifyMetadata.anchor.type !== defaults.DEFAULT_ANCHOR_TYPE ||
-                    !matchAnchorDetails(verifyMetadata.indexhash, verifyMetadata.anchor.settings, anchorDetails) ||
+                var anchorDetails = await retrieveAnchor(verifyMetadata.anchor, options);
+                if (anchorDetails.theDivisor === '') {
+                    anchorDetails.theDivisor = 1;
+                }
+                if (!matchAnchorDetails(verifyMetadata.indexhash, verifyMetadata.anchor.settings, anchorDetails) ||
                     parseInt(anchorDetails.transactionAccount, 16) !== parseInt(verifyMetadata.anchor.account, 16) ||
                     parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(verifyMetadata.anchor.address, 16)) {
                     results.unverified.push(quad);

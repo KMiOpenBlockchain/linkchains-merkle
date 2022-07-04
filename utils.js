@@ -1,10 +1,15 @@
 const N3 = require('n3');
 const parser = new N3.Parser({ blankNodePrefix: '' });
+const writer = new N3.Writer({ format: 'N-Quads' });
 const jsonld = require('jsonld');
 const newEngine = require("@comunica/actor-init-sparql").newEngine;
 const myEngine = newEngine();
 const isomorphic = require('rdf-isomorphic');
 const stringify = require('json-stable-stringify');
+const { defaults } = require('./defaults.js');
+require('./frames/metadata-frame.js');
+require('./frames/anchored-metadata-frame');
+require('./frames/quadmetadata-frame');
 
 function makeQuadTerm(term) {
     if (term.termType === "BlankNode") {
@@ -83,7 +88,8 @@ async function canonicalise(data) {
             format: 'application/n-quads'
         });
     } catch (error) {
-        quads = data;
+        const parsed = parse(data);
+        quads = writer.quadsToString(parsed);
     }
 
     var canonical = await jsonld.canonize(quads, {
@@ -92,6 +98,83 @@ async function canonicalise(data) {
         format: 'application/n-quads'
     });
     return canonical;
+}
+
+async function normaliseMetadata(metadata) {
+    var quads = metadata;
+    try {
+        var json;
+        if (!quads['@context']) {
+            json = JSON.parse(quads);
+            if (!json['@context']) {
+                json['@context'] = defaults.DEFAULT_JSONLD_CONTEXT;
+                json['@context']['@version'] = 1.1;
+            }
+        } else {
+            json = quads;
+        }
+        quads = json;
+    } catch (error) {
+        const parsed = parse(metadata);
+        const nquads = writer.quadsToString(parsed);
+        var json = await jsonld.fromRDF(nquads);
+        json['@context'] = defaults.DEFAULT_JSONLD_CONTEXT;
+        json['@context']['@version'] = 1.1;
+        quads = json;
+    }
+
+
+    quads = await jsonld.compact(quads, quads['@context'], options = { omitGraph: true });
+    var frame = metadataFrame;
+    if (quads.anchor || (quads['@graph'] && quads['@graph'][0] && quads['@graph'][0].anchor)) {
+        frame - anchoredMetadataFrame;
+    } else if (quads.graphs || (quads['@graph'] && quads['@graph'][0] && quads['@graph'][0].graphs)) {
+        frame = quadMetadataFrame;
+    }
+    const framed = await jsonld.frame(quads, frame, options = { omitGraph: true});
+
+    var compacted = await jsonld.compact(framed, framed['@context'], options = { omitGraph: true});
+    if (compacted['@context'] && compacted['@context']['@version']) {
+        delete compacted['@context']['@version'];
+    }
+    if (compacted['@graph'] && compacted['@graph'][0]) {
+        if (compacted['@graph'][0].graphs) {
+            compacted.graphs = compacted['@graph'][0].graphs;
+        }
+        if (compacted['@graph'][0].metadata) {
+            compacted.metadata = compacted['@graph'][0].metadata;
+        }
+        if (compacted['@graph'][0].merkletrees) {
+            compacted.merkletrees = compacted['@graph'][0].merkletrees;
+        }
+        delete compacted['@graph'];
+    }
+    if (compacted.metadata && compacted.metadata.anchor && compacted.metadata.anchor.settings) {
+        if (compacted.metadata.anchor.settings.divisor && compacted.metadata.anchor.settings.divisor['@value']) {
+            compacted.metadata.anchor.settings.divisor = compacted.metadata.anchor.settings.divisor['@value'];
+        }
+        if (compacted.metadata.anchor.settings.lsd && compacted.metadata.anchor.settings.lsd['@value']) {
+            compacted.metadata.anchor.settings.lsd = compacted.metadata.anchor.settings.lsd['@value'];
+        }
+    }
+    if (compacted.merkletrees && compacted.merkletrees.anchor && compacted.merkletrees.anchor.settings) {
+        if (compacted.merkletrees.anchor.settings.divisor && compacted.merkletrees.anchor.settings.divisor['@value']) {
+            compacted.merkletrees.anchor.settings.divisor = compacted.merkletrees.anchor.settings.divisor['@value'];
+        }
+        if (compacted.merkletrees.anchor.settings.lsd && compacted.merkletrees.anchor.settings.lsd['@value']) {
+            compacted.merkletrees.anchor.settings.lsd = compacted.merkletrees.anchor.settings.lsd['@value'];
+        }
+    }
+    if (compacted.merkletrees && compacted.merkletrees.treesettings) {
+        if (compacted.merkletrees.treesettings.divisor && compacted.merkletrees.treesettings.divisor['@value']) {
+            compacted.merkletrees.treesettings.divisor = compacted.merkletrees.treesettings.divisor['@value'];
+        }
+        if (compacted.merkletrees.treesettings.lsd && compacted.merkletrees.treesettings.lsd['@value']) {
+            compacted.merkletrees.treesettings.lsd = compacted.merkletrees.treesettings.lsd['@value'];
+        }
+    }
+
+    return compacted;
 }
 
 function parse(quads) {
@@ -183,6 +266,22 @@ function matchQuadsIgnoreBlanks(quadsA, quadsB) {
     };
 }
 
+async function restructureGranularMetadata( metadata) {
+    if (!metadata.graphs) {
+        return metadata;
+    }
+    var restructured = {
+        '@context': defaults.DEFAULT_JSONLD_CONTEXT
+    }
+    var graphs = Array.isArray(metadata.graphs) ? metadata.graphs : [metadata.graphs];
+    for (const graph of graphs) {
+        const name = graph.graphname === "defaultgraph" ? "@defaultgraph" : graph.graphname;
+        restructured[name] = graph.proofs['@value'];
+    }
+    restructured.metadata = metadata.metadata;
+    return restructured;
+}
+
 function getRDFTerm(term) {
     var id = null;
     try {
@@ -198,6 +297,8 @@ exports.makeQuadString = makeQuadString;
 exports.makeQuadTerm = makeQuadTerm;
 exports.makeQuadValue = makeQuadValue;
 exports.canonicalise = canonicalise;
+exports.normaliseMetadata = normaliseMetadata;
+exports.restructureGranularMetadata = restructureGranularMetadata;
 exports.parse = parse;
 exports.parseCanonical = parseCanonical;
 exports.parseToTerms = parseToTerms;

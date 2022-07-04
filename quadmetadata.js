@@ -23,14 +23,14 @@ function transformMetadata(youtadata) {
     metadata["@id"] = ":" + youtadata.merkletrees.indexhash;
     metadata.indexhash = youtadata.merkletrees.indexhash;
     metadata.index = youtadata.merkletrees.index;
-    metadata.anchor = {
-        type: defaults.DEFAULT_ANCHOR_TYPE,
+    metadata.anchor = youtadata.merkletrees.anchor;/*  {
+        type: youtadata.merkletrees.anchor.type,
         address: youtadata.merkletrees.anchor.address,
         account: youtadata.merkletrees.anchor.account,
         indexhash: youtadata.merkletrees.anchor.indexhash,
         settings: youtadata.merkletrees.anchor.settings,
         transactionhash: youtadata.merkletrees.anchor.transactionhash
-    };
+    } */;
     metadata.blanks = youtadata.merkletrees.blanks;
     return metadata;
 }
@@ -52,15 +52,38 @@ function removeAngleBrackets(url) {
     return url;
 }
 
+async function createGraphObject(graphname) {
+    return {
+        "graphname": graphname,
+        proofs: {
+            "@type": "@json",
+            "@value": {}
+        }
+    };
+}
+async function findGraph(json, graphname) {
+    if (!json.graphs) {
+        return undefined
+    }
+    const graphs = json.graphs;
+    for (const graph of graphs) {
+        if (graph.graphname === graphname) {
+            return graph;
+        }
+    }
+    return undefined
+}
+
 async function quadProofsToJSONLD(quadProofs, youtadata) {
 
     var metadata = transformMetadata(youtadata);
 
     var quadProofsLD = {
         "@context": defaults.DEFAULT_JSONLD_CONTEXT,
-        "@defaultgraph" : {}
+        "graphs" : []
     };
 
+    quadProofsLD.graphs.push(await createGraphObject("defaultgraph"));
     quadProofsLD.metadata = metadata;
 
     for (var i = 0; i < quadProofs.length; i++) {
@@ -68,14 +91,16 @@ async function quadProofsToJSONLD(quadProofs, youtadata) {
         var proof = quadProofs[i].proof;
         var merkleroot = quadProofs[i].merkleroot;
 
-        var graph = quadProofsLD["@defaultgraph"];
+        var graph = await findGraph(quadProofsLD, "defaultgraph");
         if (quad.graphString && quad.graphString !== "") {
-            if (!quadProofsLD[quad.graphString]) {
-                quadProofsLD[quad.graphString] = {};
+            if (!findGraph(quadProofsLD, quad.graphString)) {
+                graph = await createGraphObject(quad.graphString);
+            } else {
+                graph = findGraph(quadProofsLD, quad.graphString);
             }
-            graph = quadProofsLD[quad.graphString];
         }
 
+        graph = graph.proofs['@value'];
         if (!graph[quad.subjectString]) {
             graph[quad.subjectString] = {};
         }
