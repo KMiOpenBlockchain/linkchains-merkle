@@ -256,6 +256,9 @@ async function makeHashIndex(state, quadStringsObj, quadHashFunction) {
 }
 
 function containsMerkleRoot(indices, index, merkleRoot) {
+    if (!Array.isArray(indices)) {
+        indices = [indices];
+    }
     for (let indexItem of indices) {
         if (indexItem[index] === merkleRoot) {
             return true;
