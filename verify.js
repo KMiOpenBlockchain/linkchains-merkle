@@ -35,6 +35,7 @@ async function verify(quads, metadata, options, retrieveAnchor = retrieveAnchorI
             anchorDetails.theDivisor = 1;
         }
         if (!matchAnchorDetails(metadata.indexhash, metadata.settings, anchorDetails) ||
+            !matchNetworkDetails(metadata.anchor, anchorDetails) ||
             parseInt(anchorDetails.transactionAccount, 16) !== parseInt(metadata.anchor.account, 16) ||
             parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(metadata.anchor.address, 16)) {
             results.unverified = quads;
@@ -131,6 +132,7 @@ async function verifyQuad(quad, metadata, options, retrieveAnchor) {
                     anchorDetails.theDivisor = 1;
                 }
                 if (!matchAnchorDetails(verifyMetadata.indexhash, verifyMetadata.anchor.settings, anchorDetails) ||
+                    !matchNetworkDetails(verifyMetadata.anchor, anchorDetails) ||
                     parseInt(anchorDetails.transactionAccount, 16) !== parseInt(verifyMetadata.anchor.account, 16) ||
                     parseInt(anchorDetails.transactionContractAddress, 16) !== parseInt(verifyMetadata.anchor.address, 16)) {
                     results.unverified.push(quad);
@@ -268,13 +270,24 @@ function containsMerkleRoot(indices, index, merkleRoot) {
 }
 
 function matchAnchorDetails(targetHash, settings, anchorDetails) {
-    return (anchorDetails.thetargetHash === targetHash &&
-        anchorDetails.theIndexType === settings.indexType &&
-        parseInt(anchorDetails.leastSignificants) === parseInt(settings.lsd) &&
-        parseInt(anchorDetails.theDivisor, 16) === parseInt(settings.divisor, 16) &&
-        anchorDetails.theQuadHashFunction === settings.quadHash &&
-        anchorDetails.theTreeHashFunction === settings.treeHash &&
-        anchorDetails.theIndexHashFunction === settings.indexHash);
+    var matches = anchorDetails.thetargetHash === targetHash;
+    matches = matches && (anchorDetails.theIndexType === settings.indexType);
+    matches = matches && (parseInt(anchorDetails.leastSignificants) === parseInt(settings.lsd));
+    matches = matches && (parseInt(anchorDetails.theDivisor, 16) === parseInt(settings.divisor, 16));
+    matches = matches && (anchorDetails.theQuadHashFunction === settings.quadHash);
+    matches = matches && (anchorDetails.theTreeHashFunction === settings.treeHash);
+    matches = matches && (anchorDetails.theIndexHashFunction === settings.indexHash);
+    return matches;
+}
+
+function matchNetworkDetails(givenAnchor, chainAnchor) {
+    if (!givenAnchor.network && !chainAnchor.network) {
+        return true;
+    }
+    var matches = (givenAnchor.network.chainId === chainAnchor.network.chainId);
+    matches = matches && (givenAnchor.network.name === chainAnchor.network.name);
+    matches = matches && (givenAnchor.network.ensAddress === chainAnchor.network.ensAddress);
+    return matches;
 }
 
 exports.verify = verify;
