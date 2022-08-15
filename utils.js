@@ -2,8 +2,7 @@ const N3 = require('n3');
 const parser = new N3.Parser({ blankNodePrefix: '' });
 const writer = new N3.Writer({ format: 'N-Quads' });
 const jsonld = require('jsonld');
-const newEngine = require("@comunica/actor-init-sparql").newEngine;
-const myEngine = newEngine();
+
 const isomorphic = require('rdf-isomorphic');
 const stringify = require('json-stable-stringify');
 const { defaults } = require('./defaults.js');
