@@ -4,6 +4,7 @@
 package-lock.json
 config.js
 config-sample.js
+linkchains-bundle.js
 *.nt
 node_modules
 dataset
