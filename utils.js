@@ -130,9 +130,9 @@ async function normaliseMetadata(metadata) {
     } else if (quads.graphs || (quads['@graph'] && quads['@graph'][0] && quads['@graph'][0].graphs)) {
         frame = quadMetadataFrame;
     }
-    const framed = await jsonld.frame(quads, frame, options = { omitGraph: true});
+    const framed = await jsonld.frame(quads, frame, options = { omitGraph: true });
 
-    var compacted = await jsonld.compact(framed, framed['@context'], options = { omitGraph: true});
+    var compacted = await jsonld.compact(framed, framed['@context'], options = { omitGraph: true });
     if (compacted['@context'] && compacted['@context']['@version']) {
         delete compacted['@context']['@version'];
     }
@@ -148,12 +148,22 @@ async function normaliseMetadata(metadata) {
         }
         delete compacted['@graph'];
     }
-    if (compacted.metadata && compacted.metadata.anchor && compacted.metadata.anchor.settings) {
-        if (compacted.metadata.anchor.settings.divisor && compacted.metadata.anchor.settings.divisor['@value']) {
-            compacted.metadata.anchor.settings.divisor = compacted.metadata.anchor.settings.divisor['@value'];
+    if (compacted.metadata) {
+        if (compacted.metadata.anchor && compacted.metadata.anchor.settings) {
+            if (compacted.metadata.anchor.settings.divisor && compacted.metadata.anchor.settings.divisor['@value']) {
+                compacted.metadata.anchor.settings.divisor = compacted.metadata.anchor.settings.divisor['@value'];
+            }
+            if (compacted.metadata.anchor.settings.lsd && compacted.metadata.anchor.settings.lsd['@value']) {
+                compacted.metadata.anchor.settings.lsd = compacted.metadata.anchor.settings.lsd['@value'];
+            }
         }
-        if (compacted.metadata.anchor.settings.lsd && compacted.metadata.anchor.settings.lsd['@value']) {
-            compacted.metadata.anchor.settings.lsd = compacted.metadata.anchor.settings.lsd['@value'];
+        if (compacted.metadata.index && !Array.isArray(compacted.metadata.index)) {
+            compacted.metadata.index = [compacted.metadata.index];
+        }
+    }
+    if (compacted.merkletrees && compacted.merkletrees.index) {
+        if (compacted.merkletrees.index && !Array.isArray(compacted.merkletrees.index)) {
+            compacted.merkletrees.index = [compacted.merkletrees.index];
         }
     }
     if (compacted.merkletrees && compacted.merkletrees.anchor && compacted.merkletrees.anchor.settings) {
@@ -265,7 +275,7 @@ function matchQuadsIgnoreBlanks(quadsA, quadsB) {
     };
 }
 
-async function restructureGranularMetadata( metadata) {
+async function restructureGranularMetadata(metadata) {
     if (!metadata.graphs) {
         return metadata;
     }
