@@ -13,7 +13,7 @@ The functions of the library correspond to four different steps of processing, g
 
 Only the outputs of steps 2 and 3 can be used to verify in step 4 - verification requires the anchoring metadata. Either format of metadata may be passed in to step 4.
 
-Steps 2 and 4 require writing to, and reading from, respectively, a blockchain. Because methods for talking to different blockchains vary, as do methods for talking to the same blockchain from different environments (e.g., browser JS vs. server node.js), the corresponding library functions each take a callback function to handle the actual writing/reading, as appropriate. The library parses and handles the inputs and results as needed.With this demonstrator, callbacks which correspond to anchoring with a simple smart contract, and with a non-fungible token (NFT) contract, are provided.
+Steps 2 and 4 require writing to, and reading from, respectively, a blockchain. Because methods for talking to different blockchains vary, as do methods for talking to the same blockchain from different environments (e.g., browser JS vs. server node.js), the corresponding library functions each take a callback function to handle the actual writing/reading, as appropriate. The library parses and handles the inputs and results as needed. 
  
 ## Main linkchain Library functions:
 
