@@ -4,7 +4,7 @@ The Linkchain library supports the use of Merkle trees to provide blockchain-bas
 
 From the end user point of view, there are two types of data: the RDF itself, and the metadata needed to perform verification. The metadata itself comes in two forms: a compact form representing the full set of Merkle trees associated with a given set of RDF quads, and a much more verbose 'granular' form which associates each individual quad with a Merkle proof and the metadata needed to associate each proof with an immutable blockchain record. The first form of metadata can be used to verify, as a simple yes or no, whether a provided set of quads is identical up to blank node renaming to the set used to generate and anchor that metadata. The second form (which can be (re)generated at any time from the original set of quads and the first form) allows partial verification and sharing. That is, given a set of quads and a (sub)set of granular metadata, it is possible to identify exactly which quads in that set do or don't correspond to the originally anchored set.
 
-The functions of the library correspond to four different steps of processing, given a set of quads 'quads'.
+The functions of the library correspond to four different steps of processing, given a set of 'quads'.
 
 1. Generate verification metadata for 'quads' (not associated with any blockchain record)
 2. Anchor verification metadata to a blockchain (adds relevant anchor details to step 1 result)
